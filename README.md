@@ -1,141 +1,130 @@
 # qgserde
 
-QGISのプロジェクトXML（`.qgs`）を、編集可能なTypeScriptオブジェクトに変換し、XMLへ書き戻すライブラリです。QGIS 3系・4系のプロジェクトを扱います。
+QGIS 3/4のプロジェクトXML（`.qgs`）を、型付きのTypeScriptモデルへデシリアライズし、編集後にXMLへ書き戻すライブラリです。
 
 ```ts
-import {
-  addLayer,
-  createLayer,
-  parseQgs,
-  serializeQgs,
-  setProjectTitle,
-  updateLayer,
-} from "qgserde";
+import { parseQgs, serializeQgs } from "qgserde";
 
 const project = parseQgs(qgsXml);
-setProjectTitle(project, "札幌の地図");
+project.title = "札幌の地図";
+project.crs = { authId: "EPSG:4326" };
 
-addLayer(
-  project,
-  createLayer({
-    id: "cities_001",
-    name: "都市",
-    type: "vector",
-    provider: "ogr",
-    source: "./cities.gpkg|layername=cities",
-    crs: "EPSG:4326",
-  }),
-);
+for (const layer of project.layers) {
+  layer.name = `${layer.name}（編集済み）`;
+  layer.opacity = 0.8;
+  if (layer.type === "vector") {
+    layer.labelsEnabled = true;
+    // layer.fields は QgsField[]。raster 等のレイヤーには存在しません。
+    for (const field of layer.fields) field.alias = field.name;
+  }
+}
 
-updateLayer(project, "cities_001", { name: "都市一覧" });
+project.layers.push({
+  type: "vector",
+  id: "cities_001",
+  name: "都市",
+  provider: "ogr",
+  source: "./cities.gpkg|layername=cities",
+  crs: { authId: "EPSG:4326" },
+  fields: [],
+});
 
-// 入力と同じQGISバージョンで出力。ファイルにはUTF-8で保存します。
-const xml = serializeQgs(project);
+const xml = serializeQgs(project); // UTF-8で保存
 ```
 
-通常の用語では、XML → Objectがデシリアライズ、Object → XMLがシリアライズなので、書き出しを`serializeQgs`としています。
+## 型付きモデル
 
-## オブジェクト表現
-
-`QgsProject`はメソッドを持たない通常のオブジェクトです。`JSON.stringify` / `JSON.parse`で保存・復元でき、そのまま編集できます。
+`QgsProject`はXMLツリーではなく、QGISのデータを表す通常のオブジェクトです。XMLタグを検索したり、数値・真偽値を文字列へ変換したりする必要はありません。
 
 ```ts
 interface QgsProject {
-  declaration?: XmlDeclaration;
-  before: (XmlMisc | XmlDoctype)[];
-  root: XmlElement;
-  after: XmlMisc[];
-}
-
-interface XmlElement {
-  type: "element";
-  name: string;
-  attributes: Record<string, string>;
-  children: XmlNode[];
+  version: string;
+  title: string;
+  layers: QgsMapLayer[];
+  metadata: QgsProjectMetadata;
+  crs?: QgsCrs;
+  verticalCrs?: QgsCrs;
+  homePath?: string;
+  extent?: QgsReferencedRectangle;
+  rotation?: number;
+  layerTree?: QgsLayerTreeGroup;
+  layerOrder?: string[];
+  // 加えて、未モデル化の設定を保持する内部用preservedXmlがあります。
 }
 ```
 
-属性・テキストはすべて文字列です。`"0001"`、`"false"`、座標、式を数値や真偽値へ暗黙変換しません。要素の順序・繰り返し・混在テキスト・名前空間・コメント・CDATA・処理命令・外部DOCTYPE・未知のQGIS/プラグイン設定を保持します。バージョンの唯一の保存先は`project.root.attributes.version`です。
+| 型                                        | 編集できる内容                                                                               |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `QgsProjectMetadata`                      | 識別子、言語、著者、概要、作成日時など。タイトルは`project.title`に集約                      |
+| `QgsCrs`                                  | authority ID、WKT、PROJ、説明、既存のCRSメタデータ                                           |
+| `QgsRectangle` / `QgsReferencedRectangle` | 数値のxmin/ymin/xmax/ymax、表示範囲のCRS                                                     |
+| `QgsVectorLayer`                          | 共通レイヤー情報、ジオメトリ、読み取り専用・ラベルの有効状態、フィールド設定、レンダラー設定 |
+| `QgsRasterLayer`                          | 共通レイヤー情報、レンダラーの不透明度・バンド設定                                           |
+| `QgsField`                                | 名前、エディター種別、別名、デフォルト式、更新時のデフォルト適用                             |
+| `QgsLayerTreeGroup` / `QgsLayerTreeLayer` | 入れ子のグループ、参照先レイヤーID、展開・チェック状態、カスタム描画順                       |
 
-```ts
-import {
-  createElement,
-  findChild,
-  findChildren,
-  getText,
-  setText,
-} from "qgserde";
+レイヤーの共通情報は`id`、`name`、`provider`、`source`、`providerEncoding`、`crs`、`extent`、`opacity`、スケール制限です。識別子・データソース・式・日付は文字列、座標・不透明度・スケールは数値、有効状態は真偽値です。
 
-const properties = findChild(project.root, "properties"); // 直下だけを検索
-const children = findChildren(project.root); // 直下の全要素
+`QgsMapLayer`は`type`による判別可能なunionです。`vector`、`raster`に加え、`mesh`、`vector-tile`、`point-cloud`、`plugin`、`annotation`、`group`、`tiled-scene`を識別します。将来の種別は`QgsUnknownLayer`（`type: "unknown"`、元の種別は`xmlType`）になります。未知の種別を単なる`string`へ広げないため、ベクターとラスターの型の絞り込みが機能します。
 
-project.root.children.push(
-  createElement("custom-setting", { enabled: "1" }, [
-    { type: "text", value: "A & B" },
-  ]),
-);
-```
+ベクターレンダラーの`type`やフィールドのエディター種別は、プラグインで拡張される識別子なので文字列です。ベクターでは属性・symbolLevels・forceRaster・referenceScale、ラスターではopacity・alphaBand・band・redBand・greenBand・blueBandを型付きで扱います。シンボルや分類ルールの詳細、ラベル式、リレーション、レイアウト等は、現時点では個別の編集モデルを提供せず、元XMLとして保持します。
 
-`setText`は対象要素の内容全体を置き換えます。`getText`は子孫のテキスト・CDATAを連結します。XMLの属性・ノード名は書き出し時に検証し、特殊文字はエスケープします。
+## 編集とXMLへの反映
 
-タイトルには`setProjectTitle`を使ってください。ルートの`title`、`projectMetadata/title`、`projectname`を同時に更新します。`getProjectTitle`はQGISと同様にメタデータのタイトルを優先します。
+モデルのプロパティを編集して`serializeQgs`を呼ぶと、必要なXMLの保存先を更新します。
 
-`getLayers`は編集可能な`maplayer`要素の配列を返します。`createLayer`はベクター/ラスターの最小定義を作り、`addLayer`は定義をコピーしてプロジェクトへ追加し、レイヤーツリーと既存の描画順リストも更新します。`updateLayer`は名前・データソース・プロバイダーを、入れ子になったレイヤーツリー内の同じIDの参照にも反映します。スタイル等の詳細は返されたXML要素で編集できます。
+- `project.title`は、ルートの`title`、`projectMetadata/title`、`projectname`に反映します。
+- `project.crs`は、QGISの投影有効フラグも合わせて設定します。読み込み時は無効な投影のCRSを`project.crs`に公開せず、元XMLに保持します。既存の有効なCRSを削除すると投影を無効化します。
+- `project.extent`と`rotation`は、元ファイルの表示設定へ反映します。新規プロジェクトでは3.10以降/4系は`ProjectViewSettings`、旧版は`mapcanvas`を使います。範囲のCRSは`extent.crs`で指定でき、新規の表示範囲では省略時にプロジェクトCRSを使います。
+- 既存レイヤーの名前・データソース・プロバイダーは、レイヤーツリー内の対応する参照にも反映します。プロバイダーが生成したUID等は、未編集の場合は保持します。
+- `layers.push(...)`で追加したレイヤーには、必要なツリー参照と既存の描画順リストへの項目を追加します。レイヤーを配列から削除すると、そのツリー参照・描画順項目も取り除きます。
+- レイヤーIDを変更すると、ツリーと描画順のIDも更新します。リレーション、結合、レイアウト、プラグイン等に含まれる他のID参照は自動更新しないため、これらを持つプロジェクトではIDを維持してください。
 
-## バージョンを指定する
+CRSのauthorityだけを指定する場合も、呼び出し側でQGIS内部のCRSデータベースを参照する必要はありません。XMLの互換処理をコーデック内で行います。CRS自体を変更するときは`project.crs = { authId: "EPSG:3857" }`のようにオブジェクト全体を置き換えると、古いWKT等を引き継ぎません。
 
-新規プロジェクトは指定したバージョンで作成できます。
+オブジェクトは`JSON.stringify` / `JSON.parse`で保存・復元できます。書き出しはコピーで行い、呼び出し側のモデルを変更しません。
+
+`preservedXml`は未知の要素・属性・順序・コメント・CDATA等を保持する内部スナップショットです。型付きプロパティが編集内容の唯一の正本であり、スナップショットを直接編集するAPIは提供しません。この情報を削除すると、型定義していない設定は次の書き出しで保持できなくなります。
+
+## 新規作成とバージョン指定
 
 ```ts
 import { createProject, serializeQgs } from "qgserde";
 
-const project3 = createProject("3.40", "QGIS 3の地図");
-const project4 = createProject("4.2", "QGIS 4の地図");
-const xml = serializeQgs(project4, { version: "4.2.0" });
+const project = createProject("4.2", "新しい地図");
+project.metadata.author = "作成者";
+const xml = serializeQgs(project, { version: "4.2.0" });
 ```
 
-`3.40`は`3.40.0`に正規化します。`3.40.0-Bratislava`や`4.2.0-Belém do Pará`のようなリリース名も扱えます。出力バージョンを省略した場合は、入力の値を維持します。
+`3.40`は`3.40.0`へ正規化し、`3.40.0-Bratislava`や`4.2.0-Belém do Pará`のようなリリース名も扱います。出力バージョンを省略すると入力値を維持します。
 
-**既存プロジェクトのバージョン間の自動形式変換は実装していません。** QGISの機能・プロバイダー・プラグインごとの互換性は、ルートの`version`属性の変更だけでは保証できません。既定の`strict`では、数値バージョンを変更する際に`MIGRATION_REQUIRED`を送出します。パッチバージョンの変更も対象です。リリース名のみの変更には移行処理は不要です。
-
-形式変換が必要な場合は、対象とする機能に応じた移行処理を渡します。
+**バージョン間の自動形式変換は実装していません。** 既定の`strict`では数値バージョンの変更（パッチを含む）に`MIGRATION_REQUIRED`を送出します。移行する場合は型付きモデルを操作するコールバックを渡します。
 
 ```ts
 const xml = serializeQgs(project, {
   version: "4.2",
   migrate(copy, { from, to }) {
-    // 対象プロジェクトの機能を検査し、必要なXMLの変更をcopyに適用します。
-    // 非対応機能を検出した場合はthrowしてください。
     migrateSupportedProject(copy, from, to); // アプリケーション側の移行処理
   },
 });
 ```
 
-`migrate`は数値バージョンが変わる場合だけ呼び出されます。元オブジェクトを変更せず、コピーに対して実行します。コールバックの例外はそのまま伝播し、結果のXMLも再検証します。
+`migrate`は数値バージョンが変わる場合のみ、コピーに対して実行します。例外はそのまま伝播します。`versionPolicy: "preserve"`を明示すると、内容を保持してバージョン属性のみ変更できますが、対象QGISでの互換性を保証しません。
 
-内容を維持してバージョン属性だけを変更したい場合は、明示的に`preserve`を指定できます。**これは対象QGISでの動作を保証しません。**
+## 制約
 
-```ts
-const xml = serializeQgs(project, {
-  version: "4.2",
-  versionPolicy: "preserve",
-});
-```
+- XML構造・値の保持を目的とし、バイト単位の再現は保証しません。引用符・空要素・エンティティ表記、XML規格に従う改行正規化は変わり得ます。既存の空白は保持し、自動整形しません。
+- `.qgz`のZIP、`.qgd`、添付ファイル、地理データ自体は扱いません。データソースの存在確認・保存先に応じたパスの変換も行いません。
+- 入出力はUnicode文字列で、出力にXML宣言がある場合はUTF-8に正規化します。ファイルI/Oは呼び出し側の責任です。
+- XML 1.0のみ対応し、外部DTDを取得しません。内部DTD・カスタムエンティティ・深さ512超・循環したツリーは拒否します。
+- 型付きの既知フィールドとXMLの整形式を扱うコーデックであり、QGISの全機能を網羅するスキーマ検証器ではありません。
+- ESM形式です。本体はNode.js APIやブラウザーDOMに依存せず、`structuredClone`のある環境で利用できます。ブラウザーではバンドラーを使用してください。
 
-## 保持範囲と制約
-
-- XML構造・値の保持を目的とし、バイト単位の再現は保証しません。引用符、空要素の表記、エンティティ表記、XML規格に従う改行の正規化は変わり得ます。既存の要素内空白を保持し、自動整形は行いません。空のテキストノードはXMLへの書き出し後に消え、隣接テキストノードは結合される場合があります。
-- 入出力はUnicode文字列です。出力にXML宣言がある場合は`encoding="UTF-8"`へ正規化します。文字コードのデコード・エンコードとファイル入出力は呼び出し側で行います。
-- `.qgz`のZIP、`.qgd`、添付ファイル、地理データは読み書きしません。QGISのデータソースパスは入力値を保持し、保存先に応じた書き換えは行いません。
-- XML 1.0のみ対応します。外部DTDを取得せず、内部DTD・カスタムエンティティは拒否します。深さ512を超えるXMLや循環した編集オブジェクトもエラーになります。
-- XMLの整形式と`qgis`ルート・バージョンを検証します。QGIS固有の全機能、データソースの存在、レイヤーIDへの全参照の整合性まで検証するスキーマバリデーターではありません。IDを変更する場合や関係・レイアウト等を編集する場合は、関連する参照も更新してください。
-- ESM形式です。ライブラリ本体はNode.js APIやブラウザーDOMに依存せず、`structuredClone`のある環境で利用できます。ブラウザーではバンドラーを使用してください。開発・テストはNode.js 24以上で実行します。
-
-## エラー
-
-XML/プロジェクト/バージョン/編集の検証エラーは`QgsError`で返します。`code`は`INVALID_XML`、`INVALID_PROJECT`、`INVALID_VERSION`、`MIGRATION_REQUIRED`、`INVALID_EDIT`のいずれかです。
+前のXMLツリー形式のAPIからは破壊的変更になります。`root.attributes.version`は`version`へ、タイトル操作関数は`title`への代入へ、レイヤー操作関数は`layers`配列への操作へ置き換えてください。任意のXML要素を返す公開APIは廃止しました。
 
 ## 開発・検証
+
+Node.js 24以上とpnpmを使用します。
 
 ```sh
 pnpm install --frozen-lockfile
@@ -145,19 +134,20 @@ pnpm test
 pnpm build
 ```
 
-GitHub Actionsでも同じチェックをNode.js 24/26で実行します。QGIS 3の実プロジェクトとQGIS 4.2が生成したプロジェクトを使って、XML → Object → XML → Objectの保持をテストします。
+`typecheck`には、不正なプロパティ・値の型や、unionの絞り込みを検証するコンパイル時テストも含みます。QGIS 3/4の実XMLを使って、未変更時の保持、型付きプロパティの編集、JSON保存後の再出力を検証します。GitHub ActionsでもNode.js 24/26でチェックします。
 
-PyQGISが利用できる環境では実際の読み込みテストも実行できます。
+PyQGISが利用できる環境では、実際の読み込みも検証できます。
 
 ```sh
 QGIS_PYTHON=/path/to/python-with-qgis pnpm test
 ```
 
-必要に応じて`PYTHONPATH`等も設定してください。`QGIS_PYTHON`が未指定の場合、この結合テストだけをスキップします。QGIS 4.2で、3.40/4.2形式の新規プロジェクトと、編集後の4.2プロジェクトのタイトル・レイヤー名・CRS・レイヤーツリーを検証しています。QGIS 3本体での実行は別途必要です。
+必要に応じて`PYTHONPATH`も設定してください。未指定の場合は結合テストのみスキップします。QGIS 4.2で、3.40/4.2形式の新規プロジェクトと編集後の4.2プロジェクトについて、タイトル・プロジェクトCRS・表示範囲とそのCRS・回転・レイヤー名とCRS・ツリーを検証しています。QGIS 3本体での実行は別途必要です。
 
 ## 参照
 
 - [QGIS公式 QGS/QGZファイル形式](https://documentation.qgis.org/3.44/en/docs/user_manual/appendices/qgis_file_formats.html)
-- [QGIS 3の公式プロジェクト変換実装](https://github.com/qgis/QGIS/blob/release-3_44/src/core/project/qgsprojectfiletransform.cpp)
-- [QGIS 4のプロジェクト読み書き実装](https://github.com/qgis/QGIS/blob/release-4_2/src/core/project/qgsproject.cpp)
-- テスト用のQGIS公式データの出典・ライセンスは[test/fixtures/README.md](test/fixtures/README.md)を参照してください。
+- [QGIS公式プロジェクト読み書き実装](https://github.com/qgis/QGIS/blob/release-4_2/src/core/project/qgsproject.cpp)
+- [QGIS公式表示設定の読み書き実装](https://github.com/qgis/QGIS/blob/release-3_44/src/core/project/qgsprojectviewsettings.cpp)
+- [QGIS公式CRSの読み書き実装](https://github.com/qgis/QGIS/blob/release-3_44/src/core/proj/qgscoordinatereferencesystem.cpp)
+- テストデータの出典・ライセンス: [test/fixtures/README.md](test/fixtures/README.md)

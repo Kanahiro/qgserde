@@ -1,128 +1,176 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
-  addLayer,
-  createElement,
-  createLayer,
   createProject,
-  findChild,
-  findChildren,
-  getLayers,
-  getText,
   parseQgs,
+  type QgsVectorLayer,
   serializeQgs,
-  updateLayer,
 } from "../src/index.ts";
+import { findChild, readXml } from "../src/xml.ts";
 
-const definition = {
+const definition: QgsVectorLayer = {
   id: "cities_001",
   name: "都市",
   type: "vector",
   provider: "memory",
   source: "Point?crs=EPSG:4326",
-  crs: "EPSG:4326",
-} as const;
+  crs: { authId: "EPSG:4326" },
+  fields: [],
+};
 
-test("adds layers to definitions, tree, and both stored order lists", () => {
-  const project = createProject("4.2");
-  project.root.children.push(createElement("layerorder"));
-  const original = createLayer(definition);
-  const attached = addLayer(project, original);
-  assert.notEqual(attached, original);
-  assert.equal(getLayers(project)[0], attached);
-  const tree = findChild(project.root, "layer-tree-group")!;
-  assert.deepEqual(findChild(tree, "layer-tree-layer")!.attributes, {
-    id: "cities_001",
-    name: "都市",
-    providerKey: "memory",
-    source: definition.source,
-    checked: "Qt::Checked",
-    expanded: "1",
-  });
-  assert.equal(
-    getText(findChild(findChild(tree, "custom-order")!, "item")!),
-    definition.id,
-  );
-  assert.equal(
-    findChild(findChild(project.root, "layerorder")!, "layer")!.attributes.id,
-    definition.id,
-  );
-  assert.deepEqual(parseQgs(serializeQgs(project)), project);
+test("unknown field records, custom order payloads and embedded references survive untouched", () => {
+  const xml =
+    '<qgis version="4.2"><layer-tree-group><custom-order><item plugin="keep"><![CDATA[v]]></item></custom-order><layer-tree-layer id="v"/><layer-tree-group><layer-tree-layer id="external" source="external.qgs"/></layer-tree-group></layer-tree-group><projectlayers><maplayer type="vector"><id>v</id><aliases><alias field="older" name="keep"/></aliases><defaults><default field="older" expression="001" applyOnUpdate="0"/></defaults></maplayer><maplayer embedded="1" project="other.qgs" id="embedded"/></projectlayers><layerorder><layer id="v" plugin="keep"/></layerorder></qgis>';
+  const project = parseQgs(xml);
+  assert.equal(project.layers[1]!.id, "embedded");
+  assert.deepEqual(readXml(serializeQgs(project)), readXml(xml));
 });
 
-test("updates every nested tree reference while preserving styles and unrelated content", () => {
-  const project = createProject("3.40");
-  const attached = addLayer(project, createLayer(definition));
-  attached.children.push(
-    createElement("renderer-v2", { type: "singleSymbol" }),
-  );
-  const tree = findChild(project.root, "layer-tree-group")!;
-  const reference = structuredClone(findChild(tree, "layer-tree-layer")!);
-  const group = createElement("layer-tree-group", { name: "nested" }, [
-    reference,
-  ]);
-  tree.children.push(
-    group,
-    createElement("layer-tree-layer", { id: "other", name: "untouched" }),
-  );
-  const result = updateLayer(project, definition.id, {
-    name: "",
-    source: "./cities.gpkg|layername=cities",
-    provider: "ogr",
-  });
-  assert.equal(getText(findChild(result, "layername")!), "");
-  assert.equal(
-    getText(findChild(result, "datasource")!),
-    "./cities.gpkg|layername=cities",
-  );
-  assert.equal(reference.attributes.name, "");
-  assert.equal(reference.attributes.providerKey, "ogr");
-  assert.equal(
-    findChild(result, "renderer-v2")!.attributes.type,
-    "singleSymbol",
-  );
-  assert.equal(
-    findChildren(tree, "layer-tree-layer")[1]!.attributes.name,
-    "untouched",
-  );
-  assert.deepEqual(parseQgs(serializeQgs(project)), project);
+test("retains the original alias order when it differs from field configuration order", () => {
+  const xml =
+    '<qgis version="4.2"><projectlayers><maplayer type="vector"><id>v</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="external" name="keep"/><alias field="b" name="B"/><alias field="a" name="A"/></aliases></maplayer></projectlayers></qgis>';
+  assert.deepEqual(readXml(serializeQgs(parseQgs(xml))), readXml(xml));
 });
 
-test("rejects empty or duplicate IDs before changing the project", () => {
+test("pushes plain typed layers and builds their XML and tree references", () => {
   const project = createProject("4.2");
-  addLayer(project, createLayer(definition));
+  project.layers.push(structuredClone(definition));
+  project.layerOrder = [];
+  project.layerTree!.customOrder = { enabled: true, layerIds: [] };
   const before = JSON.stringify(project);
-  assert.throws(() => addLayer(project, createLayer(definition)), /duplicate/u);
+  const result = parseQgs(serializeQgs(project));
+  assert.equal(result.layers[0]!.id, "cities_001");
+  assert.equal(result.layers[0]!.name, "都市");
+  assert.deepEqual(result.layerOrder, ["cities_001"]);
+  assert.deepEqual(result.layerTree!.customOrder, {
+    enabled: true,
+    layerIds: ["cities_001"],
+  });
+  const node = result.layerTree!.children[0]!;
+  assert.equal(node.type, "layer");
+  if (node.type === "layer") assert.equal(node.layerId, "cities_001");
   assert.equal(JSON.stringify(project), before);
-  assert.throws(
-    () => createLayer({ ...definition, id: " " }),
-    /must not be empty/u,
-  );
-  assert.throws(() => createLayer({ ...definition, crs: "" }), /CRS/u);
-  assert.throws(() => addLayer(project, createElement("other")), /maplayer/u);
-  assert.throws(
-    () => updateLayer(project, "missing", { name: "x" }),
-    /found 0/u,
-  );
 });
 
-test("adds missing containers to a minimal parsed project", () => {
-  const project = parseQgs('<qgis version="3.40"/>');
-  addLayer(project, createLayer(definition));
-  assert.equal(getLayers(project).length, 1);
-  assert.ok(
-    findChild(findChild(project.root, "layer-tree-group")!, "layer-tree-layer"),
-  );
-});
-
-test("round trips a project written by QGIS 4 with Unicode release and layer names", async () => {
-  const { readFile } = await import("node:fs/promises");
-  const xml = await readFile(
+test("typed edits synchronize every nested tree reference and keep renderer symbols", () => {
+  const xml = readFileSync(
     new URL("./fixtures/qgis4.qgs", import.meta.url),
     "utf8",
   );
   const project = parseQgs(xml);
-  assert.equal(project.root.attributes.version, "4.2.0-Belém do Pará");
-  assert.equal(getLayers(project).length, 1);
-  assert.deepEqual(parseQgs(serializeQgs(project)), project);
+  const layer = project.layers[0]!;
+  assert.equal(layer.type, "vector");
+  if (layer.type !== "vector") throw new Error("Expected vector fixture");
+  assert.equal(layer.renderer!.type, "singleSymbol");
+  const reference = structuredClone(project.layerTree!.children[0]!);
+  project.layerTree!.children.push({
+    type: "group",
+    name: "nested",
+    expanded: true,
+    checked: "partial",
+    children: [reference],
+  });
+  layer.name = "";
+  layer.source = "./cities.gpkg|layername=cities";
+  layer.provider = "ogr";
+  layer.opacity = 0.5;
+  layer.labelsEnabled = true;
+  layer.renderer!.symbolLevels = true;
+  const output = serializeQgs(project);
+  const root = readXml(output).root;
+  const tree = findChild(root, "layer-tree-group")!;
+  const nested = findChild(tree, "layer-tree-group")!;
+  for (const parent of [tree, nested]) {
+    const attributes = findChild(parent, "layer-tree-layer")!.attributes;
+    assert.equal(attributes.name, "");
+    assert.equal(attributes.source, layer.source);
+    assert.equal(attributes.providerKey, "ogr");
+  }
+  const updated = parseQgs(output).layers[0]!;
+  assert.equal(updated.opacity, 0.5);
+  assert.equal(updated.type === "vector" && updated.labelsEnabled, true);
+  const originalSymbols = findChild(
+    findChild(findChild(readXml(xml).root, "projectlayers")!, "maplayer")!,
+    "renderer-v2",
+  )!;
+  const outputSymbols = findChild(
+    findChild(findChild(root, "projectlayers")!, "maplayer")!,
+    "renderer-v2",
+  )!;
+  assert.deepEqual(
+    findChild(outputSymbols, "symbols"),
+    findChild(originalSymbols, "symbols"),
+  );
+});
+
+test("renaming and removing typed layers synchronizes tree and order IDs", () => {
+  const project = parseQgs(
+    readFileSync(new URL("./fixtures/qgis3.qgs", import.meta.url), "utf8"),
+  );
+  project.layers[0]!.id = "renamed";
+  project.layers.splice(1, 1);
+  const result = parseQgs(serializeQgs(project));
+  assert.deepEqual(
+    result.layers.map((layer) => layer.id),
+    ["renamed"],
+  );
+  assert.deepEqual(result.layerOrder, ["renamed"]);
+  assert.deepEqual(result.layerTree!.customOrder!.layerIds, ["renamed"]);
+  assert.equal(result.layerTree!.children.length, 1);
+  const child = result.layerTree!.children[0]!;
+  assert.equal(child.type === "layer" && child.layerId, "renamed");
+});
+
+test("rejects duplicate IDs, empty IDs and cyclic typed trees", () => {
+  const project = createProject("4.2");
+  project.layers.push(structuredClone(definition), structuredClone(definition));
+  assert.throws(() => serializeQgs(project), /Duplicate layer ID/u);
+  project.layers.pop();
+  project.layers[0]!.id = "";
+  assert.throws(() => serializeQgs(project), /must not be empty/u);
+  project.layers = [];
+  project.layerTree!.children.push(project.layerTree!);
+  assert.throws(() => serializeQgs(project), /Cyclic/u);
+});
+
+test("raster layers have typed band settings; future types have an explicit fallback", () => {
+  const project = parseQgs(
+    '<qgis version="4.2"><projectlayers><maplayer type="raster"><id>r</id><layername>raster</layername><provider>gdal</provider><datasource>file.tif</datasource><pipe><rasterrenderer type="multibandcolor" opacity="0.75" redBand="1" greenBand="2" blueBand="3"><custom value="keep"/></rasterrenderer></pipe></maplayer><maplayer type="future"><id>u</id><plugin-data/></maplayer></projectlayers></qgis>',
+  );
+  const layer = project.layers[0]!;
+  assert.equal(layer.type, "raster");
+  if (layer.type !== "raster") throw new Error("Expected raster");
+  assert.equal(layer.renderer!.redBand, 1);
+  assert.equal(layer.renderer!.opacity, 0.75);
+  layer.renderer!.redBand = 3;
+  layer.renderer!.blueBand = 1;
+  const unknown = project.layers[1]!;
+  assert.equal(unknown.type, "unknown");
+  if (unknown.type === "unknown") assert.equal(unknown.xmlType, "future");
+  const output = serializeQgs(project);
+  const updated = parseQgs(output).layers[0]!;
+  assert.equal(updated.type === "raster" && updated.renderer!.redBand, 3);
+  assert.match(output, /<custom value="keep"\/>/u);
+  assert.match(output, /<plugin-data\/>/u);
+});
+
+test("field configurations, aliases and defaults have editable types", () => {
+  const project = parseQgs(
+    '<qgis version="3.40"><projectlayers><maplayer type="vector"><id>v</id><fieldConfiguration><field name="name"><editWidget type="TextEdit"><config><Option type="Map"/></config></editWidget></field></fieldConfiguration><aliases><alias field="name" index="0" name="名称"/></aliases><defaults><default field="name" expression="\'A\'" applyOnUpdate="1"/></defaults></maplayer></projectlayers></qgis>',
+  );
+  const layer = project.layers[0]!;
+  if (layer.type !== "vector") throw new Error("Expected vector");
+  assert.equal(layer.fields[0]!.editorWidgetType, "TextEdit");
+  assert.equal(layer.fields[0]!.applyDefaultOnUpdate, true);
+  layer.fields[0]!.alias = "都市名";
+  layer.fields[0]!.defaultExpression = "'B'";
+  layer.fields.push({ name: "population", editorWidgetType: "Range" });
+  const output = serializeQgs(project);
+  const updated = parseQgs(output).layers[0]!;
+  if (updated.type !== "vector") throw new Error("Expected vector");
+  assert.equal(updated.fields[0]!.alias, "都市名");
+  assert.equal(updated.fields[0]!.defaultExpression, "'B'");
+  assert.equal(updated.fields[1]!.editorWidgetType, "Range");
+  assert.match(output, /<config><Option type="Map"\/><\/config>/u);
 });

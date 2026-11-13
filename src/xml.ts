@@ -1,7 +1,7 @@
 import { SaxesParser } from "saxes";
 import { NAME_RE } from "xmlchars/xml/1.0/ed5.js";
 import { QgsError } from "./errors.ts";
-import type { QgsProject, XmlElement, XmlNode } from "./types.ts";
+import type { XmlDocument, XmlElement, XmlNode } from "./types.ts";
 
 // A controlled failure is preferable to a runtime stack overflow on edited trees.
 const MAX_DEPTH = 512;
@@ -77,13 +77,13 @@ function checkDoctype(value: string): void {
 }
 
 /** XML 1.0 reader shared by input parsing and output validation. */
-export function readXml(xml: string): QgsProject {
+export function readXml(xml: string): XmlDocument {
   const parser = new SaxesParser({ xmlns: true, defaultXMLVersion: "1.0" });
   const stack: XmlElement[] = [];
-  const before: QgsProject["before"] = [];
-  const after: QgsProject["after"] = [];
+  const before: XmlDocument["before"] = [];
+  const after: XmlDocument["after"] = [];
   let root: XmlElement | undefined;
-  let declaration: QgsProject["declaration"];
+  let declaration: XmlDocument["declaration"];
 
   function append(node: XmlNode): void {
     const parent = stack.at(-1);
@@ -175,7 +175,7 @@ function escapeAttribute(value: string): string {
     .replace(/\n/gu, "&#10;");
 }
 
-export function writeXml(project: QgsProject): string {
+export function writeXml(project: XmlDocument): string {
   const chunks: string[] = [];
   const active = new Set<XmlElement>();
   function write(

@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { QgsError } from "../src/index.ts";
 import {
   createElement,
   findChild,
   findChildren,
   getText,
-  parseQgs,
-  QgsError,
-  serializeQgs,
+  readXml as parseQgs,
+  writeXml as serializeQgs,
   setText,
-} from "../src/index.ts";
+} from "../src/xml.ts";
 
 const sample = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
@@ -111,18 +111,6 @@ test("never resolves an external DTD", () => {
     '<!DOCTYPE qgis SYSTEM "https://invalid.invalid/never-fetch.dtd"><qgis version="3.40"/>',
   );
   assert.deepEqual(parseQgs(serializeQgs(project)), project);
-});
-
-test("requires a qgis root and a valid source version", () => {
-  assert.throws(
-    () => parseQgs('<other version="3.40"/>'),
-    errorCode("INVALID_PROJECT"),
-  );
-  assert.throws(() => parseQgs("<qgis/>"), errorCode("INVALID_PROJECT"));
-  assert.throws(
-    () => parseQgs('<qgis version="unknown"/>'),
-    errorCode("INVALID_VERSION"),
-  );
 });
 
 test("rejects cyclic and excessively deep edited trees", () => {

@@ -7,6 +7,7 @@
   "files": [
     "dist",
     "src",
+    "scripts",
     "README.md"
   ],
   "exports": {
@@ -20,7 +21,7 @@
   },
   "packageManager": "pnpm@11.21.0",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node scripts/clean.ts && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "check": "biome check .",
