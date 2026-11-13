@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -281,8 +281,11 @@ export function createTileTree(): QgsLayerTreeGroup {
   return root;
 }
 
-export function createTileGallery(): QgsProject {
-  const project = createProject("公開タイル比較 — Raster × Vector");
+export function createTileGallery(templateXml: string): QgsProject {
+  const project = createProject(
+    templateXml,
+    "公開タイル比較 — Raster × Vector",
+  );
   project.layers = tileSources.map((tile) => {
     const parameters = new URLSearchParams({
       type: "xyz",
@@ -331,7 +334,11 @@ export async function writeTileGallery(
   destination: string,
   version = "4.2",
 ): Promise<void> {
-  const project = createTileGallery();
+  const templateXml = await readFile(
+    new URL("./template.qgs", import.meta.url),
+    "utf8",
+  );
+  const project = createTileGallery(templateXml);
   await mkdir(dirname(destination), { recursive: true });
   await writeFile(destination, serializeQgs(project, { version }), "utf8");
   console.log(

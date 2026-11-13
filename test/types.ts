@@ -15,8 +15,19 @@ export function checkPublicTypes(
   project.root;
   // @ts-expect-error Versions belong to serialization, not the domain model.
   project.version;
-  // @ts-expect-error Creation does not take a target version.
-  createProject("4.2", "title");
+  // @ts-expect-error A template is required for creation.
+  createProject();
+  // @ts-expect-error The template must be an XML string.
+  createProject({ title: "title" });
+  // @ts-expect-error Every project must retain its source or template document.
+  const withoutTemplate: QgsProject = {
+    title: "title",
+    layers: [],
+    metadata: {},
+  };
+  void withoutTemplate;
+  // @ts-expect-error The source document is required and readonly.
+  delete project.preservedXml;
   // @ts-expect-error The target format must be explicit on every write.
   serializeQgs(project);
   // @ts-expect-error A target version is required.

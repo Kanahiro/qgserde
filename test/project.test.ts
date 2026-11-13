@@ -10,6 +10,11 @@ import {
 } from "../src/index.ts";
 import { findChild, getText, readXml } from "../src/xml.ts";
 
+const templateXml = readFileSync(
+  new URL("../examples/template.qgs", import.meta.url),
+  "utf8",
+);
+
 test("deserializes a domain model instead of an arbitrary XML root", () => {
   const project = parseQgs(
     '<qgis version="4.2.0" projectname="old"><title>legacy</title><projectMetadata><title>metadata</title><author>keep</author></projectMetadata></qgis>',
@@ -37,9 +42,9 @@ test("deserializes a domain model instead of an arbitrary XML root", () => {
 });
 
 test("creates one version-independent model and writes QGIS 3/4 formats", () => {
-  const project = createProject("札幌 & 地図");
+  const project = createProject(templateXml, "札幌 & 地図");
   assert.equal("version" in project, false);
-  assert.equal(createProject().title, "");
+  assert.equal(createProject(templateXml).title, "");
   const before = JSON.stringify(project);
   for (const [version, normalized] of [
     ["3.28", "3.28.0"],
@@ -96,6 +101,88 @@ test("requires a qgis root and a valid source version", () => {
   );
 });
 
+test("requires a valid QGS template instead of synthesizing a project", () => {
+  for (const args of [[], [undefined], [null], [""], ["a title"]])
+    assert.throws(
+      () => Reflect.apply(createProject, undefined, args),
+      (error) => error instanceof QgsError && error.code === "INVALID_XML",
+    );
+  for (const xml of ['<other version="4.2"/>', "<qgis/>"])
+    assert.throws(
+      () => createProject(xml),
+      (error) => error instanceof QgsError && error.code === "INVALID_PROJECT",
+    );
+  assert.throws(
+    () => createProject('<qgis version="unknown"/>'),
+    (error) => error instanceof QgsError && error.code === "INVALID_VERSION",
+  );
+});
+
+for (const fixture of ["qgis3", "qgis4"]) {
+  test(`inherits all known and unknown settings from a real ${fixture} template`, () => {
+    const xml = readFileSync(
+      new URL(`./fixtures/${fixture}.qgs`, import.meta.url),
+      "utf8",
+    );
+    const project = createProject(xml);
+    assert.deepEqual(project, parseQgs(xml));
+    const version = readXml(xml).root.attributes.version!;
+    assert.deepEqual(readXml(serializeQgs(project, { version })), readXml(xml));
+    assert.deepEqual(project.preservedXml, readXml(xml));
+    assert.equal("version" in project, false);
+  });
+}
+
+test("only overrides the template title when supplied and retains unknown XML across outputs", () => {
+  const xml = readFileSync(
+    new URL("./fixtures/qgis4.qgs", import.meta.url),
+    "utf8",
+  )
+    .replace(
+      "<qgis ",
+      '<qgis xmlns:plugin="urn:template" plugin:setting="0001" ',
+    )
+    .replace(
+      "</qgis>",
+      '<!--template--><?plugin keep?><plugin:config flag="false"><![CDATA[unknown < value]]><item key="007"/></plugin:config></qgis>',
+    );
+  const source = parseQgs(xml);
+  for (const title of [undefined, "新しい地図", ""]) {
+    const project = createProject(xml, title);
+    assert.deepEqual(project, { ...source, title: title ?? source.title });
+    const before = JSON.stringify(project);
+    for (const version of ["3.44", "4.2"]) {
+      const output = serializeQgs(JSON.parse(before), { version });
+      const root = readXml(output).root;
+      assert.equal(parseQgs(output).title, title ?? source.title);
+      assert.equal(root.attributes["plugin:setting"], "0001");
+      assert.deepEqual(
+        findChild(root, "plugin:config"),
+        findChild(source.preservedXml.root, "plugin:config"),
+      );
+      assert.deepEqual(
+        findChild(root, "projectlayers"),
+        findChild(source.preservedXml.root, "projectlayers"),
+      );
+      assert.match(output, /<!--template--><\?plugin keep\?>/u);
+    }
+    assert.equal(JSON.stringify(project), before);
+    assert.deepEqual(project.preservedXml, source.preservedXml);
+  }
+});
+
+test("rejects missing source XML instead of silently dropping unmodeled settings", () => {
+  for (const project of [createProject(templateXml), parseQgs(templateXml)]) {
+    const stored = JSON.parse(JSON.stringify(project));
+    delete stored.preservedXml;
+    assert.throws(
+      () => serializeQgs(stored, { version: "4.2" }),
+      (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
+    );
+    assert.ok(project.preservedXml);
+  }
+});
+
 test("chooses extent and rotation storage independently for the target version", () => {
   for (const [version, extentTag, rotationTag] of [
     ["3.8", "mapcanvas", "mapcanvas"],
@@ -106,7 +193,7 @@ test("chooses extent and rotation storage independently for the target version",
     ["4.2", "ProjectViewSettings", "ProjectViewSettings"],
   ] as const) {
     for (const setting of ["extent", "rotation", "both"]) {
-      const project = createProject();
+      const project = createProject(templateXml);
       project.crs = { authId: "EPSG:4326" };
       if (setting !== "rotation")
         project.extent = { xmin: 1, ymin: 2, xmax: 3, ymax: 4 };
@@ -141,7 +228,7 @@ test("chooses extent and rotation storage independently for the target version",
 });
 
 test("reuses parsed and JSON-restored models across old and new formats without mutating them", () => {
-  const original = createProject("independent");
+  const original = createProject(templateXml, "independent");
   original.crs = { authId: "EPSG:4326" };
   original.extent = {
     xmin: 1,
@@ -211,7 +298,7 @@ test("a legacy extent keeps its own CRS when modern view settings contain other 
 });
 
 test("failed writes preserve the model and report missing target versions", () => {
-  const project = createProject();
+  const project = createProject(templateXml);
   const before = JSON.stringify(project);
   assert.throws(
     () => Reflect.apply(serializeQgs, undefined, [project]),
@@ -257,7 +344,7 @@ test("reads and edits typed CRS, extents, rotation and metadata", () => {
 });
 
 test("rejects invalid typed values before returning XML", () => {
-  const project = createProject();
+  const project = createProject(templateXml);
   project.rotation = Number.NaN;
   assert.throws(
     () => serializeQgs(project, { version: "4.2" }),

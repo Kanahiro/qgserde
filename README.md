@@ -85,18 +85,20 @@ CRSのauthorityだけを指定する場合も、呼び出し側でQGIS内部のC
 
 オブジェクトは`JSON.stringify` / `JSON.parse`で保存・復元できます。書き出しはコピーで行い、呼び出し側のモデルを変更しません。
 
-`preservedXml`は未知の要素・属性・順序・コメント・CDATA等を保持する内部スナップショットです。型付きプロパティが編集内容の唯一の正本であり、スナップショットを直接編集するAPIは提供しません。この情報を削除すると、型定義していない設定は次の書き出しで保持できなくなります。
+`preservedXml`は未知の要素・属性・順序・コメント・CDATA等を保持する内部スナップショットです。型付きプロパティが編集内容の唯一の正本であり、スナップショットを直接編集するAPIは提供しません。`QgsProject`では必須であり、この情報がないモデルの書き出しは`INVALID_EDIT`になります。
 
 ## 新規作成とバージョン指定
 
 ```ts
 import { createProject, serializeQgs } from "qgserde";
 
-const project = createProject("新しい地図");
+const project = createProject(templateXml, "新しい地図");
 project.metadata.author = "作成者";
 const qgis3Xml = serializeQgs(project, { version: "3.44" });
 const qgis4Xml = serializeQgs(project, { version: "4.2" });
 ```
+
+`templateXml`は呼び出し側で読み込んだQGS文字列です。テンプレートのレイヤー・メタデータ・ツリー・未知の設定をすべて引き継ぎます。タイトルを省略するとテンプレートのタイトルを維持し、空文字列を指定すると空にします。最小構成の例は[`examples/template.qgs`](examples/template.qgs)です。QGISで作った独自のテンプレートも利用できます。
 
 `serializeQgs`では出力先のQGIS 3/4バージョンを必ず指定します。`3.40`は`3.40.0`へ正規化し、`3.40.0-Bratislava`や`4.2.0-Belém do Pará`のようなリリース名も扱います。未指定・不正なバージョン・3/4以外のメジャーバージョンは`INVALID_VERSION`です。
 
@@ -122,7 +124,7 @@ const qgis3XmlAgain = serializeQgs(project, { version: "3.44" });
 - 型付きの既知フィールドとXMLの整形式を扱うコーデックであり、QGISの全機能を網羅するスキーマ検証器ではありません。
 - ESM形式です。本体はNode.js APIやブラウザーDOMに依存せず、`structuredClone`のある環境で利用できます。ブラウザーではバンドラーを使用してください。
 
-APIは破壊的変更になります。`createProject(version, title)`は`createProject(title)`へ置き換え、`project.version`の代わりに`serializeQgs(project, { version })`で出力先を指定してください。前のXMLツリー形式のタイトル操作関数は`title`への代入へ、レイヤー操作関数は`layers`配列への操作へ置き換えてください。任意のXML要素を返す公開APIは廃止しました。
+APIは破壊的変更になります。`createProject(title)`は`createProject(templateXml, title?)`へ置き換え、`project.version`の代わりに`serializeQgs(project, { version })`で出力先を指定してください。前のXMLツリー形式のタイトル操作関数は`title`への代入へ、レイヤー操作関数は`layers`配列への操作へ置き換えてください。任意のXML要素を返す公開APIは廃止しました。
 
 ## 開発・検証
 

@@ -117,20 +117,12 @@ export function parseQgs(xml: string): QgsProject {
 }
 
 function encodeProject(project: QgsProject, version: string): XmlDocument {
-  const document = structuredClone(
-    project.preservedXml ??
-      ({
-        declaration: { version: "1.0", encoding: "UTF-8" },
-        before: [
-          {
-            type: "doctype",
-            value: " qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'",
-          },
-        ],
-        root: createElement("qgis"),
-        after: [],
-      } satisfies XmlDocument),
-  );
+  if (!project.preservedXml)
+    throw new QgsError(
+      "INVALID_EDIT",
+      "The project must retain its source or template XML; use parseQgs or createProject",
+    );
+  const document = structuredClone(project.preservedXml);
   const root = document.root;
   if (root.name !== "qgis")
     throw new QgsError(
@@ -142,7 +134,7 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
     throw new QgsError("INVALID_EDIT", "Project title must be a string");
   // Avoid changing redundant legacy values on untouched input. A title edit owns all
   // three storage locations, so QGIS cannot override it with stale project metadata.
-  if (!project.preservedXml || readTitle(document) !== project.title) {
+  if (readTitle(document) !== project.title) {
     putText(root, "title", project.title);
     putText(ensure(root, "projectMetadata"), "title", project.title);
     putAttribute(root, "projectname", project.title);
@@ -247,10 +239,10 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
  * @param options - 出力先バージョン。省略できません。
  * @returns XML文字列。XML宣言がある場合の文字コード表記はUTF-8です。
  * @throws {@link QgsError} 出力先が不正な場合は`INVALID_VERSION`、重複ID・循環・
- * 有限でない数値などの書き出せない編集は`INVALID_EDIT`。
+ * 有限でない数値・保持元XMLの欠落などの書き出せない編集は`INVALID_EDIT`。
  * @example
  * ```ts
- * const project = createProject("同じ地図");
+ * const project = createProject(templateXml, "同じ地図");
  * const qgis3 = serializeQgs(project, { version: "3.44" });
  * const qgis4 = serializeQgs(project, { version: "4.2" });
  * ```
@@ -283,22 +275,24 @@ function emptyTree(): QgsLayerTreeGroup {
 }
 
 /**
- * バージョンを持たない新規プロジェクトを作成します。
+ * テンプレートのQGS XMLを引き継ぐ、バージョンに依存しないプロジェクトを作成します。
  *
- * @param title - タイトル。省略時は空文字列。
- * @returns レイヤー配列とメタデータが空で、空のルートグループを持つモデル。
+ * テンプレートは {@link parseQgs} と同じ規則で読み取ります。既知の設定・レイヤー・
+ * ツリー・未知のXMLをすべて引き継ぎ、暗黙に初期化や削除を行いません。
+ * @param templateXml - 必須のテンプレートQGS文字列。ファイルの読み込みは呼び出し側で行います。
+ * @param title - 新しいタイトル。省略するとテンプレートのタイトルを維持します。
+ * 空文字列を指定するとタイトルを空にします。
+ * @returns テンプレート全体を内部スナップショットに保持する編集可能なモデル。
+ * @throws {@link QgsError} {@link parseQgs} と同じXML・プロジェクト・バージョン検証エラー。
  * @example
  * ```ts
- * const project = createProject("新しい地図");
+ * const project = createProject(templateXml, "新しい地図");
  * project.crs = { authId: "EPSG:4326" };
  * const xml = serializeQgs(project, { version: "4.2" });
  * ```
  */
-export function createProject(title = ""): QgsProject {
-  return {
-    title,
-    layers: [],
-    metadata: {},
-    layerTree: emptyTree(),
-  };
+export function createProject(templateXml: string, title?: string): QgsProject {
+  const project = parseQgs(templateXml);
+  if (title !== undefined) project.title = title;
+  return project;
 }

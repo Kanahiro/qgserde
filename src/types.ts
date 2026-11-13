@@ -78,12 +78,12 @@ export interface QgsProject {
   extent?: QgsReferencedRectangle;
   /** 初期表示の時計回りの回転角（度）。有限の数値を指定します。 */
   rotation?: number;
-  /** レイヤーの表示階層。新規プロジェクトでは空のルートグループを持ちます。 */
+  /** レイヤーの表示階層。テンプレートに含まれる場合はその階層を引き継ぎます。 */
   layerTree?: QgsLayerTreeGroup;
   /** レイヤーIDによる描画順。配列から削除されたレイヤーは出力時に除外します。 */
   layerOrder?: string[];
   /** @internal Original document, used only to preserve unmodeled settings. */
-  readonly preservedXml?: XmlDocument;
+  readonly preservedXml: XmlDocument;
 }
 
 /**

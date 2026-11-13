@@ -6,7 +6,11 @@ import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
 
 export function writeQgisFixtures(directory: string, version: string): void {
   mkdirSync(directory, { recursive: true });
-  const project = createProject("検証 & 地図");
+  const templateXml = readFileSync(
+    new URL("../../examples/template.qgs", import.meta.url),
+    "utf8",
+  );
+  const project = createProject(templateXml, "検証 & 地図");
   project.layers.push({
     id: "cities_layer_001",
     name: "都市",
@@ -50,7 +54,7 @@ export function writeQgisFixtures(directory: string, version: string): void {
     serializeQgs(edited, { version }),
   );
 
-  const gallery = serializeQgs(createTileGallery(), { version });
+  const gallery = serializeQgs(createTileGallery(templateXml), { version });
   writeFileSync(join(directory, "gallery.qgs"), gallery);
   writeFileSync(
     join(directory, "gallery-roundtrip.qgs"),
