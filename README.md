@@ -136,13 +136,27 @@ pnpm build
 
 `typecheck`には、不正なプロパティ・値の型や、unionの絞り込みを検証するコンパイル時テストも含みます。QGIS 3/4の実XMLを使って、未変更時の保持、型付きプロパティの編集、JSON保存後の再出力を検証します。GitHub ActionsでもNode.js 24/26でチェックします。
 
+CIではQGIS公式Dockerイメージの3.44・4.0・4.2でも読み込みテストを実行します。それぞれのバージョン向けXMLをテスト時にqgserdeから生成し、新規作成・実XMLの編集・27タイルレイヤーを含むプロジェクト・その再出力の4ファイルを検証します。タイトル・CRS・表示範囲・回転に加え、全レイヤーとプロバイダーの有効性、ベクタータイルのシンボルとズーム範囲、ツリー参照の解決、OSMのみの初期表示を確認します。Dockerコンテナは通信を無効にして実行し、外部タイルサービスの応答には依存しません。
+
+CIと同じ検証をローカルで実行する例:
+
+```sh
+node test/qgis/fixtures.ts /tmp/qgserde-projects 3.44
+docker run --rm --network none -e QT_QPA_PLATFORM=offscreen \
+  -v "$PWD:/workspace:ro" -v /tmp/qgserde-projects:/projects:ro \
+  -w /workspace --entrypoint python3 qgis/qgis:3.44 \
+  test/qgis/verify-projects.py /projects 3.44
+```
+
+4.0は`qgis/qgis:4.0-trixie`、4.2は`qgis/qgis:4.2-trixie`を使用し、生成時と検証時のバージョン指定も合わせます。
+
 PyQGISが利用できる環境では、実際の読み込みも検証できます。
 
 ```sh
-QGIS_PYTHON=/path/to/python-with-qgis pnpm test
+QGIS_PYTHON=/path/to/python-with-qgis QGIS_VERSION=4.2 pnpm test
 ```
 
-必要に応じて`PYTHONPATH`も設定してください。未指定の場合は結合テストのみスキップします。QGIS 4.2で、3.40/4.2形式の新規プロジェクトと編集後の4.2プロジェクトについて、タイトル・プロジェクトCRS・表示範囲とそのCRS・回転・レイヤー名とCRS・ツリーを検証しています。QGIS 3本体での実行は別途必要です。
+必要に応じて`PYTHONPATH`も設定してください。`QGIS_PYTHON`が未指定の場合は結合テストのみスキップします。`QGIS_VERSION`の既定値は4.2です。CIとローカルで同じ生成処理とPythonの検証処理を使用し、実行中のQGISが指定バージョンと異なる場合も失敗します。ここでは読み込みを検証し、タイルの取得や描画は行いません。
 
 ## 参照
 

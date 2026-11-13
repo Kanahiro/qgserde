@@ -1,5 +1,5 @@
 name: CI
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
@@ -9,11 +9,11 @@ jobs:
       matrix:
         node: [24, 26]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
@@ -22,3 +22,43 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+  qgis:
+    name: QGIS ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: "3.44"
+            image: qgis/qgis:3.44
+          - version: "4.0"
+            image: qgis/qgis:4.0-trixie
+          - version: "4.2"
+            image: qgis/qgis:4.2-trixie
+    env:
+      QGIS_VERSION: ${{ matrix.version }}
+      QGIS_IMAGE: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate QGIS projects with qgserde
+        run: node test/qgis/fixtures.ts "$RUNNER_TEMP/qgis-projects" "$QGIS_VERSION"
+      - name: Pull QGIS
+        run: docker pull "$QGIS_IMAGE"
+      - name: Read projects in QGIS
+        run: |
+          docker run --rm --network none \
+            --env QT_QPA_PLATFORM=offscreen \
+            --volume "$GITHUB_WORKSPACE:/workspace:ro" \
+            --volume "$RUNNER_TEMP/qgis-projects:/projects:ro" \
+            --workdir /workspace \
+            --entrypoint python3 \
+            "$QGIS_IMAGE" test/qgis/verify-projects.py /projects "$QGIS_VERSION"

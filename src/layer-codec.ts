@@ -292,6 +292,59 @@ export function readLayer(element: XmlElement): QgsMapLayer {
   }
 }
 
+function defaultTileRenderer(): XmlElement {
+  const styles = [
+    {
+      name: "Polygons",
+      geometry: "2",
+      symbol: "fill",
+      symbolLayer: "SimpleFill",
+    },
+    { name: "Lines", geometry: "1", symbol: "line", symbolLayer: "SimpleLine" },
+    {
+      name: "Points",
+      geometry: "0",
+      symbol: "marker",
+      symbolLayer: "SimpleMarker",
+    },
+  ].map((style) =>
+    createElement(
+      "style",
+      {
+        name: style.name,
+        geometry: style.geometry,
+        layer: "",
+        enabled: "1",
+        "min-zoom": "-1",
+        "max-zoom": "-1",
+      },
+      [
+        createElement("symbols", {}, [
+          createElement(
+            "symbol",
+            {
+              name: "0",
+              type: style.symbol,
+              alpha: "1",
+            },
+            [
+              createElement("layer", {
+                class: style.symbolLayer,
+                enabled: "1",
+                locked: "0",
+                pass: "0",
+              }),
+            ],
+          ),
+        ]),
+      ],
+    ),
+  );
+  return createElement("renderer", { type: "basic" }, [
+    createElement("styles", {}, styles),
+  ]);
+}
+
 export function writeLayer(layer: QgsMapLayer): XmlElement {
   if (typeof layer.id !== "string" || !layer.id.trim())
     throw new QgsError("INVALID_EDIT", "A layer ID must not be empty");
@@ -347,5 +400,9 @@ export function writeLayer(layer: QgsMapLayer): XmlElement {
     writeVectorRenderer(element, layer.renderer);
   } else if (layer.type === "raster")
     writeRasterRenderer(element, layer.renderer);
+  // QGIS 3.x rejects vector tile layer XML without a renderer, even with a valid URI.
+  // styleUrl is connection metadata; it does not replace native renderer XML.
+  else if (layer.type === "vector-tile" && !findChild(element, "renderer"))
+    element.children.push(defaultTileRenderer());
   return element;
 }

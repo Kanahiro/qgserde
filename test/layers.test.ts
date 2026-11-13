@@ -174,3 +174,32 @@ test("field configurations, aliases and defaults have editable types", () => {
   assert.equal(updated.fields[1]!.editorWidgetType, "Range");
   assert.match(output, /<config><Option type="Map"\/><\/config>/u);
 });
+
+test("fresh vector tiles include native symbology required by QGIS 3 and preserve existing styles and multi-source URIs", () => {
+  const project = createProject("3.44");
+  const source =
+    "type=xyz&url=https://tiles.example.com/{z}/{x}/{y}.pbf&urlName=base&url_2=https://tiles.example.com/overlay/{z}/{x}/{y}.pbf&urlName_2=overlay&styleUrl=https%3A%2F%2Ftiles.example.com%2Fstyle.json";
+  project.layers.push({
+    id: "tiles",
+    name: "Tiles",
+    type: "vector-tile",
+    provider: "xyzvectortiles",
+    source,
+  });
+  const output = serializeQgs(project);
+  const layer = findChild(
+    findChild(readXml(output).root, "projectlayers")!,
+    "maplayer",
+  )!;
+  const renderer = findChild(layer, "renderer")!;
+  assert.equal(renderer.attributes.type, "basic");
+  assert.equal(findChild(renderer, "styles")!.children.length, 3);
+  assert.equal(parseQgs(output).layers[0]!.source, source);
+  const custom = output.replace(
+    '<renderer type="basic">',
+    '<renderer type="basic" custom="keep">',
+  );
+  const parsed = parseQgs(custom);
+  assert.deepEqual(parseQgs(serializeQgs(parsed)), parsed);
+  assert.match(serializeQgs(parsed), /custom="keep"/u);
+});
