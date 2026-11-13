@@ -70,6 +70,7 @@ def main():
     try:
         for name, check in [
             ("generated.qgs", check_memory),
+            ("converted.qgs", check_memory),
             ("edited.qgs", check_memory),
             ("gallery.qgs", check_gallery),
             ("gallery-roundtrip.qgs", check_gallery),
@@ -85,7 +86,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 4 projects", flush=True)
+    print("QGIS verified 5 projects", flush=True)
 
 
 if __name__ == "__main__":

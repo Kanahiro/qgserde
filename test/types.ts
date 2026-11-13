@@ -4,6 +4,7 @@ import type {
   QgsProject,
   QgsVectorLayer,
 } from "../src/index.ts";
+import { createProject, serializeQgs } from "../src/index.ts";
 
 /** Compile-time assertions. This function is intentionally never executed. */
 export function checkPublicTypes(
@@ -12,6 +13,18 @@ export function checkPublicTypes(
 ): void {
   // @ts-expect-error The public model is not an arbitrary XML tree.
   project.root;
+  // @ts-expect-error Versions belong to serialization, not the domain model.
+  project.version;
+  // @ts-expect-error Creation does not take a target version.
+  createProject("4.2", "title");
+  // @ts-expect-error The target format must be explicit on every write.
+  serializeQgs(project);
+  // @ts-expect-error A target version is required.
+  serializeQgs(project, {});
+  // @ts-expect-error Format conversion is owned by the codec.
+  serializeQgs(project, { version: "4.2", migrate() {} });
+  // @ts-expect-error There is no version-label-only escape hatch.
+  serializeQgs(project, { version: "4.2", versionPolicy: "preserve" });
   // @ts-expect-error Titles must be strings.
   project.title = 10;
   // @ts-expect-error CRS uses explicit named fields.

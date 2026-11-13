@@ -55,9 +55,8 @@ export interface XmlDocument {
   after: XmlMisc[];
 }
 
-/** Typed values are authoritative. Snapshots retain unmodeled XML on round trips. */
+/** Version-independent domain values. Snapshots retain unmodeled XML on round trips. */
 export interface QgsProject {
-  version: string;
   title: string;
   layers: QgsMapLayer[];
   metadata: QgsProjectMetadata;
@@ -221,17 +220,6 @@ export interface QgisVersion {
 }
 
 export interface SerializeOptions {
-  /** Defaults to the source version. "3.40" is normalized to "3.40.0". */
-  version?: string;
-  /**
-   * strict requires a migration for numeric version changes.
-   * preserve changes only the version label, retaining all existing XML content.
-   * It does not promise compatibility with the target QGIS release.
-   */
-  versionPolicy?: "strict" | "preserve";
-  /** Mutates an isolated copy; errors leave the caller's project unchanged. */
-  migrate?: (
-    project: QgsProject,
-    versions: { from: string; to: string },
-  ) => void;
+  /** Target QGIS 3/4 format. Required on every write; "3.40" becomes "3.40.0". */
+  version: string;
 }

@@ -3,6 +3,8 @@ import type { QgisVersion } from "./types.ts";
 
 /** Accepts QGIS release names such as 3.40.0-Bratislava as well as 3.40. */
 export function parseQgisVersion(value: string): QgisVersion {
+  if (typeof value !== "string")
+    throw new QgsError("INVALID_VERSION", "A QGIS version string is required");
   const match =
     /^(0|[1-9]\d*)\.(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:-([^\p{Cc}<>"'&]+))?$/u.exec(
       value,
@@ -19,12 +21,12 @@ export function parseQgisVersion(value: string): QgisVersion {
   return { major, minor, patch, ...(match[4] ? { suffix: match[4] } : {}) };
 }
 
-export function versionNumber(value: string): string {
-  const { major, minor, patch } = parseQgisVersion(value);
-  return `${major}.${minor}.${patch}`;
-}
-
 export function normalizeVersion(value: string): string {
-  const { suffix } = parseQgisVersion(value);
-  return `${versionNumber(value)}${suffix ? `-${suffix}` : ""}`;
+  const { major, minor, patch, suffix } = parseQgisVersion(value);
+  if (major !== 3 && major !== 4)
+    throw new QgsError(
+      "INVALID_VERSION",
+      "Writing projects is supported for QGIS 3 and 4",
+    );
+  return `${major}.${minor}.${patch}${suffix ? `-${suffix}` : ""}`;
 }

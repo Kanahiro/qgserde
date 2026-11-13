@@ -21,25 +21,31 @@ const definition: QgsVectorLayer = {
 
 test("unknown field records, custom order payloads and embedded references survive untouched", () => {
   const xml =
-    '<qgis version="4.2"><layer-tree-group><custom-order><item plugin="keep"><![CDATA[v]]></item></custom-order><layer-tree-layer id="v"/><layer-tree-group><layer-tree-layer id="external" source="external.qgs"/></layer-tree-group></layer-tree-group><projectlayers><maplayer type="vector"><id>v</id><aliases><alias field="older" name="keep"/></aliases><defaults><default field="older" expression="001" applyOnUpdate="0"/></defaults></maplayer><maplayer embedded="1" project="other.qgs" id="embedded"/></projectlayers><layerorder><layer id="v" plugin="keep"/></layerorder></qgis>';
+    '<qgis version="4.2.0"><layer-tree-group><custom-order><item plugin="keep"><![CDATA[v]]></item></custom-order><layer-tree-layer id="v"/><layer-tree-group><layer-tree-layer id="external" source="external.qgs"/></layer-tree-group></layer-tree-group><projectlayers><maplayer type="vector"><id>v</id><aliases><alias field="older" name="keep"/></aliases><defaults><default field="older" expression="001" applyOnUpdate="0"/></defaults></maplayer><maplayer embedded="1" project="other.qgs" id="embedded"/></projectlayers><layerorder><layer id="v" plugin="keep"/></layerorder></qgis>';
   const project = parseQgs(xml);
   assert.equal(project.layers[1]!.id, "embedded");
-  assert.deepEqual(readXml(serializeQgs(project)), readXml(xml));
+  assert.deepEqual(
+    readXml(serializeQgs(project, { version: "4.2" })),
+    readXml(xml),
+  );
 });
 
 test("retains the original alias order when it differs from field configuration order", () => {
   const xml =
-    '<qgis version="4.2"><projectlayers><maplayer type="vector"><id>v</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="external" name="keep"/><alias field="b" name="B"/><alias field="a" name="A"/></aliases></maplayer></projectlayers></qgis>';
-  assert.deepEqual(readXml(serializeQgs(parseQgs(xml))), readXml(xml));
+    '<qgis version="4.2.0"><projectlayers><maplayer type="vector"><id>v</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="external" name="keep"/><alias field="b" name="B"/><alias field="a" name="A"/></aliases></maplayer></projectlayers></qgis>';
+  assert.deepEqual(
+    readXml(serializeQgs(parseQgs(xml), { version: "4.2" })),
+    readXml(xml),
+  );
 });
 
 test("pushes plain typed layers and builds their XML and tree references", () => {
-  const project = createProject("4.2");
+  const project = createProject();
   project.layers.push(structuredClone(definition));
   project.layerOrder = [];
   project.layerTree!.customOrder = { enabled: true, layerIds: [] };
   const before = JSON.stringify(project);
-  const result = parseQgs(serializeQgs(project));
+  const result = parseQgs(serializeQgs(project, { version: "4.2" }));
   assert.equal(result.layers[0]!.id, "cities_001");
   assert.equal(result.layers[0]!.name, "都市");
   assert.deepEqual(result.layerOrder, ["cities_001"]);
@@ -77,7 +83,7 @@ test("typed edits synchronize every nested tree reference and keep renderer symb
   layer.opacity = 0.5;
   layer.labelsEnabled = true;
   layer.renderer!.symbolLevels = true;
-  const output = serializeQgs(project);
+  const output = serializeQgs(project, { version: "4.2" });
   const root = readXml(output).root;
   const tree = findChild(root, "layer-tree-group")!;
   const nested = findChild(tree, "layer-tree-group")!;
@@ -110,7 +116,7 @@ test("renaming and removing typed layers synchronizes tree and order IDs", () =>
   );
   project.layers[0]!.id = "renamed";
   project.layers.splice(1, 1);
-  const result = parseQgs(serializeQgs(project));
+  const result = parseQgs(serializeQgs(project, { version: "4.2" }));
   assert.deepEqual(
     result.layers.map((layer) => layer.id),
     ["renamed"],
@@ -123,20 +129,26 @@ test("renaming and removing typed layers synchronizes tree and order IDs", () =>
 });
 
 test("rejects duplicate IDs, empty IDs and cyclic typed trees", () => {
-  const project = createProject("4.2");
+  const project = createProject();
   project.layers.push(structuredClone(definition), structuredClone(definition));
-  assert.throws(() => serializeQgs(project), /Duplicate layer ID/u);
+  assert.throws(
+    () => serializeQgs(project, { version: "4.2" }),
+    /Duplicate layer ID/u,
+  );
   project.layers.pop();
   project.layers[0]!.id = "";
-  assert.throws(() => serializeQgs(project), /must not be empty/u);
+  assert.throws(
+    () => serializeQgs(project, { version: "4.2" }),
+    /must not be empty/u,
+  );
   project.layers = [];
   project.layerTree!.children.push(project.layerTree!);
-  assert.throws(() => serializeQgs(project), /Cyclic/u);
+  assert.throws(() => serializeQgs(project, { version: "4.2" }), /Cyclic/u);
 });
 
 test("raster layers have typed band settings; future types have an explicit fallback", () => {
   const project = parseQgs(
-    '<qgis version="4.2"><projectlayers><maplayer type="raster"><id>r</id><layername>raster</layername><provider>gdal</provider><datasource>file.tif</datasource><pipe><rasterrenderer type="multibandcolor" opacity="0.75" redBand="1" greenBand="2" blueBand="3"><custom value="keep"/></rasterrenderer></pipe></maplayer><maplayer type="future"><id>u</id><plugin-data/></maplayer></projectlayers></qgis>',
+    '<qgis version="4.2.0"><projectlayers><maplayer type="raster"><id>r</id><layername>raster</layername><provider>gdal</provider><datasource>file.tif</datasource><pipe><rasterrenderer type="multibandcolor" opacity="0.75" redBand="1" greenBand="2" blueBand="3"><custom value="keep"/></rasterrenderer></pipe></maplayer><maplayer type="future"><id>u</id><plugin-data/></maplayer></projectlayers></qgis>',
   );
   const layer = project.layers[0]!;
   assert.equal(layer.type, "raster");
@@ -148,7 +160,7 @@ test("raster layers have typed band settings; future types have an explicit fall
   const unknown = project.layers[1]!;
   assert.equal(unknown.type, "unknown");
   if (unknown.type === "unknown") assert.equal(unknown.xmlType, "future");
-  const output = serializeQgs(project);
+  const output = serializeQgs(project, { version: "4.2" });
   const updated = parseQgs(output).layers[0]!;
   assert.equal(updated.type === "raster" && updated.renderer!.redBand, 3);
   assert.match(output, /<custom value="keep"\/>/u);
@@ -166,7 +178,7 @@ test("field configurations, aliases and defaults have editable types", () => {
   layer.fields[0]!.alias = "都市名";
   layer.fields[0]!.defaultExpression = "'B'";
   layer.fields.push({ name: "population", editorWidgetType: "Range" });
-  const output = serializeQgs(project);
+  const output = serializeQgs(project, { version: "4.2" });
   const updated = parseQgs(output).layers[0]!;
   if (updated.type !== "vector") throw new Error("Expected vector");
   assert.equal(updated.fields[0]!.alias, "都市名");
@@ -176,7 +188,7 @@ test("field configurations, aliases and defaults have editable types", () => {
 });
 
 test("fresh vector tiles include native symbology required by QGIS 3 and preserve existing styles and multi-source URIs", () => {
-  const project = createProject("3.44");
+  const project = createProject();
   const source =
     "type=xyz&url=https://tiles.example.com/{z}/{x}/{y}.pbf&urlName=base&url_2=https://tiles.example.com/overlay/{z}/{x}/{y}.pbf&urlName_2=overlay&styleUrl=https%3A%2F%2Ftiles.example.com%2Fstyle.json";
   project.layers.push({
@@ -186,7 +198,7 @@ test("fresh vector tiles include native symbology required by QGIS 3 and preserv
     provider: "xyzvectortiles",
     source,
   });
-  const output = serializeQgs(project);
+  const output = serializeQgs(project, { version: "3.44" });
   const layer = findChild(
     findChild(readXml(output).root, "projectlayers")!,
     "maplayer",
@@ -200,6 +212,6 @@ test("fresh vector tiles include native symbology required by QGIS 3 and preserv
     '<renderer type="basic" custom="keep">',
   );
   const parsed = parseQgs(custom);
-  assert.deepEqual(parseQgs(serializeQgs(parsed)), parsed);
-  assert.match(serializeQgs(parsed), /custom="keep"/u);
+  assert.deepEqual(parseQgs(serializeQgs(parsed, { version: "3.44" })), parsed);
+  assert.match(serializeQgs(parsed, { version: "3.44" }), /custom="keep"/u);
 });

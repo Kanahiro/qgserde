@@ -2,7 +2,6 @@ export type QgsErrorCode =
   | "INVALID_XML"
   | "INVALID_PROJECT"
   | "INVALID_VERSION"
-  | "MIGRATION_REQUIRED"
   | "INVALID_EDIT";
 
 export class QgsError extends Error {

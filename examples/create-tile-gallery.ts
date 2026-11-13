@@ -281,8 +281,8 @@ export function createTileTree(): QgsLayerTreeGroup {
   return root;
 }
 
-export function createTileGallery(version = "4.2"): QgsProject {
-  const project = createProject(version, "公開タイル比較 — Raster × Vector");
+export function createTileGallery(): QgsProject {
+  const project = createProject("公開タイル比較 — Raster × Vector");
   project.layers = tileSources.map((tile) => {
     const parameters = new URLSearchParams({
       type: "xyz",
@@ -331,9 +331,9 @@ export async function writeTileGallery(
   destination: string,
   version = "4.2",
 ): Promise<void> {
-  const project = createTileGallery(version);
+  const project = createTileGallery();
   await mkdir(dirname(destination), { recursive: true });
-  await writeFile(destination, serializeQgs(project), "utf8");
+  await writeFile(destination, serializeQgs(project, { version }), "utf8");
   console.log(
     `Wrote ${destination} (${project.layers.length} tile layers; only osm_standard visible)`,
   );

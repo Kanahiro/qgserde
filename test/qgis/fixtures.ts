@@ -6,7 +6,7 @@ import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
 
 export function writeQgisFixtures(directory: string, version: string): void {
   mkdirSync(directory, { recursive: true });
-  const project = createProject(version, "検証 & 地図");
+  const project = createProject("検証 & 地図");
   project.layers.push({
     id: "cities_layer_001",
     name: "都市",
@@ -25,7 +25,15 @@ export function writeQgisFixtures(directory: string, version: string): void {
     crs: { authId: "EPSG:4326" },
   };
   project.rotation = 15;
-  writeFileSync(join(directory, "generated.qgs"), serializeQgs(project));
+  writeFileSync(
+    join(directory, "generated.qgs"),
+    serializeQgs(project, { version }),
+  );
+  const legacy = parseQgs(serializeQgs(project, { version: "3.8" }));
+  writeFileSync(
+    join(directory, "converted.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(legacy)), { version }),
+  );
 
   // Keep exercising edits to real QGIS XML as well as freshly created models.
   const edited = parseQgs(
@@ -39,14 +47,14 @@ export function writeQgisFixtures(directory: string, version: string): void {
   edited.rotation = project.rotation;
   writeFileSync(
     join(directory, "edited.qgs"),
-    serializeQgs(edited, { version, versionPolicy: "preserve" }),
+    serializeQgs(edited, { version }),
   );
 
-  const gallery = serializeQgs(createTileGallery(version));
+  const gallery = serializeQgs(createTileGallery(), { version });
   writeFileSync(join(directory, "gallery.qgs"), gallery);
   writeFileSync(
     join(directory, "gallery-roundtrip.qgs"),
-    serializeQgs(parseQgs(gallery)),
+    serializeQgs(parseQgs(gallery), { version }),
   );
 }
 

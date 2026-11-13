@@ -62,7 +62,7 @@ test("tile gallery contains only the advertised raster/vector tiles and has a si
   for (const id of ids) assert.ok(references.includes(id));
   assert.equal(project.crs?.authId, "EPSG:3857");
   assert.ok(project.extent);
-  const roundTrip = parseQgs(serializeQgs(project));
+  const roundTrip = parseQgs(serializeQgs(project, { version: "4.2" }));
   assert.deepEqual(roundTrip, project);
 });
 

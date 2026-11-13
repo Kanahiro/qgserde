@@ -1,17 +1,13 @@
 import {
   boolean,
   ensure,
-  number,
   putAttribute,
-  putNumber,
   putText,
   readCrs,
-  readExtent,
   remove,
   replaceChildren,
   text,
   writeCrs,
-  writeExtent,
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import { readLayer, readLayerId, writeLayer } from "./layer-codec.ts";
@@ -23,11 +19,8 @@ import type {
   SerializeOptions,
   XmlDocument,
 } from "./types.ts";
-import {
-  normalizeVersion,
-  parseQgisVersion,
-  versionNumber,
-} from "./version.ts";
+import { normalizeVersion, parseQgisVersion } from "./version.ts";
+import { readView, writeView } from "./view-codec.ts";
 import {
   createElement,
   findChild,
@@ -77,11 +70,11 @@ export function parseQgs(xml: string): QgsProject {
   parseQgisVersion(version);
   const container = findChild(root, "projectlayers");
   const project: QgsProject = {
-    version,
     title: readTitle(document),
     metadata: {},
     layers: container ? findChildren(container, "maplayer").map(readLayer) : [],
     preservedXml: document,
+    ...readView(root),
   };
   const crs = readCrs(root, "projectCrs");
   const verticalCrs = readCrs(root, "verticalCrs");
@@ -89,22 +82,6 @@ export function parseQgs(xml: string): QgsProject {
   if (verticalCrs) project.verticalCrs = verticalCrs;
   const homePath = findChild(root, "homePath")?.attributes.path;
   if (homePath !== undefined) project.homePath = homePath;
-  const view = findChild(root, "ProjectViewSettings");
-  const canvas = findChild(root, "mapcanvas");
-  const extent =
-    (view && readExtent(view, "DefaultViewExtent")) ||
-    (canvas && readExtent(canvas));
-  const rotation = number(
-    view?.attributes.rotation ?? (canvas && text(canvas, "rotation")),
-  );
-  if (extent) {
-    project.extent = extent;
-    const extentCrs =
-      (view && readCrs(view, "DefaultViewExtent")) ||
-      (canvas && readCrs(canvas, "destinationsrs"));
-    if (extentCrs) project.extent.crs = extentCrs;
-  }
-  if (rotation !== undefined) project.rotation = rotation;
   const tree = findChild(root, "layer-tree-group");
   if (tree) {
     const parsed = readTree(tree);
@@ -126,7 +103,7 @@ export function parseQgs(xml: string): QgsProject {
   return project;
 }
 
-function encodeProject(project: QgsProject): XmlDocument {
+function encodeProject(project: QgsProject, version: string): XmlDocument {
   const document = structuredClone(
     project.preservedXml ??
       ({
@@ -147,7 +124,7 @@ function encodeProject(project: QgsProject): XmlDocument {
       "INVALID_EDIT",
       "The preserved document must have a <qgis> root",
     );
-  putAttribute(root, "version", project.version);
+  putAttribute(root, "version", version);
   if (typeof project.title !== "string")
     throw new QgsError("INVALID_EDIT", "Project title must be a string");
   // Avoid changing redundant legacy values on untouched input. A title edit owns all
@@ -175,50 +152,7 @@ function encodeProject(project: QgsProject): XmlDocument {
   if (project.homePath !== undefined)
     putAttribute(ensure(root, "homePath"), "path", project.homePath);
   else remove(root, "homePath");
-  const view = findChild(root, "ProjectViewSettings");
-  const canvas = findChild(root, "mapcanvas");
-  // Keep each representation in sync if both old and new view settings exist.
-  const targetVersion = parseQgisVersion(project.version);
-  const usesModernView =
-    targetVersion.major >= 4 ||
-    (targetVersion.major === 3 && targetVersion.minor >= 10);
-  if (view) writeExtent(view, project.extent, "DefaultViewExtent");
-  if (canvas) writeExtent(canvas, project.extent);
-  if (!view && !canvas && project.extent) {
-    if (usesModernView)
-      writeExtent(
-        ensure(root, "ProjectViewSettings"),
-        project.extent,
-        "DefaultViewExtent",
-      );
-    else writeExtent(ensure(root, "mapcanvas"), project.extent);
-  }
-  const viewExtent = findChild(root, "ProjectViewSettings");
-  if (viewExtent && project.extent) {
-    const sourceView =
-      project.preservedXml &&
-      findChild(project.preservedXml.root, "ProjectViewSettings");
-    const hadExtent = sourceView && findChild(sourceView, "DefaultViewExtent");
-    writeCrs(
-      viewExtent,
-      "DefaultViewExtent",
-      project.extent.crs ?? (hadExtent ? undefined : project.crs),
-    );
-  }
-  const oldCanvas = findChild(root, "mapcanvas");
-  if (oldCanvas && project.extent)
-    writeCrs(oldCanvas, "destinationsrs", project.extent.crs ?? project.crs);
-  if (view) putAttribute(view, "rotation", project.rotation);
-  if (canvas) putNumber(canvas, "rotation", project.rotation);
-  if (!view && !canvas && project.rotation !== undefined) {
-    if (usesModernView)
-      putAttribute(
-        ensure(root, "ProjectViewSettings"),
-        "rotation",
-        project.rotation,
-      );
-    else putNumber(ensure(root, "mapcanvas"), "rotation", project.rotation);
-  }
+  writeView(root, project, parseQgisVersion(version));
   const oldContainer = findChild(root, "projectlayers");
   const oldIds = new Set(
     oldContainer ? findChildren(oldContainer, "maplayer").map(readLayerId) : [],
@@ -292,25 +226,13 @@ function encodeProject(project: QgsProject): XmlDocument {
 /** Serialize typed properties without mutating the model or its XML snapshots. */
 export function serializeQgs(
   project: QgsProject,
-  options: SerializeOptions = {},
+  options: SerializeOptions,
 ): string {
-  const from = project.version;
-  parseQgisVersion(from);
-  const to =
-    options.version === undefined ? from : normalizeVersion(options.version);
-  const changed = versionNumber(from) !== versionNumber(to);
-  if (changed && !options.migrate && options.versionPolicy !== "preserve")
-    throw new QgsError(
-      "MIGRATION_REQUIRED",
-      `QGIS ${from} → ${to} requires a migrate callback, or versionPolicy: "preserve" to change only the version label`,
-    );
+  const version = normalizeVersion(options?.version);
   try {
-    const copy = structuredClone(project);
-    if (changed && options.migrate) options.migrate(copy, { from, to });
-    copy.version = to;
-    return writeXml(encodeProject(copy));
+    return writeXml(encodeProject(project, version));
   } catch (error) {
-    if (error instanceof QgsError || (changed && options.migrate)) throw error;
+    if (error instanceof QgsError) throw error;
     throw new QgsError(
       "INVALID_EDIT",
       `Invalid project edit: ${error instanceof Error ? error.message : String(error)}`,
@@ -329,16 +251,8 @@ function emptyTree(): QgsLayerTreeGroup {
   };
 }
 
-export function createProject(version: string, title = ""): QgsProject {
-  const normalized = normalizeVersion(version);
-  const { major } = parseQgisVersion(normalized);
-  if (major !== 3 && major !== 4)
-    throw new QgsError(
-      "INVALID_VERSION",
-      "Creating projects is supported for QGIS 3 and 4",
-    );
+export function createProject(title = ""): QgsProject {
   return {
-    version: normalized,
     title,
     layers: [],
     metadata: {},
