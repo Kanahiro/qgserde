@@ -287,9 +287,8 @@ export function createTileTree(): QgsLayerTreeGroup {
   return root;
 }
 
-export function createTileGallery(templateXml: string): QgsProject {
+export function createTileGallery(): QgsProject {
   const project = createProject({
-    templateXml,
     title: "Tile gallery — raster and vector",
   });
   project.layers = tileSources.map((tile) => {

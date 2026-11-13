@@ -52,19 +52,15 @@ const xml = serializeQgs(project, { version: "4.2" });
 ```
 
 `createProject()` returns an empty project with an empty title, metadata object,
-layer array, and root tree group. Both options are optional:
+layer array, and root tree group. Set `title` in the options object to give it a
+name.
 
-| Option        | Behavior                                                                                        |
-| ------------- | ----------------------------------------------------------------------------------------------- |
-| `templateXml` | Read an existing QGS string and inherit its settings, layers, metadata, tree, and unknown data. |
-| `title`       | Set the title. Omit it to keep the template title, or pass `""` to clear it.                    |
+To start from an existing QGS file, use `parseQgs` and edit the resulting model:
 
 ```ts
-const project = createProject({ templateXml, title: "Regional map" });
+const project = parseQgs(qgsXml);
+project.title = "Regional map";
 ```
-
-A template follows the same validation rules as `parseQgs`. It is decoded into
-the model; its original XML is not retained as a backup.
 
 ## Work with the model
 

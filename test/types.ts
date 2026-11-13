@@ -18,13 +18,8 @@ export function checkPublicTypes(
   createProject();
   createProject({});
   createProject({ title: "title" });
-  createProject({ templateXml: '<qgis version="4.2"/>', title: "title" });
   // @ts-expect-error Creation accepts a single options object.
-  createProject('<qgis version="4.2"/>');
-  // @ts-expect-error Positional template/title arguments are no longer accepted.
-  createProject('<qgis version="4.2"/>', "title");
-  // @ts-expect-error The optional template must be an XML string.
-  createProject({ templateXml: 42 });
+  createProject("title");
   // @ts-expect-error The optional title must be a string.
   createProject({ title: 42 });
   const standalone: QgsProject = { title: "title", layers: [], metadata: {} };

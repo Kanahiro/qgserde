@@ -6,10 +6,6 @@ import { createTileGallery } from "./tile-gallery.ts";
 
 export function writeQgisFixtures(directory: string, version: string): void {
   mkdirSync(directory, { recursive: true });
-  const templateXml = readFileSync(
-    new URL("../fixtures/template.qgs", import.meta.url),
-    "utf8",
-  );
   const project = createProject({ title: "検証 & 地図" });
   project.layers.push({
     id: "cities_layer_001",
@@ -54,7 +50,7 @@ export function writeQgisFixtures(directory: string, version: string): void {
     serializeQgs(edited, { version }),
   );
 
-  const gallery = serializeQgs(createTileGallery(templateXml), { version });
+  const gallery = serializeQgs(createTileGallery(), { version });
   writeFileSync(join(directory, "gallery.qgs"), gallery);
   writeFileSync(
     join(directory, "gallery-roundtrip.qgs"),

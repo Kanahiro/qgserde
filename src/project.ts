@@ -276,18 +276,15 @@ function emptyTree(): QgsLayerTreeGroup {
 /**
  * Create a project independent of any QGIS output version.
  *
- * A template is read using {@link parseQgs} and supplies its settings, layers,
- * tree, and unknown data. Without one, the result is an empty typed model.
- * The original XML is not retained as a backup. File I/O belongs to the caller.
+ * Use {@link parseQgs} to read an existing QGS file.
  *
- * @param options - Optional template and title override. The object may also be omitted.
- * @returns An editable model. Without a template, it has empty layers, metadata, and a root tree group.
- * @throws {@link QgsError} Templates follow the validation rules of {@link parseQgs}.
- * Invalid options or a non-string title cause `INVALID_EDIT`.
+ * @param options - Initial settings. The object may be omitted.
+ * @returns An editable model with empty layers, metadata, and a root tree group.
+ * @throws {@link QgsError} `INVALID_EDIT` for invalid options or a non-string title.
  * @example
  * ```ts
  * const empty = createProject();
- * const project = createProject({ templateXml, title: "Regional map" });
+ * const project = createProject({ title: "Regional map" });
  * project.crs = { authId: "EPSG:4326" };
  * const xml = serializeQgs(project, { version: "4.2" });
  * ```
@@ -297,10 +294,10 @@ export function createProject(options: CreateProjectOptions = {}): QgsProject {
     throw new QgsError("INVALID_EDIT", "Project options must be an object");
   if (options.title !== undefined && typeof options.title !== "string")
     throw new QgsError("INVALID_EDIT", "Project title must be a string");
-  const project: QgsProject =
-    options.templateXml === undefined
-      ? { title: "", metadata: {}, layers: [], layerTree: emptyTree() }
-      : parseQgs(options.templateXml);
-  if (options.title !== undefined) project.title = options.title;
-  return project;
+  return {
+    title: options.title ?? "",
+    metadata: {},
+    layers: [],
+    layerTree: emptyTree(),
+  };
 }

@@ -80,7 +80,7 @@ export interface QgsProject {
   extent?: QgsReferencedRectangle;
   /** Default clockwise view rotation in degrees. Must be finite. */
   rotation?: number;
-  /** Layer tree. A project created from a template inherits its tree. */
+  /** Groups and layer references in display order. */
   layerTree?: QgsLayerTreeGroup;
   /** Drawing order as layer IDs. Removed project layers are excluded on serialization. */
   layerOrder?: string[];
@@ -351,9 +351,7 @@ export interface QgisVersion {
 
 /** Initial settings for {@link createProject}. All options are optional. */
 export interface CreateProjectOptions {
-  /** Template QGS string. Omit it to create an empty project. */
-  templateXml?: string;
-  /** Title override. Defaults to the template title, or an empty string without a template. */
+  /** Project title. Defaults to an empty string. */
   title?: string;
 }
 

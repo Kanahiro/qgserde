@@ -24,11 +24,6 @@ function canonicalDocument(xml: string) {
   return document;
 }
 
-const templateXml = readFileSync(
-  new URL("./fixtures/template.qgs", import.meta.url),
-  "utf8",
-);
-
 test("deserializes a domain model instead of an arbitrary XML root", () => {
   const project = parseQgs(
     '<qgis version="4.2.0" projectname="old"><title>legacy</title><projectMetadata><title>metadata</title><author>keep</author></projectMetadata></qgis>',
@@ -58,7 +53,6 @@ test("deserializes a domain model instead of an arbitrary XML root", () => {
 test("creates one version-independent model and writes QGIS 3/4 formats", () => {
   const project = createProject({ title: "札幌 & 地図" });
   assert.equal("version" in project, false);
-  assert.equal(createProject({ templateXml }).title, "");
   const before = JSON.stringify(project);
   for (const [version, normalized] of [
     ["3.28", "3.28.0"],
@@ -115,7 +109,7 @@ test("requires a qgis root and a valid source version", () => {
   );
 });
 
-test("accepts optional creation options and validates supplied templates", () => {
+test("creates empty projects with optional settings and validates their types", () => {
   for (const project of [
     createProject(),
     createProject({}),
@@ -132,59 +126,28 @@ test("accepts optional creation options and validates supplied templates", () =>
       () => Reflect.apply(createProject, undefined, [options]),
       (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
     );
-  for (const xml of ["", "a title"])
+  assert.equal(createProject({ title: "" }).title, "");
+  for (const title of [42, null, false])
     assert.throws(
-      () => createProject({ templateXml: xml }),
-      (error) => error instanceof QgsError && error.code === "INVALID_XML",
+      () => Reflect.apply(createProject, undefined, [{ title }]),
+      (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
     );
-  for (const xml of ['<other version="4.2"/>', "<qgis/>"])
-    assert.throws(
-      () => createProject({ templateXml: xml }),
-      (error) => error instanceof QgsError && error.code === "INVALID_PROJECT",
-    );
-  assert.throws(
-    () => createProject({ templateXml: '<qgis version="unknown"/>' }),
-    (error) => error instanceof QgsError && error.code === "INVALID_VERSION",
-  );
 });
 
-for (const fixture of ["qgis3", "qgis4"]) {
-  test(`inherits all known and unknown settings from a real ${fixture} template`, () => {
-    const xml = readFileSync(
-      new URL(`./fixtures/${fixture}.qgs`, import.meta.url),
-      "utf8",
-    );
-    const project = createProject({ templateXml: xml });
-    assert.deepEqual(project, parseQgs(xml));
-    const version = readXml(xml).root.attributes.version!;
-    assert.deepEqual(
-      canonicalDocument(serializeQgs(project, { version })),
-      canonicalDocument(xml),
-    );
-    assert.equal("preservedXml" in project, false);
-    assert.equal("version" in project, false);
-  });
-}
-
-test("only overrides the template title when supplied and retains unknown XML across outputs", () => {
+test("title edits retain unknown XML across output versions", () => {
   const xml = readFileSync(
     new URL("./fixtures/qgis4.qgs", import.meta.url),
     "utf8",
   )
-    .replace(
-      "<qgis ",
-      '<qgis xmlns:plugin="urn:template" plugin:setting="0001" ',
-    )
+    .replace("<qgis ", '<qgis xmlns:plugin="urn:plugin" plugin:setting="0001" ')
     .replace(
       "</qgis>",
-      '<!--template--><?plugin keep?><plugin:config flag="false"><![CDATA[unknown < value]]><item key="007"/></plugin:config></qgis>',
+      '<!--keep--><?plugin keep?><plugin:config flag="false"><![CDATA[unknown < value]]><item key="007"/></plugin:config></qgis>',
     );
   const source = parseQgs(xml);
   for (const title of [undefined, "新しい地図", ""]) {
-    const project = createProject({
-      templateXml: xml,
-      ...(title === undefined ? {} : { title }),
-    });
+    const project = parseQgs(xml);
+    if (title !== undefined) project.title = title;
     assert.deepEqual(project, { ...source, title: title ?? source.title });
     const before = JSON.stringify(project);
     for (const version of ["3.44", "4.2"]) {
@@ -200,7 +163,7 @@ test("only overrides the template title when supplied and retains unknown XML ac
         findChild(root, "projectlayers"),
         findChild(readXml(xml).root, "projectlayers"),
       );
-      assert.match(output, /<!--template--><\?plugin keep\?>/u);
+      assert.match(output, /<!--keep--><\?plugin keep\?>/u);
     }
     assert.equal(JSON.stringify(project), before);
     assert.deepEqual(project.extensions, source.extensions);
@@ -259,7 +222,7 @@ test("chooses extent and rotation storage independently for the target version",
 });
 
 test("reuses parsed and JSON-restored models across old and new formats without mutating them", () => {
-  const original = createProject({ templateXml, title: "independent" });
+  const original = createProject({ title: "independent" });
   original.crs = { authId: "EPSG:4326" };
   original.extent = {
     xmin: 1,

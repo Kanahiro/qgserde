@@ -33,7 +33,7 @@ const xml = serializeQgs(project, { version: "4.2" });
 
 Input and output are strings. Your application reads and writes the files.
 
-To start a project from scratch or use an existing QGS file as a template:
+To start a new project:
 
 ```ts
 import { createProject, serializeQgs } from "qgserde";
@@ -50,20 +50,19 @@ project.layers.push({
   fields: [],
 });
 
-const fromTemplate = createProject({ templateXml, title: "Regional map" });
 const qgis3Xml = serializeQgs(project, { version: "3.44" });
 const qgis4Xml = serializeQgs(project, { version: "4.2" });
 ```
 
-`createProject()` also works without arguments. A template supplies its layers,
-metadata, tree, and settings; omitting `title` keeps its title.
+`createProject()` also works without arguments and defaults to an empty title.
+Use `parseQgs(xml)` to load an existing project, then edit its properties.
 
 ## API
 
 | Export                               | Purpose                                                               |
 | ------------------------------------ | --------------------------------------------------------------------- |
 | `parseQgs(xml)`                      | Read QGS XML into a `QgsProject`.                                     |
-| `createProject(options?)`            | Create an empty project or read a template.                           |
+| `createProject(options?)`            | Create an empty project with an optional title.                       |
 | `serializeQgs(project, { version })` | Write a model for a QGIS 3 or 4 version.                              |
 | `parseQgisVersion(value)`            | Split a QGIS version into numeric parts and an optional release name. |
 | `QgsError`                           | Identify failures by their `code`.                                    |
