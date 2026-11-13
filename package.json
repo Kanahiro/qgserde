@@ -1,0 +1,39 @@
+{
+  "name": "qgserde",
+  "version": "0.1.0",
+  "description": "Editable, information-preserving QGIS project XML for TypeScript",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "check": "biome check .",
+    "format": "biome check --write .",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "saxes": "6.0.0",
+    "xmlchars": "2.2.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.5",
+    "@types/node": "26.6.6",
+    "typescript": "7.0.2"
+  }
+}
