@@ -1,13 +1,9 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   createProject,
   type QgsLayerTreeGroup,
   type QgsLayerTreeLayer,
   type QgsProject,
-  serializeQgs,
-} from "../src/index.ts";
+} from "../../src/index.ts";
 
 interface TileSource {
   id: string;
@@ -317,7 +313,7 @@ export function createTileGallery(templateXml: string): QgsProject {
       crs: { authId: "EPSG:3857" },
     };
   });
-  project.metadata.author = "qgserde example";
+  project.metadata.author = "qgserde test fixture";
   project.metadata.abstract = [
     "qgserde tile gallery. Only OpenStreetMap Standard is visible on load.",
     ...new Set(tileSources.map((tile) => tile.attribution)),
@@ -338,32 +334,4 @@ export function createTileGallery(templateXml: string): QgsProject {
   project.layerTree = createTileTree();
   project.layerOrder = tileSources.map((tile) => tile.id);
   return project;
-}
-
-export async function writeTileGallery(
-  destination: string,
-  version = "4.2",
-): Promise<void> {
-  const templateXml = await readFile(
-    new URL("./template.qgs", import.meta.url),
-    "utf8",
-  );
-  const project = createTileGallery(templateXml);
-  await mkdir(dirname(destination), { recursive: true });
-  await writeFile(destination, serializeQgs(project, { version }), "utf8");
-  console.log(
-    `Wrote ${destination} (${project.layers.length} tile layers; only osm_standard visible)`,
-  );
-}
-
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  await writeTileGallery(
-    fileURLToPath(new URL("./tile-gallery.qgs", import.meta.url)),
-  );
-  for (const version of ["3.44", "4.0", "4.2"]) {
-    await writeTileGallery(
-      fileURLToPath(new URL(`./tile-gallery-${version}.qgs`, import.meta.url)),
-      version,
-    );
-  }
 }

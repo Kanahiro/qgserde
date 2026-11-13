@@ -33,3 +33,10 @@ layer = QgsVectorLayer(
 project.addMapLayer(layer)
 project.write("qgis4.qgs")
 ```
+
+## template.qgs
+
+A minimal QGS template for project-creation and tile-project tests. It contains
+an empty title, metadata, and root layer group, with no external data sources.
+The tile-project builder lives in `test/qgis/tile-gallery.ts`; generated projects
+are written to a temporary directory during integration tests.

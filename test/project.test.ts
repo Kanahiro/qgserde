@@ -25,7 +25,7 @@ function canonicalDocument(xml: string) {
 }
 
 const templateXml = readFileSync(
-  new URL("../examples/template.qgs", import.meta.url),
+  new URL("./fixtures/template.qgs", import.meta.url),
   "utf8",
 );
 

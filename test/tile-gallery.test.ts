@@ -2,19 +2,25 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
-  createTileTree,
-  tileSources,
-} from "../examples/create-tile-gallery.ts";
-import {
   parseQgs,
   type QgsLayerTreeGroup,
   serializeQgs,
 } from "../src/index.ts";
+import {
+  createTileGallery,
+  createTileTree,
+  tileSources,
+} from "./qgis/tile-gallery.ts";
 
-const projectUrl = new URL("../examples/tile-gallery.qgs", import.meta.url);
+const templateXml = readFileSync(
+  new URL("./fixtures/template.qgs", import.meta.url),
+  "utf8",
+);
 
-test("tile gallery contains only the advertised raster/vector tiles and has a single visible OSM reference", () => {
-  const project = parseQgs(readFileSync(projectUrl, "utf8"));
+test("tile fixture contains the expected raster/vector layers and has a single visible OSM reference", () => {
+  const project = parseQgs(
+    serializeQgs(createTileGallery(templateXml), { version: "4.2" }),
+  );
   assert.equal(project.layers.length, tileSources.length);
   assert.ok(project.layers.every((layer) => layer.id.length > 10));
   assert.equal(

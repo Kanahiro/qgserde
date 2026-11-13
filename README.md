@@ -7,8 +7,7 @@ fields, and the layer tree, then choose a QGIS 3 or 4 version when writing it
 back. Settings outside the typed API retain their values, structure, and order.
 
 [Documentation](https://kanahiro.github.io/qgserde/) ·
-[API reference](https://kanahiro.github.io/qgserde/modules.html) ·
-[Examples](examples/)
+[API reference](https://kanahiro.github.io/qgserde/modules.html)
 
 Pre-release. The API may change before the first release.
 
@@ -115,6 +114,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, documentation builds, and QGIS
 integration tests. CI runs on Node.js 24 and 26 and opens generated projects in
 QGIS 3.44, 4.0, and 4.2.
 
-The [tile gallery](examples/tile-gallery.md) demonstrates raster and vector tiles,
-nested groups, and repeated layer references. Fixture sources and their licenses
-are listed in [test/fixtures/README.md](test/fixtures/README.md).
+Fixture sources and their licenses are listed in
+[test/fixtures/README.md](test/fixtures/README.md).

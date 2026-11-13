@@ -20,8 +20,8 @@ CI runs these checks on Node.js 24 and 26.
 ## Documentation
 
 Public API descriptions live in source comments. `docs/index.md` is the guide
-shown on the documentation homepage. Write documentation and examples in
-English, and describe the current API.
+shown on the documentation homepage. Write documentation in English and
+describe the current API.
 
 `pnpm docs:build` generates the TypeDoc site in `docs/api/`. Missing API
 comments and broken references fail the build. Generated HTML is not committed.
@@ -33,9 +33,10 @@ must be set to GitHub Actions (`build_type: workflow`).
 
 CI opens five projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
 images: a new project, a conversion from an older format, an edited fixture,
-the tile gallery, and a round trip of the gallery. Checks cover title, CRS,
-extent, rotation, layer and provider validity, vector-tile symbols and zoom
-ranges, tree references, and the initial visible layer.
+a tile project with nested groups and repeated references, and its round trip.
+Checks cover title, CRS, extent, rotation, layer and provider validity,
+vector-tile symbols and zoom ranges, tree references, and the initial visible
+layer.
 
 Run the same checks locally:
 

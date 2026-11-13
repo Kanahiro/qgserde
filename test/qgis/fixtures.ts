@@ -1,13 +1,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createTileGallery } from "../../examples/create-tile-gallery.ts";
 import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
+import { createTileGallery } from "./tile-gallery.ts";
 
 export function writeQgisFixtures(directory: string, version: string): void {
   mkdirSync(directory, { recursive: true });
   const templateXml = readFileSync(
-    new URL("../../examples/template.qgs", import.meta.url),
+    new URL("../fixtures/template.qgs", import.meta.url),
     "utf8",
   );
   const project = createProject({ title: "検証 & 地図" });
