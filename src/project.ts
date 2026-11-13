@@ -10,14 +10,18 @@ import {
   writeCrs,
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
+import { ExtensionCodec } from "./extensions.ts";
 import { readLayer, readLayerId, writeLayer } from "./layer-codec.ts";
+import { metadataTags } from "./schema.ts";
 import { readTree, writeTree } from "./tree-codec.ts";
 import type {
+  CreateProjectOptions,
   QgsLayerTreeGroup,
   QgsProject,
   QgsProjectMetadata,
   SerializeOptions,
   XmlDocument,
+  XmlElement,
 } from "./types.ts";
 import { normalizeVersion, parseQgisVersion } from "./version.ts";
 import { readView, writeView } from "./view-codec.ts";
@@ -28,16 +32,6 @@ import {
   readXml,
   writeXml,
 } from "./xml.ts";
-
-const metadataTags = {
-  identifier: "identifier",
-  parentIdentifier: "parentidentifier",
-  language: "language",
-  type: "type",
-  abstract: "abstract",
-  author: "author",
-  creationDateTime: "creation",
-} as const;
 
 function projectionsEnabled(document: XmlDocument): boolean {
   const properties = findChild(document.root, "properties");
@@ -56,7 +50,7 @@ function readTitle(document: XmlDocument): string {
  * QGSのXMLを、バージョンに依存しない編集可能なモデルへ読み取ります。
  *
  * @param xml - ファイルからデコードしたQGSのUnicode文字列。ZIP形式のQGZは扱いません。
- * @returns 未モデル化のXMLも内部情報として保持するプロジェクト。
+ * @returns 未知の値と順序情報を分離して保持するプロジェクト。元XMLは保持しません。
  * @throws {@link QgsError} XMLが不正な場合は`INVALID_XML`、プロジェクト構造や
  * 値が不正な場合は`INVALID_PROJECT`、バージョン表記が不正な場合は`INVALID_VERSION`。
  * @example
@@ -67,6 +61,7 @@ function readTitle(document: XmlDocument): string {
  * ```
  */
 export function parseQgs(xml: string): QgsProject {
+  const codec = new ExtensionCodec();
   const document = readXml(xml);
   const root = document.root;
   if (root.name !== "qgis")
@@ -85,8 +80,11 @@ export function parseQgs(xml: string): QgsProject {
   const project: QgsProject = {
     title: readTitle(document),
     metadata: {},
-    layers: container ? findChildren(container, "maplayer").map(readLayer) : [],
-    preservedXml: document,
+    layers: container
+      ? findChildren(container, "maplayer").map((element) =>
+          readLayer(element, codec),
+        )
+      : [],
     ...readView(root),
   };
   const crs = readCrs(root, "projectCrs");
@@ -97,7 +95,7 @@ export function parseQgs(xml: string): QgsProject {
   if (homePath !== undefined) project.homePath = homePath;
   const tree = findChild(root, "layer-tree-group");
   if (tree) {
-    const parsed = readTree(tree);
+    const parsed = readTree(tree, codec);
     if (parsed.type === "group") project.layerTree = parsed;
   }
   const order = findChild(root, "layerorder");
@@ -113,21 +111,18 @@ export function parseQgs(xml: string): QgsProject {
         project.metadata[field as keyof QgsProjectMetadata] = value;
     }
   }
+  codec.captureProject(project, document);
   return project;
 }
 
 function encodeProject(project: QgsProject, version: string): XmlDocument {
-  if (!project.preservedXml)
-    throw new QgsError(
-      "INVALID_EDIT",
-      "The project must retain its source or template XML; use parseQgs or createProject",
-    );
-  const document = structuredClone(project.preservedXml);
+  const codec = new ExtensionCodec();
+  const document = codec.restoreProject(project, version);
   const root = document.root;
   if (root.name !== "qgis")
     throw new QgsError(
       "INVALID_EDIT",
-      "The preserved document must have a <qgis> root",
+      "The reconstructed document must have a <qgis> root",
     );
   putAttribute(root, "version", version);
   if (typeof project.title !== "string")
@@ -157,7 +152,7 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
   if (project.homePath !== undefined)
     putAttribute(ensure(root, "homePath"), "path", project.homePath);
   else remove(root, "homePath");
-  writeView(root, project, parseQgisVersion(version));
+  writeView(root, project, parseQgisVersion(version), codec);
   const oldContainer = findChild(root, "projectlayers");
   const oldIds = new Set(
     oldContainer ? findChildren(oldContainer, "maplayer").map(readLayerId) : [],
@@ -168,7 +163,8 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
     if (ids.has(layer.id))
       throw new QgsError("INVALID_EDIT", `Duplicate layer ID: ${layer.id}`);
     ids.add(layer.id);
-    const previousId = layer.preservedXml && readLayerId(layer.preservedXml);
+    const source = codec.source(layer);
+    const previousId = source && readLayerId(source);
     if (previousId && previousId !== layer.id)
       renamed.set(previousId, layer.id);
   }
@@ -177,14 +173,12 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
     replaceChildren(
       oldContainer ?? ensure(root, "projectlayers"),
       ["maplayer"],
-      project.layers.map(writeLayer),
+      project.layers.map((layer) => writeLayer(layer, codec)),
     );
-  const addedLayers = project.layers.some(
-    (layer) =>
-      !oldIds.has(
-        layer.preservedXml ? readLayerId(layer.preservedXml) : layer.id,
-      ),
-  );
+  const addedLayers = project.layers.some((layer) => {
+    const source = codec.source(layer);
+    return !oldIds.has(source ? readLayerId(source) : layer.id);
+  });
   const tree = project.layerTree ?? (addedLayers ? emptyTree() : undefined);
   if (tree)
     replaceChildren(
@@ -196,6 +190,7 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
           project.layers,
           project.layerTree ? oldIds : new Set(),
           resolve,
+          codec,
         ),
       ],
     );
@@ -203,22 +198,24 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
   if (project.layerOrder) {
     const orderIds = project.layerOrder
       .map(resolve)
-      .filter((id) => ids.has(id));
+      .filter((id) => ids.has(id) || !oldIds.has(id));
     for (const layer of project.layers) {
-      const oldId = layer.preservedXml && readLayerId(layer.preservedXml);
+      const source = codec.source(layer);
+      const oldId = source && readLayerId(source);
       if (!oldIds.has(oldId ?? layer.id) && !orderIds.includes(layer.id))
         orderIds.push(layer.id);
     }
+    const oldOrder = findChild(root, "layerorder");
+    const available = oldOrder ? findChildren(oldOrder, "layer") : [];
+    const used = new Set<XmlElement>();
     replaceChildren(
       ensure(root, "layerorder"),
       ["layer"],
       orderIds.map((id) => {
-        const old = findChild(root, "layerorder");
-        const source =
-          old &&
-          findChildren(old, "layer").find(
-            (item) => resolve(item.attributes.id ?? "") === id,
-          );
+        const source = available.find(
+          (item) => !used.has(item) && resolve(item.attributes.id ?? "") === id,
+        );
+        if (source) used.add(source);
         const element = structuredClone(source ?? createElement("layer"));
         putAttribute(element, "id", id);
         return element;
@@ -231,18 +228,18 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
 /**
  * モデルを指定したQGIS 3/4の形式でXMLに書き出します。
  *
- * 同じモデルを異なるバージョンへ繰り返し書き出せます。モデルや内部情報を変更しません。
- * 既知の形式差は変換しますが、未モデル化のXMLはそのまま保持します。
+ * 同じモデルを異なるバージョンへ繰り返し書き出せます。モデルや拡張データを変更しません。
+ * 既知の形式差は変換し、未知の値と順序は拡張データから復元します。
  * 出力先QGISにない機能を代替したり、プロジェクト全体の互換性を検証したりはしません。
  *
  * @param project - 読み取ったモデル、または {@link createProject} で作成したモデル。
  * @param options - 出力先バージョン。省略できません。
  * @returns XML文字列。XML宣言がある場合の文字コード表記はUTF-8です。
  * @throws {@link QgsError} 出力先が不正な場合は`INVALID_VERSION`、重複ID・循環・
- * 有限でない数値・保持元XMLの欠落などの書き出せない編集は`INVALID_EDIT`。
+ * 有限でない数値・データの意味や構造を失う操作など、書き出せない編集は`INVALID_EDIT`。
  * @example
  * ```ts
- * const project = createProject(templateXml, "同じ地図");
+ * const project = createProject({ title: "同じ地図" });
  * const qgis3 = serializeQgs(project, { version: "3.44" });
  * const qgis4 = serializeQgs(project, { version: "4.2" });
  * ```
@@ -275,24 +272,32 @@ function emptyTree(): QgsLayerTreeGroup {
 }
 
 /**
- * テンプレートのQGS XMLを引き継ぐ、バージョンに依存しないプロジェクトを作成します。
+ * バージョンに依存しないプロジェクトを作成します。
  *
- * テンプレートは {@link parseQgs} と同じ規則で読み取ります。既知の設定・レイヤー・
- * ツリー・未知のXMLをすべて引き継ぎ、暗黙に初期化や削除を行いません。
- * @param templateXml - 必須のテンプレートQGS文字列。ファイルの読み込みは呼び出し側で行います。
- * @param title - 新しいタイトル。省略するとテンプレートのタイトルを維持します。
- * 空文字列を指定するとタイトルを空にします。
- * @returns テンプレート全体を内部スナップショットに保持する編集可能なモデル。
- * @throws {@link QgsError} {@link parseQgs} と同じXML・プロジェクト・バージョン検証エラー。
+ * テンプレート指定時は {@link parseQgs} と同じ規則で読み取り、既知の設定・レイヤー・
+ * ツリー・未知のXMLをすべて引き継ぎます。省略時は型付きの空のプロジェクトを作ります。
+ * 元XMLのスナップショットは保持しません。ファイルI/Oは呼び出し側で行います。
+ * @param options - テンプレートとタイトル。オブジェクト全体も省略できます。
+ * @returns 編集可能なモデル。テンプレート省略時は空のレイヤー配列・メタデータ・ルートグループを持ちます。
+ * @throws {@link QgsError} テンプレートには {@link parseQgs} と同じ検証を行います。
+ * オプションがオブジェクトでない場合やタイトルが文字列でない場合は`INVALID_EDIT`。
  * @example
  * ```ts
- * const project = createProject(templateXml, "新しい地図");
+ * const empty = createProject();
+ * const project = createProject({ templateXml, title: "新しい地図" });
  * project.crs = { authId: "EPSG:4326" };
  * const xml = serializeQgs(project, { version: "4.2" });
  * ```
  */
-export function createProject(templateXml: string, title?: string): QgsProject {
-  const project = parseQgs(templateXml);
-  if (title !== undefined) project.title = title;
+export function createProject(options: CreateProjectOptions = {}): QgsProject {
+  if (options === null || typeof options !== "object" || Array.isArray(options))
+    throw new QgsError("INVALID_EDIT", "Project options must be an object");
+  if (options.title !== undefined && typeof options.title !== "string")
+    throw new QgsError("INVALID_EDIT", "Project title must be a string");
+  const project: QgsProject =
+    options.templateXml === undefined
+      ? { title: "", metadata: {}, layers: [], layerTree: emptyTree() }
+      : parseQgs(options.templateXml);
+  if (options.title !== undefined) project.title = options.title;
   return project;
 }

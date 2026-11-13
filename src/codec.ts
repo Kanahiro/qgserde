@@ -1,6 +1,7 @@
 import { QgsError } from "./errors.ts";
+import { crsStrings } from "./schema.ts";
 import type { QgsCrs, QgsRectangle, XmlElement } from "./types.ts";
-import { createElement, findChild, getText, setText } from "./xml.ts";
+import { createElement, findChild, getText } from "./xml.ts";
 
 export function text(parent: XmlElement, name: string): string | undefined {
   const child = findChild(parent, name);
@@ -55,7 +56,33 @@ export function putText(
   if (typeof value !== "string")
     throw new QgsError("INVALID_EDIT", `${name} must be a string`);
   if (text(parent, name) === value) return;
-  setText(ensure(parent, name), value);
+  putElementText(ensure(parent, name), value);
+}
+
+/** Edit a scalar without discarding extension markup, comments, or instructions. */
+export function putElementText(element: XmlElement, value: string): void {
+  if (getText(element) === value) return;
+  if (element.children.some((node) => node.type === "element"))
+    throw new QgsError(
+      "INVALID_EDIT",
+      `Cannot replace ${element.name} without losing nested extension elements`,
+    );
+  const texts = element.children.filter(
+    (node) => node.type === "text" || node.type === "cdata",
+  );
+  if (!texts.length) {
+    element.children.push({ type: "text", value });
+    return;
+  }
+  let offset = 0;
+  for (const node of texts) {
+    const length = node.value.length;
+    node.value = value.slice(
+      offset,
+      node === texts.at(-1) ? undefined : offset + length,
+    );
+    offset += length;
+  }
 }
 
 export function putAttribute(
@@ -117,15 +144,6 @@ export function replaceChildren(
   parent.children = result;
 }
 
-const crsStrings = {
-  authId: "authid",
-  wkt: "wkt",
-  proj4: "proj4",
-  description: "description",
-  projectionAcronym: "projectionacronym",
-  ellipsoidAcronym: "ellipsoidacronym",
-} as const;
-
 export function readCrs(parent: XmlElement, name: string): QgsCrs | undefined {
   const element = findChild(parent, name);
   const srs = element && findChild(element, "spatialrefsys");
@@ -143,6 +161,8 @@ export function readCrs(parent: XmlElement, name: string): QgsCrs | undefined {
   if (geographic !== undefined) crs.geographic = geographic;
   if (srs.attributes.nativeFormat !== undefined)
     crs.nativeFormat = srs.attributes.nativeFormat;
+  if (crs.authId && crs.srsId === undefined && !crs.wkt && !crs.proj4)
+    Object.assign(crs, { extensions: { origin: { authId: crs.authId } } });
   return crs;
 }
 
@@ -167,9 +187,9 @@ export function writeCrs(
   const authorityOnly =
     crs.authId && !/^USER:/iu.test(crs.authId) && !crs.wkt && !crs.proj4;
   const newAuthority =
-    previous === undefined ||
-    previous.authId !== crs.authId ||
-    previous.srsId !== undefined;
+    crs.extensions?.origin?.authId === undefined ||
+    crs.extensions.origin.authId !== crs.authId ||
+    previous?.srsId !== undefined;
   putNumber(
     srs,
     "srsid",

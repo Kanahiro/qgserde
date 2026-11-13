@@ -1,3 +1,5 @@
+import type { QgsExtensions } from "./extensions.ts";
+
 /** Values stay strings: coercing IDs, expressions, or coordinates loses information. */
 export interface XmlElement {
   type: "element";
@@ -59,7 +61,7 @@ export interface XmlDocument {
  * バージョンに依存しない、編集可能なプロジェクトモデル。
  *
  * 型付きプロパティが編集内容の正本です。JSON保存時は未モデル化の設定を保持する
- * 内部スナップショットも残してください。出力先は {@link serializeQgs} で指定します。
+ * 拡張データと順序情報も残してください。出力先は {@link serializeQgs} で指定します。
  */
 export interface QgsProject {
   /** プロジェクトのタイトル。編集するとQGISの複数のタイトル保存先を同期します。 */
@@ -82,8 +84,8 @@ export interface QgsProject {
   layerTree?: QgsLayerTreeGroup;
   /** レイヤーIDによる描画順。配列から削除されたレイヤーは出力時に除外します。 */
   layerOrder?: string[];
-  /** @internal Original document, used only to preserve unmodeled settings. */
-  readonly preservedXml: XmlDocument;
+  /** @internal Unmodeled values and ordering slots; never an original XML document. */
+  readonly extensions?: QgsExtensions;
 }
 
 /**
@@ -93,6 +95,8 @@ export interface QgsProject {
  * 置き換えると、読み取り元のWKTやPROJ定義を引き継ぎません。
  */
 export interface QgsCrs {
+  /** @internal Provenance needed to distinguish authority lookup from an unchanged legacy CRS. */
+  readonly extensions?: QgsExtensions;
   /** authority ID。例: `EPSG:4326`。 */
   authId?: string;
   /** Well-Known TextによるCRS定義。 */
@@ -174,7 +178,7 @@ export interface QgsLayerTreeGroup {
     layerIds: string[];
   };
   /** @internal */
-  readonly preservedXml?: XmlElement;
+  readonly extensions?: QgsExtensions;
 }
 
 /** レイヤー一覧の1項目をIDで参照する表示ノード。 */
@@ -188,7 +192,7 @@ export interface QgsLayerTreeLayer {
   /** レイヤー参照のチェック状態。親グループの状態も実際の表示に影響します。 */
   checked: QgsCheckState;
   /** @internal */
-  readonly preservedXml?: XmlElement;
+  readonly extensions?: QgsExtensions;
 }
 
 /** `type`でグループとレイヤー参照を判別するツリーノード。 */
@@ -218,8 +222,8 @@ export interface QgsMapLayerBase {
   maxScale?: number;
   /** 縮尺に応じた表示制限を有効にするかどうか。 */
   scaleBasedVisibility?: boolean;
-  /** @internal Original maplayer, never the authority for modeled fields. */
-  readonly preservedXml?: XmlElement;
+  /** @internal Unmodeled values and ordering slots. */
+  readonly extensions?: QgsExtensions;
 }
 
 /** ベクターレイヤーの設定。属性の値やフィーチャーは含みません。 */
@@ -232,7 +236,7 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   wkbType?: string;
   /** QGIS上で読み取り専用にするかどうか。 */
   readOnly?: boolean;
-  /** ラベルを有効にするかどうか。ラベル式等の詳細は元XMLに保持します。 */
+  /** ラベルを有効にするかどうか。ラベル式等の詳細は拡張データに保持します。 */
   labelsEnabled?: boolean;
   /** フィールドの表示・入力設定。データソースのスキーマは変更しません。 */
   fields: QgsField[];
@@ -248,7 +252,7 @@ export interface QgsRasterLayer extends QgsMapLayerBase {
   renderer?: QgsRasterRenderer;
 }
 
-/** 共通プロパティを編集できるその他の既知レイヤー。固有設定は元XMLに保持します。 */
+/** 共通プロパティを編集できるその他の既知レイヤー。固有設定は拡張データに保持します。 */
 export interface QgsOtherLayer extends QgsMapLayerBase {
   /** レイヤー種別。入力の`pointcloud`も`point-cloud`へ正規化します。 */
   type:
@@ -298,10 +302,10 @@ export interface QgsField {
   /** 更新時にもデフォルト式を適用するかどうか。 */
   applyDefaultOnUpdate?: boolean;
   /** @internal */
-  readonly preservedXml?: XmlElement;
+  readonly extensions?: QgsExtensions;
 }
 
-/** ベクターレンダラーの共通設定。シンボルや分類ルールの詳細は元XMLに保持します。 */
+/** ベクターレンダラーの共通設定。シンボルや分類ルールの詳細は拡張データに保持します。 */
 export interface QgsVectorRenderer {
   /** QGISのレンダラー識別子。例: `singleSymbol`、`categorizedSymbol`。 */
   type: string;
@@ -315,7 +319,7 @@ export interface QgsVectorRenderer {
   referenceScale?: number;
 }
 
-/** ラスターレンダラーの共通設定。色変換等の詳細は元XMLに保持します。 */
+/** ラスターレンダラーの共通設定。色変換等の詳細は拡張データに保持します。 */
 export interface QgsRasterRenderer {
   /** QGISのレンダラー識別子。例: `multibandcolor`。 */
   type: string;
@@ -343,6 +347,14 @@ export interface QgisVersion {
   patch: number;
   /** ハイフンより後のリリース名。例: `Bratislava`。 */
   suffix?: string;
+}
+
+/** {@link createProject} の初期設定。すべて省略可能です。 */
+export interface CreateProjectOptions {
+  /** テンプレートQGS文字列。省略時は空のプロジェクトを作ります。 */
+  templateXml?: string;
+  /** タイトル。省略時はテンプレートの値を維持し、テンプレートもなければ空文字列です。 */
+  title?: string;
 }
 
 /** {@link serializeQgs} の出力先設定。呼び出しごとに指定します。 */

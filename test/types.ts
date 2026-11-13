@@ -15,19 +15,22 @@ export function checkPublicTypes(
   project.root;
   // @ts-expect-error Versions belong to serialization, not the domain model.
   project.version;
-  // @ts-expect-error A template is required for creation.
   createProject();
-  // @ts-expect-error The template must be an XML string.
+  createProject({});
   createProject({ title: "title" });
-  // @ts-expect-error Every project must retain its source or template document.
-  const withoutTemplate: QgsProject = {
-    title: "title",
-    layers: [],
-    metadata: {},
-  };
-  void withoutTemplate;
-  // @ts-expect-error The source document is required and readonly.
-  delete project.preservedXml;
+  createProject({ templateXml: '<qgis version="4.2"/>', title: "title" });
+  // @ts-expect-error Creation accepts a single options object.
+  createProject('<qgis version="4.2"/>');
+  // @ts-expect-error Positional template/title arguments are no longer accepted.
+  createProject('<qgis version="4.2"/>', "title");
+  // @ts-expect-error The optional template must be an XML string.
+  createProject({ templateXml: 42 });
+  // @ts-expect-error The optional title must be a string.
+  createProject({ title: 42 });
+  const standalone: QgsProject = { title: "title", layers: [], metadata: {} };
+  void standalone;
+  // @ts-expect-error Models do not retain a source XML document.
+  project.preservedXml;
   // @ts-expect-error The target format must be explicit on every write.
   serializeQgs(project);
   // @ts-expect-error A target version is required.

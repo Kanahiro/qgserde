@@ -2,10 +2,12 @@ import {
   boolean,
   ensure,
   putAttribute,
+  putElementText,
   replaceChildren,
   text,
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
+import type { ExtensionCodec } from "./extensions.ts";
 import { readLayerId } from "./layer-codec.ts";
 import type {
   QgsCheckState,
@@ -14,13 +16,7 @@ import type {
   QgsMapLayer,
   XmlElement,
 } from "./types.ts";
-import {
-  createElement,
-  findChild,
-  findChildren,
-  getText,
-  setText,
-} from "./xml.ts";
+import { createElement, findChild, findChildren, getText } from "./xml.ts";
 
 const checkStates = {
   checked: "Qt::Checked",
@@ -38,14 +34,19 @@ function readCheckState(value: string | undefined): QgsCheckState {
   );
 }
 
-export function readTree(element: XmlElement): QgsLayerTreeNode {
+export function readTree(
+  element: XmlElement,
+  codec: ExtensionCodec,
+): QgsLayerTreeNode {
   const state = {
     expanded: boolean(element.attributes.expanded) ?? true,
     checked: readCheckState(element.attributes.checked),
-    preservedXml: element,
   };
   if (element.name === "layer-tree-layer")
-    return { type: "layer", layerId: element.attributes.id ?? "", ...state };
+    return codec.remember(
+      { type: "layer", layerId: element.attributes.id ?? "", ...state },
+      element,
+    );
   const group: QgsLayerTreeGroup = {
     type: "group",
     name: element.attributes.name ?? "",
@@ -56,7 +57,7 @@ export function readTree(element: XmlElement): QgsLayerTreeNode {
           child.name === "layer-tree-group" ||
           child.name === "layer-tree-layer",
       )
-      .map(readTree),
+      .map((child) => readTree(child, codec)),
   };
   const order = findChild(element, "custom-order");
   if (order)
@@ -64,7 +65,7 @@ export function readTree(element: XmlElement): QgsLayerTreeNode {
       enabled: boolean(order.attributes.enabled) ?? false,
       layerIds: findChildren(order, "item").map(getText),
     };
-  return group;
+  return codec.remember(group, element);
 }
 
 /** Resolve IDs from typed layers, including renamed IDs, without changing caller data. */
@@ -73,6 +74,7 @@ export function writeTree(
   layers: QgsMapLayer[],
   originalIds: Set<string>,
   resolve: (id: string) => string,
+  codec: ExtensionCodec,
 ): XmlElement {
   const layerMap = new Map(layers.map((layer) => [layer.id, layer]));
   const referenced = new Set<string>();
@@ -88,7 +90,7 @@ export function writeTree(
       );
     active.add(node);
     const element = structuredClone(
-      node.preservedXml ??
+      codec.source(node) ??
         createElement(
           node.type === "group" ? "layer-tree-group" : "layer-tree-layer",
         ),
@@ -109,7 +111,7 @@ export function writeTree(
       const layer = layerMap.get(id);
       active.delete(node);
       if (!layer && originalIds.has(node.layerId)) return undefined;
-      if (!layer && node.preservedXml) return element;
+      if (!layer && codec.source(node)) return element;
       if (!layer)
         throw new QgsError(
           "INVALID_EDIT",
@@ -117,6 +119,7 @@ export function writeTree(
         );
       referenced.add(id);
       putAttribute(element, "id", id);
+      const sourceLayer = codec.source(layer);
       for (const [attribute, tag, value] of [
         ["name", "layername", layer.name],
         ["source", "datasource", layer.source],
@@ -125,9 +128,9 @@ export function writeTree(
         // Tree sources may legitimately contain provider-generated UIDs absent
         // from maplayer sources. Only a typed edit should replace those values.
         if (
-          !node.preservedXml ||
-          !layer.preservedXml ||
-          (text(layer.preservedXml, tag) ?? "") !== value
+          !codec.source(node) ||
+          !sourceLayer ||
+          (text(sourceLayer, tag) ?? "") !== value
         )
           putAttribute(element, attribute, value);
       }
@@ -151,15 +154,18 @@ export function writeTree(
       const items = node.customOrder.layerIds
         .map(resolve)
         .filter((id) => layerMap.has(id) || !originalIds.has(id));
+      const available = findChildren(order, "item");
+      const used = new Set<XmlElement>();
       replaceChildren(
         order,
         ["item"],
         items.map((id) => {
-          const source = findChildren(order, "item").find(
-            (item) => resolve(getText(item)) === id,
+          const source = available.find(
+            (item) => !used.has(item) && resolve(getText(item)) === id,
           );
+          if (source) used.add(source);
           const element = structuredClone(source ?? createElement("item"));
-          if (getText(element) !== id) setText(element, id);
+          putElementText(element, id);
           return element;
         }),
       );
@@ -174,7 +180,8 @@ export function writeTree(
   if (!root)
     throw new QgsError("INVALID_EDIT", "A layer tree must have a root group");
   for (const layer of layers) {
-    const oldId = layer.preservedXml && readLayerId(layer.preservedXml);
+    const source = codec.source(layer);
+    const oldId = source && readLayerId(source);
     const existed = originalIds.has(oldId ?? layer.id);
     if (!referenced.has(layer.id) && !existed) {
       root.children.push(

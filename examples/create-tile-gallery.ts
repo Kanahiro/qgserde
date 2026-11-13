@@ -282,10 +282,10 @@ export function createTileTree(): QgsLayerTreeGroup {
 }
 
 export function createTileGallery(templateXml: string): QgsProject {
-  const project = createProject(
+  const project = createProject({
     templateXml,
-    "公開タイル比較 — Raster × Vector",
-  );
+    title: "公開タイル比較 — Raster × Vector",
+  });
   project.layers = tileSources.map((tile) => {
     const parameters = new URLSearchParams({
       type: "xyz",

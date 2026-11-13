@@ -50,7 +50,7 @@ interface QgsProject {
   rotation?: number;
   layerTree?: QgsLayerTreeGroup;
   layerOrder?: string[];
-  // 加えて、未モデル化の設定を保持する内部用preservedXmlがあります。
+  // 加えて、未モデル化の設定と順序を保持する内部用extensionsがあります。
 }
 ```
 
@@ -68,15 +68,15 @@ interface QgsProject {
 
 `QgsMapLayer`は`type`による判別可能なunionです。`vector`、`raster`に加え、`mesh`、`vector-tile`、`point-cloud`、`plugin`、`annotation`、`group`、`tiled-scene`を識別します。将来の種別は`QgsUnknownLayer`（`type: "unknown"`、元の種別は`xmlType`）になります。未知の種別を単なる`string`へ広げないため、ベクターとラスターの型の絞り込みが機能します。
 
-ベクターレンダラーの`type`やフィールドのエディター種別は、プラグインで拡張される識別子なので文字列です。ベクターでは属性・symbolLevels・forceRaster・referenceScale、ラスターではopacity・alphaBand・band・redBand・greenBand・blueBandを型付きで扱います。シンボルや分類ルールの詳細、ラベル式、リレーション、レイアウト等は、現時点では個別の編集モデルを提供せず、元XMLとして保持します。
+ベクターレンダラーの`type`やフィールドのエディター種別は、プラグインで拡張される識別子なので文字列です。ベクターでは属性・symbolLevels・forceRaster・referenceScale、ラスターではopacity・alphaBand・band・redBand・greenBand・blueBandを型付きで扱います。シンボルや分類ルールの詳細、ラベル式、リレーション、レイアウト等は、現時点では個別の編集モデルを提供せず、拡張データとして保持します。
 
 ## 編集とXMLへの反映
 
 モデルのプロパティを編集して`serializeQgs`を呼ぶと、必要なXMLの保存先を更新します。
 
 - `project.title`は、ルートの`title`、`projectMetadata/title`、`projectname`に反映します。
-- `project.crs`は、QGISの投影有効フラグも合わせて設定します。読み込み時は無効な投影のCRSを`project.crs`に公開せず、元XMLに保持します。既存の有効なCRSを削除すると投影を無効化します。
-- `project.extent`と`rotation`は、出力先のバージョンに合わせて保存します。表示範囲は3.10.1以降、回転は3.28以降で`ProjectViewSettings`を使い、それ以前は`mapcanvas`を使います。入力に両方ある場合は双方を同期します。範囲のCRSは`extent.crs`で指定でき、新規の表示範囲では省略時にプロジェクトCRSを使います。
+- `project.crs`は、QGISの投影有効フラグも合わせて設定します。読み込み時は無効な投影のCRSを`project.crs`に公開せず、拡張データに保持します。既存の有効なCRSを削除すると投影を無効化します。
+- `project.extent`と`rotation`は、出力先のバージョンに合わせて保存します。表示範囲は3.10.1以降、回転は3.28以降で`ProjectViewSettings`を使い、それ以前は`mapcanvas`を使います。入力に同じ表示設定が両方ある場合は双方を同期し、独立した異なる設定はそのまま保持します。範囲のCRSは`extent.crs`で指定でき、新規の表示範囲では省略時にプロジェクトCRSを使います。
 - 既存レイヤーの名前・データソース・プロバイダーは、レイヤーツリー内の対応する参照にも反映します。プロバイダーが生成したUID等は、未編集の場合は保持します。
 - `layers.push(...)`で追加したレイヤーには、必要なツリー参照と既存の描画順リストへの項目を追加します。レイヤーを配列から削除すると、そのツリー参照・描画順項目も取り除きます。
 - レイヤーIDを変更すると、ツリーと描画順のIDも更新します。リレーション、結合、レイアウト、プラグイン等に含まれる他のID参照は自動更新しないため、これらを持つプロジェクトではIDを維持してください。
@@ -85,20 +85,24 @@ CRSのauthorityだけを指定する場合も、呼び出し側でQGIS内部のC
 
 オブジェクトは`JSON.stringify` / `JSON.parse`で保存・復元できます。書き出しはコピーで行い、呼び出し側のモデルを変更しません。
 
-`preservedXml`は未知の要素・属性・順序・コメント・CDATA等を保持する内部スナップショットです。型付きプロパティが編集内容の唯一の正本であり、スナップショットを直接編集するAPIは提供しません。`QgsProject`では必須であり、この情報がないモデルの書き出しは`INVALID_EDIT`になります。
+パース後のモデルには、入力のXML文字列やXMLツリー全体を保存しません。既知の設定は型付きプロパティへ取り込み、未モデル化の値・名前空間・要素の配置順は内部の`extensions`へ分離します。既知の項目の位置は値のコピーではなく参照スロットで表します。関連参照の更新に必要な識別情報も保持し、書き出し時にXMLを再生成します。
+
+`extensions`はモデルのデータの一部です。JSON保存時に取り除くと未知の値や順序を復元できません。直接編集するAPIは提供しません。新規の空のモデルには元データがなく、`extensions`なしで書き出せます。
+
+未知要素を含む値の置換や、別々の表示設定を表現できない旧形式への変換など、意味や構造を失う操作は`INVALID_EDIT`で拒否します。未編集の値・親子関係・繰り返し要素の順序を維持し、明示した編集だけを反映することを契約とします。
 
 ## 新規作成とバージョン指定
 
 ```ts
 import { createProject, serializeQgs } from "qgserde";
 
-const project = createProject(templateXml, "新しい地図");
+const project = createProject({ templateXml, title: "新しい地図" });
 project.metadata.author = "作成者";
 const qgis3Xml = serializeQgs(project, { version: "3.44" });
 const qgis4Xml = serializeQgs(project, { version: "4.2" });
 ```
 
-`templateXml`は呼び出し側で読み込んだQGS文字列です。テンプレートのレイヤー・メタデータ・ツリー・未知の設定をすべて引き継ぎます。タイトルを省略するとテンプレートのタイトルを維持し、空文字列を指定すると空にします。最小構成の例は[`examples/template.qgs`](examples/template.qgs)です。QGISで作った独自のテンプレートも利用できます。
+`createProject()`や`createProject({ title: "新しい地図" })`で、テンプレートなしでも作成できます。元XMLを保持するための仮のテンプレートは作りません。任意の`templateXml`を指定する場合は呼び出し側で読み込んだQGS文字列を渡します。テンプレートに含まれる既知の設定と未知の情報・順序を引き継ぎます。タイトルを省略するとテンプレートの値（テンプレートもなければ空文字列）を維持し、空文字列を指定すると空にします。最小構成の例は[`examples/template.qgs`](examples/template.qgs)です。
 
 `serializeQgs`では出力先のQGIS 3/4バージョンを必ず指定します。`3.40`は`3.40.0`へ正規化し、`3.40.0-Bratislava`や`4.2.0-Belém do Pará`のようなリリース名も扱います。未指定・不正なバージョン・3/4以外のメジャーバージョンは`INVALID_VERSION`です。
 
@@ -113,18 +117,18 @@ const qgis3XmlAgain = serializeQgs(project, { version: "3.44" });
 
 `migrate`・`versionPolicy`は廃止しました。形式の違いはコーデック内で扱い、呼び出し側にバージョン間の移行処理を要求しません。
 
-変換対象は型付きで扱うプロパティです。未モデル化のXML・プラグイン設定・レンダラーの詳細は元の内容を保持し、バージョン間の変換は行いません。また、出力先QGISに存在しない機能やレイヤー種別を代替する処理はありません。出力バージョンの指定だけで、プロジェクト全体の互換性を保証するものではありません。
+変換対象は型付きで扱うプロパティです。未モデル化の設定・プラグイン設定・レンダラーの詳細は拡張データとして保持し、バージョン間の変換は行いません。また、出力先QGISに存在しない機能やレイヤー種別を代替する処理はありません。出力バージョンの指定だけで、プロジェクト全体の互換性を保証するものではありません。
 
 ## 制約
 
-- XML構造・値の保持を目的とし、バイト単位の再現は保証しません。引用符・空要素・エンティティ表記、XML規格に従う改行正規化は変わり得ます。既存の空白は保持し、自動整形しません。
+- データの値・親子関係・順序の保持を目的とし、バイト単位の再現は保証しません。既知の数値・真偽値は同じ意味の表記へ正規化する場合があります。引用符・空要素・エンティティ表記、XML規格に従う改行正規化は変わり得ます。既存の空白は保持し、自動整形しません。
 - `.qgz`のZIP、`.qgd`、添付ファイル、地理データ自体は扱いません。データソースの存在確認・保存先に応じたパスの変換も行いません。
 - 入出力はUnicode文字列で、出力にXML宣言がある場合はUTF-8に正規化します。ファイルI/Oは呼び出し側の責任です。
 - XML 1.0のみ対応し、外部DTDを取得しません。内部DTD・カスタムエンティティ・深さ512超・循環したツリーは拒否します。
 - 型付きの既知フィールドとXMLの整形式を扱うコーデックであり、QGISの全機能を網羅するスキーマ検証器ではありません。
 - ESM形式です。本体はNode.js APIやブラウザーDOMに依存せず、`structuredClone`のある環境で利用できます。ブラウザーではバンドラーを使用してください。
 
-APIは破壊的変更になります。`createProject(title)`は`createProject(templateXml, title?)`へ置き換え、`project.version`の代わりに`serializeQgs(project, { version })`で出力先を指定してください。前のXMLツリー形式のタイトル操作関数は`title`への代入へ、レイヤー操作関数は`layers`配列への操作へ置き換えてください。任意のXML要素を返す公開APIは廃止しました。
+APIは破壊的変更になります。`createProject(templateXml, title?)`は`createProject({ templateXml, title })`へ置き換え、`project.version`の代わりに`serializeQgs(project, { version })`で出力先を指定してください。前のXMLツリー形式のタイトル操作関数は`title`への代入へ、レイヤー操作関数は`layers`配列への操作へ置き換えてください。任意のXML要素を返す公開APIは廃止しました。
 
 ## 開発・検証
 

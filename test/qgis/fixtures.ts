@@ -10,7 +10,7 @@ export function writeQgisFixtures(directory: string, version: string): void {
     new URL("../../examples/template.qgs", import.meta.url),
     "utf8",
   );
-  const project = createProject(templateXml, "検証 & 地図");
+  const project = createProject({ title: "検証 & 地図" });
   project.layers.push({
     id: "cities_layer_001",
     name: "都市",

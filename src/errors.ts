@@ -4,7 +4,7 @@
  * - `INVALID_XML`: 不正なXML、内部DTD、非対応XML形式、過剰な深さ等。
  * - `INVALID_PROJECT`: 不正なルート・必須属性・数値・真偽値等。
  * - `INVALID_VERSION`: 不正なバージョン表記、出力先未指定、対応範囲外の出力先。
- * - `INVALID_EDIT`: 重複ID・循環したツリー等の書き出せない編集。
+ * - `INVALID_EDIT`: 重複ID・循環した構造・データを失う操作等の書き出せない編集。
  */
 export type QgsErrorCode =
   | "INVALID_XML"

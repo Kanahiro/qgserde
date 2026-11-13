@@ -14,6 +14,8 @@ import {
   writeExtent,
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
+import type { ExtensionCodec } from "./extensions.ts";
+import { rasterAttributes, vectorAttributes } from "./schema.ts";
 import type {
   QgsField,
   QgsMapLayer,
@@ -28,7 +30,7 @@ export function readLayerId(element: XmlElement): string {
   return text(element, "id") ?? element.attributes.id ?? "";
 }
 
-function readFields(layer: XmlElement): QgsField[] {
+function readFields(layer: XmlElement, codec: ExtensionCodec): QgsField[] {
   const configuration = findChild(layer, "fieldConfiguration");
   if (!configuration) return [];
   const aliases = findChild(layer, "aliases");
@@ -36,7 +38,6 @@ function readFields(layer: XmlElement): QgsField[] {
   return findChildren(configuration, "field").map((element) => {
     const field: QgsField = {
       name: element.attributes.name ?? "",
-      preservedXml: element,
     };
     const editorWidget = findChild(element, "editWidget")?.attributes.type;
     const alias =
@@ -56,11 +57,15 @@ function readFields(layer: XmlElement): QgsField[] {
       field.defaultExpression = defaultValue.attributes.expression;
     const apply = boolean(defaultValue?.attributes.applyOnUpdate);
     if (apply !== undefined) field.applyDefaultOnUpdate = apply;
-    return field;
+    return codec.remember(field, element);
   });
 }
 
-function writeFields(layer: XmlElement, fields: QgsField[]): void {
+function writeFields(
+  layer: XmlElement,
+  fields: QgsField[],
+  codec: ExtensionCodec,
+): void {
   const originalConfiguration = findChild(layer, "fieldConfiguration");
   const originalNames = new Set(
     originalConfiguration
@@ -75,13 +80,30 @@ function writeFields(layer: XmlElement, fields: QgsField[]): void {
       throw new QgsError("INVALID_EDIT", `Duplicate field: ${field.name}`);
     names.add(field.name);
   }
+  // Orphan records are extension data. Creating a field with their name would
+  // silently claim those records, so require the caller to resolve the collision.
+  for (const [containerName, tag] of [
+    ["aliases", "alias"],
+    ["defaults", "default"],
+  ] as const) {
+    const container = findChild(layer, containerName);
+    if (container)
+      for (const record of findChildren(container, tag)) {
+        const name = record.attributes.field;
+        if (name && !originalNames.has(name) && names.has(name))
+          throw new QgsError(
+            "INVALID_EDIT",
+            `Field ${name} conflicts with an unmodeled ${tag} record`,
+          );
+      }
+  }
   if (fields.length || findChild(layer, "fieldConfiguration")) {
     replaceChildren(
       ensure(layer, "fieldConfiguration"),
       ["field"],
       fields.map((field) => {
         const element = structuredClone(
-          field.preservedXml ?? createElement("field"),
+          codec.source(field) ?? createElement("field"),
         );
         putAttribute(element, "name", field.name);
         if (field.editorWidgetType !== undefined)
@@ -108,7 +130,7 @@ function writeFields(layer: XmlElement, fields: QgsField[]): void {
         field.applyDefaultOnUpdate === undefined
       )
         return [];
-      const originalName = field.preservedXml?.attributes.name ?? field.name;
+      const originalName = codec.source(field)?.attributes.name ?? field.name;
       const old =
         container &&
         findChildren(container, tag).find(
@@ -127,21 +149,45 @@ function writeFields(layer: XmlElement, fields: QgsField[]): void {
     // that have aliases/defaults without a corresponding fieldConfiguration.
     const ordered: XmlElement[] = [];
     const remaining = new Set(records);
+    const primary = new Map<string, boolean>();
     if (container)
       for (const old of findChildren(container, tag)) {
         const field = fields.find(
           (field) =>
-            (field.preservedXml?.attributes.name ?? field.name) ===
+            (codec.source(field)?.attributes.name ?? field.name) ===
             old.attributes.field,
         );
         const record =
           field &&
           records.find((record) => record.attributes.field === field.name);
-        if (record) {
+        const oldName = old.attributes.field ?? "";
+        const managed =
+          codec.controls(
+            old,
+            tag === "alias" ? "alias" : "defaultExpression",
+          ) ||
+          (tag === "default" && codec.controls(old, "applyDefaultOnUpdate"));
+        const seen = primary.has(oldName);
+        if (!seen) primary.set(oldName, managed);
+        if (record && remaining.has(record)) {
           ordered.push(record);
           remaining.delete(record);
-        } else if (!field && !originalNames.has(old.attributes.field))
-          ordered.push(old);
+        } else if (field && record) {
+          const duplicate = structuredClone(old);
+          putAttribute(duplicate, "field", field.name);
+          ordered.push(duplicate);
+        } else if (field && seen && primary.get(oldName)) {
+          throw new QgsError(
+            "INVALID_EDIT",
+            `Cannot clear ambiguous ${tag} records without losing extension data`,
+          );
+        } else if (!originalNames.has(oldName) || (field && !managed)) {
+          if (field && field.name !== oldName) {
+            const renamed = structuredClone(old);
+            putAttribute(renamed, "field", field.name);
+            ordered.push(renamed);
+          } else ordered.push(old);
+        }
       }
     ordered.push(...remaining);
     if (container || records.length)
@@ -177,21 +223,13 @@ function writeVectorRenderer(
     return;
   }
   const element = ensure(layer, "renderer-v2");
-  putAttribute(element, "type", renderer.type);
-  putAttribute(element, "attr", renderer.attribute);
-  putAttribute(element, "symbollevels", renderer.symbolLevels);
-  putAttribute(element, "forceraster", renderer.forceRaster);
-  putAttribute(element, "referencescale", renderer.referenceScale);
+  for (const [field, attribute] of Object.entries(vectorAttributes))
+    putAttribute(
+      element,
+      attribute,
+      renderer[field as keyof typeof vectorAttributes],
+    );
 }
-
-const rasterAttributes = {
-  opacity: "opacity",
-  alphaBand: "alphaBand",
-  band: "band",
-  redBand: "redBand",
-  greenBand: "greenBand",
-  blueBand: "blueBand",
-} as const;
 function readRasterRenderer(layer: XmlElement): QgsRasterRenderer | undefined {
   const pipe = findChild(layer, "pipe");
   const element = pipe && findChild(pipe, "rasterrenderer");
@@ -224,13 +262,15 @@ function writeRasterRenderer(
     );
 }
 
-export function readLayer(element: XmlElement): QgsMapLayer {
+export function readLayer(
+  element: XmlElement,
+  codec: ExtensionCodec,
+): QgsMapLayer {
   const base: QgsMapLayerBase = {
     id: readLayerId(element),
     name: text(element, "layername") ?? "",
     source: text(element, "datasource") ?? "",
     provider: text(element, "provider") ?? "",
-    preservedXml: element,
   };
   const encoding = findChild(element, "provider")?.attributes.encoding;
   if (encoding !== undefined) base.providerEncoding = encoding;
@@ -255,7 +295,7 @@ export function readLayer(element: XmlElement): QgsMapLayer {
       const layer: Extract<QgsMapLayer, { type: "vector" }> = {
         ...base,
         type,
-        fields: readFields(element),
+        fields: readFields(element, codec),
       };
       if (element.attributes.geometry !== undefined)
         layer.geometry = element.attributes.geometry;
@@ -267,14 +307,17 @@ export function readLayer(element: XmlElement): QgsMapLayer {
       if (readOnly !== undefined) layer.readOnly = readOnly;
       if (labelsEnabled !== undefined) layer.labelsEnabled = labelsEnabled;
       if (renderer) layer.renderer = renderer;
-      return layer;
+      return codec.remember(layer, element);
     }
     case "raster": {
       const renderer = readRasterRenderer(element);
-      return { ...base, type, ...(renderer ? { renderer } : {}) };
+      return codec.remember(
+        { ...base, type, ...(renderer ? { renderer } : {}) },
+        element,
+      );
     }
     case "pointcloud":
-      return { ...base, type: "point-cloud" };
+      return codec.remember({ ...base, type: "point-cloud" }, element);
     case "mesh":
     case "vector-tile":
     case "point-cloud":
@@ -282,13 +325,16 @@ export function readLayer(element: XmlElement): QgsMapLayer {
     case "annotation":
     case "group":
     case "tiled-scene":
-      return { ...base, type };
+      return codec.remember({ ...base, type }, element);
     default:
-      return {
-        ...base,
-        type: "unknown",
-        xmlType: element.attributes.type ?? "",
-      };
+      return codec.remember(
+        {
+          ...base,
+          type: "unknown",
+          xmlType: element.attributes.type ?? "",
+        },
+        element,
+      );
   }
 }
 
@@ -345,11 +391,14 @@ function defaultTileRenderer(): XmlElement {
   ]);
 }
 
-export function writeLayer(layer: QgsMapLayer): XmlElement {
+export function writeLayer(
+  layer: QgsMapLayer,
+  codec: ExtensionCodec,
+): XmlElement {
   if (typeof layer.id !== "string" || !layer.id.trim())
     throw new QgsError("INVALID_EDIT", "A layer ID must not be empty");
   const element = structuredClone(
-    layer.preservedXml ?? createElement("maplayer"),
+    codec.source(layer) ?? createElement("maplayer"),
   );
   const xmlType = layer.type === "unknown" ? layer.xmlType : layer.type;
   const originalType = element.attributes.type?.toLowerCase();
@@ -396,7 +445,7 @@ export function writeLayer(layer: QgsMapLayer): XmlElement {
     putAttribute(element, "wkbType", layer.wkbType);
     putAttribute(element, "readOnly", layer.readOnly);
     putAttribute(element, "labelsEnabled", layer.labelsEnabled);
-    writeFields(element, layer.fields);
+    writeFields(element, layer.fields, codec);
     writeVectorRenderer(element, layer.renderer);
   } else if (layer.type === "raster")
     writeRasterRenderer(element, layer.renderer);

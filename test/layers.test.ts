@@ -9,11 +9,6 @@ import {
 } from "../src/index.ts";
 import { findChild, readXml } from "../src/xml.ts";
 
-const templateXml = readFileSync(
-  new URL("../examples/template.qgs", import.meta.url),
-  "utf8",
-);
-
 const definition: QgsVectorLayer = {
   id: "cities_001",
   name: "都市",
@@ -45,7 +40,7 @@ test("retains the original alias order when it differs from field configuration 
 });
 
 test("pushes plain typed layers and builds their XML and tree references", () => {
-  const project = createProject(templateXml);
+  const project = createProject();
   project.layers.push(structuredClone(definition));
   project.layerOrder = [];
   project.layerTree!.customOrder = { enabled: true, layerIds: [] };
@@ -134,7 +129,7 @@ test("renaming and removing typed layers synchronizes tree and order IDs", () =>
 });
 
 test("rejects duplicate IDs, empty IDs and cyclic typed trees", () => {
-  const project = createProject(templateXml);
+  const project = createProject();
   project.layers.push(structuredClone(definition), structuredClone(definition));
   assert.throws(
     () => serializeQgs(project, { version: "4.2" }),
@@ -193,7 +188,7 @@ test("field configurations, aliases and defaults have editable types", () => {
 });
 
 test("fresh vector tiles include native symbology required by QGIS 3 and preserve existing styles and multi-source URIs", () => {
-  const project = createProject(templateXml);
+  const project = createProject();
   const source =
     "type=xyz&url=https://tiles.example.com/{z}/{x}/{y}.pbf&urlName=base&url_2=https://tiles.example.com/overlay/{z}/{x}/{y}.pbf&urlName_2=overlay&styleUrl=https%3A%2F%2Ftiles.example.com%2Fstyle.json";
   project.layers.push({

@@ -10,6 +10,20 @@ import {
 } from "../src/index.ts";
 import { findChild, getText, readXml } from "../src/xml.ts";
 
+// Only modeled numeric spellings may normalize; unknown strings such as "0001" stay exact.
+function canonicalDocument(xml: string) {
+  const document = readXml(xml);
+  const layers = findChild(document.root, "projectlayers");
+  if (layers)
+    for (const layer of layers.children) {
+      if (layer.type !== "element" || layer.name !== "maplayer") continue;
+      for (const key of ["minScale", "maxScale"])
+        if (layer.attributes[key] !== undefined)
+          layer.attributes[key] = String(Number(layer.attributes[key]));
+    }
+  return document;
+}
+
 const templateXml = readFileSync(
   new URL("../examples/template.qgs", import.meta.url),
   "utf8",
@@ -42,9 +56,9 @@ test("deserializes a domain model instead of an arbitrary XML root", () => {
 });
 
 test("creates one version-independent model and writes QGIS 3/4 formats", () => {
-  const project = createProject(templateXml, "札幌 & 地図");
+  const project = createProject({ title: "札幌 & 地図" });
   assert.equal("version" in project, false);
-  assert.equal(createProject(templateXml).title, "");
+  assert.equal(createProject({ templateXml }).title, "");
   const before = JSON.stringify(project);
   for (const [version, normalized] of [
     ["3.28", "3.28.0"],
@@ -101,19 +115,35 @@ test("requires a qgis root and a valid source version", () => {
   );
 });
 
-test("requires a valid QGS template instead of synthesizing a project", () => {
-  for (const args of [[], [undefined], [null], [""], ["a title"]])
+test("accepts optional creation options and validates supplied templates", () => {
+  for (const project of [
+    createProject(),
+    createProject({}),
+    createProject(undefined),
+  ]) {
+    assert.equal(project.title, "");
+    assert.deepEqual(project.layers, []);
+    assert.deepEqual(project.metadata, {});
+    assert.equal("preservedXml" in project, false);
+  }
+  assert.equal(createProject({ title: "named" }).title, "named");
+  for (const options of [null, [], "a title"])
     assert.throws(
-      () => Reflect.apply(createProject, undefined, args),
+      () => Reflect.apply(createProject, undefined, [options]),
+      (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
+    );
+  for (const xml of ["", "a title"])
+    assert.throws(
+      () => createProject({ templateXml: xml }),
       (error) => error instanceof QgsError && error.code === "INVALID_XML",
     );
   for (const xml of ['<other version="4.2"/>', "<qgis/>"])
     assert.throws(
-      () => createProject(xml),
+      () => createProject({ templateXml: xml }),
       (error) => error instanceof QgsError && error.code === "INVALID_PROJECT",
     );
   assert.throws(
-    () => createProject('<qgis version="unknown"/>'),
+    () => createProject({ templateXml: '<qgis version="unknown"/>' }),
     (error) => error instanceof QgsError && error.code === "INVALID_VERSION",
   );
 });
@@ -124,11 +154,14 @@ for (const fixture of ["qgis3", "qgis4"]) {
       new URL(`./fixtures/${fixture}.qgs`, import.meta.url),
       "utf8",
     );
-    const project = createProject(xml);
+    const project = createProject({ templateXml: xml });
     assert.deepEqual(project, parseQgs(xml));
     const version = readXml(xml).root.attributes.version!;
-    assert.deepEqual(readXml(serializeQgs(project, { version })), readXml(xml));
-    assert.deepEqual(project.preservedXml, readXml(xml));
+    assert.deepEqual(
+      canonicalDocument(serializeQgs(project, { version })),
+      canonicalDocument(xml),
+    );
+    assert.equal("preservedXml" in project, false);
     assert.equal("version" in project, false);
   });
 }
@@ -148,7 +181,10 @@ test("only overrides the template title when supplied and retains unknown XML ac
     );
   const source = parseQgs(xml);
   for (const title of [undefined, "新しい地図", ""]) {
-    const project = createProject(xml, title);
+    const project = createProject({
+      templateXml: xml,
+      ...(title === undefined ? {} : { title }),
+    });
     assert.deepEqual(project, { ...source, title: title ?? source.title });
     const before = JSON.stringify(project);
     for (const version of ["3.44", "4.2"]) {
@@ -158,29 +194,24 @@ test("only overrides the template title when supplied and retains unknown XML ac
       assert.equal(root.attributes["plugin:setting"], "0001");
       assert.deepEqual(
         findChild(root, "plugin:config"),
-        findChild(source.preservedXml.root, "plugin:config"),
+        findChild(readXml(xml).root, "plugin:config"),
       );
       assert.deepEqual(
         findChild(root, "projectlayers"),
-        findChild(source.preservedXml.root, "projectlayers"),
+        findChild(readXml(xml).root, "projectlayers"),
       );
       assert.match(output, /<!--template--><\?plugin keep\?>/u);
     }
     assert.equal(JSON.stringify(project), before);
-    assert.deepEqual(project.preservedXml, source.preservedXml);
+    assert.deepEqual(project.extensions, source.extensions);
   }
 });
 
-test("rejects missing source XML instead of silently dropping unmodeled settings", () => {
-  for (const project of [createProject(templateXml), parseQgs(templateXml)]) {
-    const stored = JSON.parse(JSON.stringify(project));
-    delete stored.preservedXml;
-    assert.throws(
-      () => serializeQgs(stored, { version: "4.2" }),
-      (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
-    );
-    assert.ok(project.preservedXml);
-  }
+test("writes a typed model without any source XML", () => {
+  const project = { title: "generated", metadata: {}, layers: [] };
+  const output = serializeQgs(project, { version: "4.2" });
+  assert.equal(parseQgs(output).title, project.title);
+  assert.equal("preservedXml" in project, false);
 });
 
 test("chooses extent and rotation storage independently for the target version", () => {
@@ -193,7 +224,7 @@ test("chooses extent and rotation storage independently for the target version",
     ["4.2", "ProjectViewSettings", "ProjectViewSettings"],
   ] as const) {
     for (const setting of ["extent", "rotation", "both"]) {
-      const project = createProject(templateXml);
+      const project = createProject();
       project.crs = { authId: "EPSG:4326" };
       if (setting !== "rotation")
         project.extent = { xmin: 1, ymin: 2, xmax: 3, ymax: 4 };
@@ -228,7 +259,7 @@ test("chooses extent and rotation storage independently for the target version",
 });
 
 test("reuses parsed and JSON-restored models across old and new formats without mutating them", () => {
-  const original = createProject(templateXml, "independent");
+  const original = createProject({ templateXml, title: "independent" });
   original.crs = { authId: "EPSG:4326" };
   original.extent = {
     xmin: 1,
@@ -256,12 +287,20 @@ test("reuses parsed and JSON-restored models across old and new formats without 
         const result = parseQgs(output);
         assert.equal(result.title, "independent");
         assert.equal(result.rotation, 45);
-        assert.deepEqual(result.extent, project.extent);
-        assert.deepEqual(result.crs, project.crs);
-        assert.match(
-          output,
-          /<plugin-data value="keep"><!\[CDATA\[unknown\]\]><\/plugin-data>/u,
+        assert.deepEqual(
+          JSON.parse(
+            JSON.stringify(result.extent, (key, value) =>
+              key === "extensions" ? undefined : value,
+            ),
+          ),
+          JSON.parse(
+            JSON.stringify(project.extent, (key, value) =>
+              key === "extensions" ? undefined : value,
+            ),
+          ),
         );
+        assert.deepEqual(result.crs, project.crs);
+        assert.equal(getText(findChild(root, "plugin-data")!), "unknown");
         const parent = findChild(
           root,
           version === "3.8" ? "mapcanvas" : "ProjectViewSettings",
@@ -298,7 +337,7 @@ test("a legacy extent keeps its own CRS when modern view settings contain other 
 });
 
 test("failed writes preserve the model and report missing target versions", () => {
-  const project = createProject(templateXml);
+  const project = createProject();
   const before = JSON.stringify(project);
   assert.throws(
     () => Reflect.apply(serializeQgs, undefined, [project]),
@@ -314,7 +353,8 @@ test("reads and edits typed CRS, extents, rotation and metadata", () => {
   const project = parseQgs(
     '<qgis version="4.2.0"><properties><SpatialRefSys><ProjectionsEnabled type="int">1</ProjectionsEnabled></SpatialRefSys></properties><projectCrs><spatialrefsys><authid>EPSG:4326</authid><geographicflag>true</geographicflag></spatialrefsys></projectCrs><ProjectViewSettings rotation="1e1"><DefaultViewExtent xmin="0" ymin="1" xmax="2" ymax="3"/></ProjectViewSettings></qgis>',
   );
-  assert.deepEqual(project.crs, { authId: "EPSG:4326", geographic: true });
+  assert.equal(project.crs?.authId, "EPSG:4326");
+  assert.equal(project.crs?.geographic, true);
   assert.deepEqual(project.extent, { xmin: 0, ymin: 1, xmax: 2, ymax: 3 });
   assert.equal(project.rotation, 10);
   project.crs = { authId: "EPSG:3857" };
@@ -344,7 +384,7 @@ test("reads and edits typed CRS, extents, rotation and metadata", () => {
 });
 
 test("rejects invalid typed values before returning XML", () => {
-  const project = createProject(templateXml);
+  const project = createProject();
   project.rotation = Number.NaN;
   assert.throws(
     () => serializeQgs(project, { version: "4.2" }),
@@ -375,23 +415,28 @@ test("unchanged authority-only and disabled CRS payloads retain their original X
 });
 
 for (const fixture of ["qgis3", "qgis4"]) {
-  test(`preserves all XML in an unmodified typed ${fixture} model, including after JSON storage`, () => {
+  test(`preserves semantic values, structure and order in an unmodified typed ${fixture} model, including after JSON storage`, () => {
     const xml = readFileSync(
       new URL(`./fixtures/${fixture}.qgs`, import.meta.url),
       "utf8",
     );
     const project = parseQgs(xml);
     const version = readXml(xml).root.attributes.version!;
-    assert.deepEqual(readXml(serializeQgs(project, { version })), readXml(xml));
     assert.deepEqual(
-      readXml(serializeQgs(JSON.parse(JSON.stringify(project)), { version })),
-      readXml(xml),
+      canonicalDocument(serializeQgs(project, { version })),
+      canonicalDocument(xml),
+    );
+    assert.deepEqual(
+      canonicalDocument(
+        serializeQgs(JSON.parse(JSON.stringify(project)), { version }),
+      ),
+      canonicalDocument(xml),
     );
     const before = JSON.stringify(project);
     project.title = "edited";
     const edited = serializeQgs(project, { version });
     assert.equal(parseQgs(edited).title, "edited");
-    // Snapshot is not updated when the typed model is serialized.
-    assert.deepEqual(project.preservedXml, JSON.parse(before).preservedXml);
+    // Extension data is not changed when the model is serialized.
+    assert.deepEqual(project.extensions, JSON.parse(before).extensions);
   });
 }

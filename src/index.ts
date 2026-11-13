@@ -2,6 +2,7 @@ export type { QgsErrorCode } from "./errors.ts";
 export { QgsError } from "./errors.ts";
 export { createProject, parseQgs, serializeQgs } from "./project.ts";
 export type {
+  CreateProjectOptions,
   QgisVersion,
   QgsCheckState,
   QgsCrs,
