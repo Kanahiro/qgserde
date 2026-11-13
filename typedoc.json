@@ -4,6 +4,7 @@
   "out": "docs/api",
   "readme": "docs/index.md",
   "name": "qgserde",
+  "includeVersion": true,
   "lang": "en",
   "excludeInternal": true,
   "excludePrivate": true,
