@@ -1,28 +1,45 @@
-# 公開タイルの入出力サンプル
+# Tile gallery
 
-`tile-gallery.qgs` はqgserdeの型付きモデルから生成するQGIS 4.2形式のサンプルです。
-`tile-gallery-3.44.qgs`、`tile-gallery-4.0.qgs`、`tile-gallery-4.2.qgs` も同時に生成します。
+The gallery shows how to build a QGIS project with raster tiles, vector tiles,
+nested groups, and multiple tree references to the same layer.
 
-- ラスター22レイヤー：OpenStreetMap、OpenTopoMap、CyclOSM、国土地理院、Natural Earth。
-- ベクタータイル5レイヤー：OpenFreeMapのLiberty、Bright、Positron、Dark、Fiord。
-- 初期表示はOpenStreetMap Standardのみ。初期範囲は東京周辺。
-- 提供元・用途・年代別の多階層グループと、同一レイヤーの別グループへの参照を含みます。
+`tile-gallery.qgs` targets QGIS 4.2. The generator also writes
+`tile-gallery-3.44.qgs`, `tile-gallery-4.0.qgs`, and `tile-gallery-4.2.qgs`.
 
-生成・検証にネットワークやQGISのインストールは不要です。
+- 22 raster layers from OpenStreetMap, OpenTopoMap, CyclOSM, the Geospatial
+  Information Authority of Japan (GSI), and Natural Earth.
+- Five OpenFreeMap vector-tile layers: Liberty, Bright, Positron, Dark, and Fiord.
+- OpenStreetMap Standard is the only layer visible on load. The initial extent
+  covers Tokyo.
+- Nested groups organize layers by provider, use, and date. Comparison groups
+  reference some of the same layers again.
+
+## Generate the projects
 
 ```sh
 node examples/create-tile-gallery.ts
 pnpm test
 ```
 
-テストではレイヤー種別・参照整合性・OSMのみの初期表示と、パース→出力→再パース後のモデル一致を確認します。ベクタータイルのスタイルURLは接続情報として記録しています。QGISによるタイル取得・スタイル変換・描画は検証していません。
+Generation and unit tests need no network access or QGIS installation. Tests
+check layer types, reference integrity, initial visibility, and model equality
+after parsing, writing, and parsing again.
 
-ベクタータイルには、QGIS 3.44でも読み込めるよう基本のポリゴン・線・点のレンダラーを出力します。各名称の配色はスタイルURLを読み込むまでは適用されません。GitHub ActionsではQGIS 3.44・4.0・4.2の公式Dockerイメージで、全レイヤーの有効性、シンボル、ツリー参照、OSMのみの初期表示と再出力後の読み込みを検証します。
+Vector tiles include basic polygon, line, and point renderers readable by QGIS
+3.44. Style URLs are recorded in the connection settings; the named color
+schemes apply only after a style is loaded. Tests do not fetch tiles, convert
+remote styles, or render maps. CI also opens the projects in QGIS 3.44, 4.0, and
+4.2 to check layer validity, symbols, references, and visibility.
 
-接続URL、ズーム範囲、出典は `create-tile-gallery.ts` の `tileSources` にまとめています。出典一覧はプロジェクトの概要にも記録しています。公開サービスの利用条件や提供範囲は各提供元を確認してください。
+## Tile sources
+
+Connection URLs, zoom ranges, and credits are listed in `tileSources` in
+[create-tile-gallery.ts](create-tile-gallery.ts). Credits are also written into
+the project's abstract. Check each provider's coverage and usage terms before
+using its service.
 
 - [OpenStreetMap](https://www.openstreetmap.org/copyright)
 - [OpenTopoMap](https://opentopomap.org/about)
 - [CyclOSM](https://www.cyclosm.org/)
-- [国土地理院](https://maps.gsi.go.jp/development/ichiran.html)
+- [GSI](https://maps.gsi.go.jp/development/ichiran.html)
 - [OpenFreeMap](https://openfreemap.org/)

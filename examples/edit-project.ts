@@ -7,11 +7,11 @@ if (!input || !output || !version)
     "Usage: node examples/edit-project.ts input.qgs output.qgs <QGIS version>",
   );
 const project = parseQgs(await readFile(input, "utf8"));
-project.title = "札幌の地図";
+project.title = "Sapporo";
 project.layers.push({
   type: "vector",
   id: "qgserde_cities_001",
-  name: "都市",
+  name: "Cities",
   provider: "memory",
   source: "Point?crs=EPSG:4326&field=name:string",
   crs: { authId: "EPSG:4326" },

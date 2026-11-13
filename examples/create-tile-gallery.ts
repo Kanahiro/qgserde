@@ -25,7 +25,7 @@ interface TileSource {
 const osmCredit =
   "© OpenStreetMap contributors — https://www.openstreetmap.org/copyright";
 const gsiWebsite = "https://maps.gsi.go.jp/development/ichiran.html";
-const gsiCredit = `地理院タイル / 国土地理院 — ${gsiWebsite}`;
+const gsiCredit = `GSI Tiles / Geospatial Information Authority of Japan — ${gsiWebsite}`;
 
 function gsi(
   id: string,
@@ -46,36 +46,40 @@ function gsi(
     maxZoom,
     attribution: gsiCredit + (extraCredit ? ` / ${extraCredit}` : ""),
     website: gsiWebsite,
-    groups: ["02 日本 / 国土地理院", ...groups],
+    groups: ["02 Japan / GSI", ...groups],
   };
 }
 
 export const tileSources: TileSource[] = [
   {
     id: "osm_standard",
-    name: "OpenStreetMap Standard — 初期表示",
+    name: "OpenStreetMap Standard — initially visible",
     type: "raster",
     url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     minZoom: 0,
     maxZoom: 19,
     attribution: osmCredit,
     website: "https://operations.osmfoundation.org/policies/tiles/",
-    groups: ["01 世界 / OSM系ラスター", "基本地図", "OpenStreetMap"],
+    groups: ["01 World / OSM raster tiles", "Base maps", "OpenStreetMap"],
   },
   {
     id: "opentopomap",
-    name: "OpenTopoMap — 地形・等高線",
+    name: "OpenTopoMap — terrain and contours",
     type: "raster",
     url: "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
     minZoom: 0,
     maxZoom: 17,
     attribution: `${osmCredit} / SRTM / © OpenTopoMap (CC-BY-SA)`,
     website: "https://opentopomap.org/",
-    groups: ["01 世界 / OSM系ラスター", "地形・アウトドア", "地形図"],
+    groups: [
+      "01 World / OSM raster tiles",
+      "Terrain and outdoors",
+      "Topographic maps",
+    ],
   },
   {
     id: "cyclosm_base",
-    name: "CyclOSM — 自転車地図",
+    name: "CyclOSM — cycling map",
     type: "raster",
     url: "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
     minZoom: 0,
@@ -83,15 +87,15 @@ export const tileSources: TileSource[] = [
     attribution: `${osmCredit} / © CyclOSM / OpenStreetMap France`,
     website: "https://www.cyclosm.org/",
     groups: [
-      "01 世界 / OSM系ラスター",
-      "地形・アウトドア",
-      "自転車",
-      "ベースマップ",
+      "01 World / OSM raster tiles",
+      "Terrain and outdoors",
+      "Cycling",
+      "Base maps",
     ],
   },
   {
     id: "cyclosm_lite",
-    name: "CyclOSM Lite — 自転車オーバーレイ",
+    name: "CyclOSM Lite — cycling overlay",
     type: "raster",
     url: "https://a.tile-cyclosm.openstreetmap.fr/cyclosm-lite/{z}/{x}/{y}.png",
     minZoom: 0,
@@ -99,97 +103,103 @@ export const tileSources: TileSource[] = [
     attribution: `${osmCredit} / © CyclOSM / OpenStreetMap France`,
     website: "https://www.cyclosm.org/",
     groups: [
-      "01 世界 / OSM系ラスター",
-      "地形・アウトドア",
-      "自転車",
-      "重ね合わせ",
+      "01 World / OSM raster tiles",
+      "Terrain and outdoors",
+      "Cycling",
+      "Overlays",
     ],
   },
-  gsi("std", "地理院タイル 標準地図", 2, 18, ["ベースマップ", "地図"]),
-  gsi("pale", "地理院タイル 淡色地図", 2, 18, ["ベースマップ", "地図"]),
-  gsi("blank", "地理院タイル 白地図", 5, 14, ["ベースマップ", "地図"]),
-  gsi("english", "GSI English — 英語地図", 2, 11, ["ベースマップ", "地図"]),
+  gsi("std", "GSI Standard", 2, 18, ["Base maps", "Maps"]),
+  gsi("pale", "GSI Pale", 2, 18, ["Base maps", "Maps"]),
+  gsi("blank", "GSI Blank", 5, 14, ["Base maps", "Maps"]),
+  gsi("english", "GSI English", 2, 11, ["Base maps", "Maps"]),
   gsi(
     "seamlessphoto",
-    "全国最新写真（シームレス）",
+    "GSI Seamless Photo — latest imagery",
     2,
     18,
-    ["写真", "現在"],
+    ["Imagery", "Current"],
     "jpg",
-    "一部画像：林野庁・地方公共団体・NASA/USGS・Axelspace",
+    "Some imagery: Forestry Agency, local governments, NASA/USGS, Axelspace",
   ),
   gsi(
     "gazo4",
-    "空中写真 1987–1990年",
+    "Aerial imagery 1987–1990",
     10,
     17,
-    ["写真", "年代別", "昭和後期"],
+    ["Imagery", "Historical", "Late Showa period"],
     "jpg",
   ),
   gsi(
     "gazo3",
-    "空中写真 1984–1986年",
+    "Aerial imagery 1984–1986",
     10,
     17,
-    ["写真", "年代別", "昭和後期"],
+    ["Imagery", "Historical", "Late Showa period"],
     "jpg",
   ),
   gsi(
     "gazo2",
-    "空中写真 1979–1983年",
+    "Aerial imagery 1979–1983",
     10,
     17,
-    ["写真", "年代別", "昭和中期"],
+    ["Imagery", "Historical", "Mid-Showa period"],
     "jpg",
   ),
   gsi(
     "gazo1",
-    "空中写真 1974–1978年",
+    "Aerial imagery 1974–1978",
     10,
     17,
-    ["写真", "年代別", "昭和中期"],
+    ["Imagery", "Historical", "Mid-Showa period"],
     "jpg",
   ),
   gsi(
     "relief",
-    "色別標高図",
+    "Elevation tint map",
     5,
     15,
-    ["地形", "標高・陰影"],
+    ["Terrain", "Elevation and hillshade"],
     "png",
-    "海域部は海上保安庁海洋情報部の資料を使用して作成",
+    "Marine areas use data from the Japan Coast Guard Hydrographic and Oceanographic Department",
   ),
-  gsi("hillshademap", "陰影起伏図", 2, 16, ["地形", "標高・陰影"]),
-  gsi("earthhillshade", "陰影起伏図（全球版・z0–8）", 0, 8, [
-    "地形",
-    "標高・陰影",
+  gsi("hillshademap", "Hillshade", 2, 16, [
+    "Terrain",
+    "Elevation and hillshade",
   ]),
-  gsi("slopemap", "傾斜量図", 3, 15, ["地形", "傾斜・雪崩関連"]),
-  gsi("slopezone1map", "全国傾斜量区分図（雪崩関連）", 3, 15, [
-    "地形",
-    "傾斜・雪崩関連",
+  gsi("earthhillshade", "Global hillshade (z0–8)", 0, 8, [
+    "Terrain",
+    "Elevation and hillshade",
   ]),
-  gsi("sekishoku", "赤色立体地図", 2, 14, ["地形", "立体表現"]),
-  gsi("anaglyphmap_color", "アナグリフ（カラー）", 2, 16, [
-    "地形",
-    "立体表現",
-    "アナグリフ",
+  gsi("slopemap", "Slope map", 3, 15, [
+    "Terrain",
+    "Slope and avalanche assessment",
   ]),
-  gsi("anaglyphmap_gray", "アナグリフ（グレー）", 2, 16, [
-    "地形",
-    "立体表現",
-    "アナグリフ",
+  gsi("slopezone1map", "Slope classification — avalanche assessment", 3, 15, [
+    "Terrain",
+    "Slope and avalanche assessment",
+  ]),
+  gsi("sekishoku", "Red Relief Image Map", 2, 14, ["Terrain", "3D relief"]),
+  gsi("anaglyphmap_color", "Anaglyph (color)", 2, 16, [
+    "Terrain",
+    "3D relief",
+    "Anaglyph",
+  ]),
+  gsi("anaglyphmap_gray", "Anaglyph (grayscale)", 2, 16, [
+    "Terrain",
+    "3D relief",
+    "Anaglyph",
   ]),
   {
     id: "natural_earth",
-    name: "Natural Earth — 世界の地形（z0–6）",
+    name: "Natural Earth — global relief (z0–6)",
     type: "raster",
     url: "https://tiles.openfreemap.org/natural_earth/ne2sr/{z}/{x}/{y}.png",
     minZoom: 0,
     maxZoom: 6,
     attribution: "Natural Earth (public domain) / OpenFreeMap",
     website: "https://www.naturalearthdata.com/about/terms-of-use/",
-    groups: ["03 世界 / 小縮尺", "Natural Earth"],
+    groups: ["03 World / small scale", "Natural Earth"],
   },
   ...["liberty", "bright", "positron", "dark", "fiord"].map(
     (style): TileSource => ({
@@ -203,10 +213,10 @@ export const tileSources: TileSource[] = [
       attribution: `${osmCredit} / © OpenMapTiles / OpenFreeMap`,
       website: "https://openfreemap.org/quick_start/",
       groups: [
-        "04 ベクタータイル",
+        "04 Vector tiles",
         "OpenFreeMap",
         "OpenMapTiles",
-        ["dark", "fiord"].includes(style) ? "暗色" : "明色・標準",
+        ["dark", "fiord"].includes(style) ? "Dark" : "Light and standard",
       ],
     }),
   ),
@@ -235,7 +245,7 @@ function reference(layerId: string, checked = false): QgsLayerTreeLayer {
 }
 
 export function createTileTree(): QgsLayerTreeGroup {
-  const root = group("公開タイル比較");
+  const root = group("Tile gallery");
   root.checked = "checked";
   root.expanded = true;
   for (const source of tileSources) {
@@ -259,19 +269,19 @@ export function createTileTree(): QgsLayerTreeGroup {
     parent.children.push(reference(source.id, isOsm));
   }
   root.children.push(
-    group("05 比較実験 / 同じレイヤーへの別参照", [
-      group("地形と写真", [
-        group("標高の見え方", [
+    group("05 Comparisons / repeated references", [
+      group("Terrain and imagery", [
+        group("Elevation views", [
           reference("gsi_relief_layer"),
           reference("gsi_hillshademap_layer"),
         ]),
-        group("写真", [reference("gsi_seamlessphoto_layer")]),
+        group("Imagery", [reference("gsi_seamlessphoto_layer")]),
       ]),
-      group("明色と暗色", [
+      group("Light and dark", [
         reference("openfreemap_positron"),
         reference("openfreemap_dark"),
       ]),
-      group("自転車を重ねる", [reference("cyclosm_lite")]),
+      group("Cycling overlay", [reference("cyclosm_lite")]),
     ]),
   );
   root.customOrder = {
@@ -284,7 +294,7 @@ export function createTileTree(): QgsLayerTreeGroup {
 export function createTileGallery(templateXml: string): QgsProject {
   const project = createProject({
     templateXml,
-    title: "公開タイル比較 — Raster × Vector",
+    title: "Tile gallery — raster and vector",
   });
   project.layers = tileSources.map((tile) => {
     const parameters = new URLSearchParams({
@@ -309,7 +319,7 @@ export function createTileGallery(templateXml: string): QgsProject {
   });
   project.metadata.author = "qgserde example";
   project.metadata.abstract = [
-    "qgserdeの入出力確認用。初期表示はOSM Standardのみ。",
+    "qgserde tile gallery. Only OpenStreetMap Standard is visible on load.",
     ...new Set(tileSources.map((tile) => tile.attribution)),
   ].join("\n");
   project.crs = { authId: "EPSG:3857" };

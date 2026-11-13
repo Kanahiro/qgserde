@@ -58,203 +58,203 @@ export interface XmlDocument {
 }
 
 /**
- * バージョンに依存しない、編集可能なプロジェクトモデル。
+ * An editable project model, independent of the QGIS version used to read it.
  *
- * 型付きプロパティが編集内容の正本です。JSON保存時は未モデル化の設定を保持する
- * 拡張データと順序情報も残してください。出力先は {@link serializeQgs} で指定します。
+ * Edit the typed properties and choose a target version with {@link serializeQgs}.
+ * When storing the model as JSON, keep its internal extension and order data.
  */
 export interface QgsProject {
-  /** プロジェクトのタイトル。編集するとQGISの複数のタイトル保存先を同期します。 */
+  /** Project title. Edits synchronize the title locations used by QGIS. */
   title: string;
-  /** レイヤー一覧。追加・削除は書き出し時にツリー参照と描画順へ反映します。 */
+  /** Project layers. Additions and removals update tree and drawing-order references on serialization. */
   layers: QgsMapLayer[];
-  /** タイトル以外のプロジェクトメタデータ。 */
+  /** Descriptive metadata, excluding the project title. */
   metadata: QgsProjectMetadata;
-  /** 水平CRS。削除するとプロジェクトの投影を無効にします。 */
+  /** Horizontal CRS. Removing an active CRS disables project projection. */
   crs?: QgsCrs;
-  /** 垂直CRS。出力先QGISが対応している場合に利用できます。 */
+  /** Vertical CRS, for use with QGIS versions that support it. */
   verticalCrs?: QgsCrs;
-  /** QGISのプロジェクトホームパス。ファイルのパス変換は行いません。 */
+  /** Project home path, passed to QGIS without rewriting file paths. */
   homePath?: string;
-  /** 初期表示範囲。範囲自体のCRSを指定できます。 */
+  /** Default view extent, with an optional CRS of its own. */
   extent?: QgsReferencedRectangle;
-  /** 初期表示の時計回りの回転角（度）。有限の数値を指定します。 */
+  /** Default clockwise view rotation in degrees. Must be finite. */
   rotation?: number;
-  /** レイヤーの表示階層。テンプレートに含まれる場合はその階層を引き継ぎます。 */
+  /** Layer tree. A project created from a template inherits its tree. */
   layerTree?: QgsLayerTreeGroup;
-  /** レイヤーIDによる描画順。配列から削除されたレイヤーは出力時に除外します。 */
+  /** Drawing order as layer IDs. Removed project layers are excluded on serialization. */
   layerOrder?: string[];
   /** @internal Unmodeled values and ordering slots; never an original XML document. */
   readonly extensions?: QgsExtensions;
 }
 
 /**
- * CRSの識別子と定義。authority IDだけでも指定できます。
+ * CRS identifier and definition. An authority ID alone is sufficient.
  *
- * 定義を変更するときは `{ authId: "EPSG:3857" }` のようにオブジェクト全体を
- * 置き換えると、読み取り元のWKTやPROJ定義を引き継ぎません。
+ * To change the definition, replace the whole object, for example with
+ * `{ authId: "EPSG:3857" }`, so old WKT or PROJ values are not carried over.
  */
 export interface QgsCrs {
   /** @internal Provenance needed to distinguish authority lookup from an unchanged legacy CRS. */
   readonly extensions?: QgsExtensions;
-  /** authority ID。例: `EPSG:4326`。 */
+  /** Authority ID, such as `EPSG:4326`. */
   authId?: string;
-  /** Well-Known TextによるCRS定義。 */
+  /** CRS definition in Well-Known Text. */
   wkt?: string;
-  /** PROJ文字列によるCRS定義。 */
+  /** CRS definition as a PROJ string. */
   proj4?: string;
-  /** CRSの説明・表示名。 */
+  /** CRS description or display name. */
   description?: string;
-  /** 読み取り元のQGIS内部CRS ID。authority IDのみの指定では省略できます。 */
+  /** QGIS internal CRS ID from the input. Optional when assigning an authority ID. */
   srsId?: number;
-  /** 読み取り元の空間参照ID。 */
+  /** Spatial reference ID from the input. */
   srid?: number;
-  /** 地理座標系かどうかを示すQGISのフラグ。 */
+  /** QGIS flag indicating whether this is a geographic CRS. */
   geographic?: boolean;
-  /** QGISの投影法略称。 */
+  /** QGIS projection acronym. */
   projectionAcronym?: string;
-  /** QGISの楕円体略称。 */
+  /** QGIS ellipsoid acronym. */
   ellipsoidAcronym?: string;
-  /** 読み取り元のCRS定義形式を示すQGIS属性。 */
+  /** QGIS attribute identifying the source CRS definition format. */
   nativeFormat?: string;
 }
 
-/** CRSの座標単位で表す矩形。各座標には有限の数値を指定します。 */
+/** Rectangle in CRS coordinate units. All coordinates must be finite. */
 export interface QgsRectangle {
-  /** X座標の下限。 */
+  /** Minimum x coordinate. */
   xmin: number;
-  /** Y座標の下限。 */
+  /** Minimum y coordinate. */
   ymin: number;
-  /** X座標の上限。 */
+  /** Maximum x coordinate. */
   xmax: number;
-  /** Y座標の上限。 */
+  /** Maximum y coordinate. */
   ymax: number;
 }
 
-/** CRSを持つ表示範囲。座標の再投影は行いません。 */
+/** View extent with an optional CRS. Coordinates are not reprojected. */
 export interface QgsReferencedRectangle extends QgsRectangle {
-  /** この範囲のCRS。新規の表示範囲で省略するとプロジェクトCRSを使います。 */
+  /** Extent CRS. A new extent without one uses the project CRS. */
   crs?: QgsCrs;
 }
 
-/** プロジェクトの記述情報。タイトルは {@link QgsProject.title} に集約します。 */
+/** Descriptive metadata. The title is stored in {@link QgsProject.title}. */
 export interface QgsProjectMetadata {
-  /** プロジェクトのメタデータ識別子。 */
+  /** Project metadata identifier. */
   identifier?: string;
-  /** 親となるリソースの識別子。 */
+  /** Identifier of the parent resource. */
   parentIdentifier?: string;
-  /** メタデータの言語コード。 */
+  /** Metadata language code. */
   language?: string;
-  /** リソースの種別。 */
+  /** Resource type. */
   type?: string;
-  /** プロジェクトの概要。 */
+  /** Project abstract. */
   abstract?: string;
-  /** 作成者名。 */
+  /** Author name. */
   author?: string;
-  /** 作成日時の文字列表現。Dateへの変換やタイムゾーン補正は行いません。 */
+  /** Creation date and time as stored. No Date conversion or timezone adjustment is performed. */
   creationDateTime?: string;
 }
 
-/** ツリーのチェック状態。`partial`は一部の子がチェックされている状態です。 */
+/** Tree check state. `partial` means that only some children are checked. */
 export type QgsCheckState = "checked" | "unchecked" | "partial";
 
-/** レイヤーと子グループをまとめる表示階層。ルートもこの型です。 */
+/** Group of layers and child groups in display order. Also used for the root. */
 export interface QgsLayerTreeGroup {
-  /** グループノードを識別する値。 */
+  /** Discriminant for a group node. */
   type: "group";
-  /** グループの表示名。 */
+  /** Group display name. */
   name: string;
-  /** ツリーUIで展開するかどうか。 */
+  /** Whether the node is expanded in the layer tree. */
   expanded: boolean;
-  /** グループのチェック状態。 */
+  /** Group check state. */
   checked: QgsCheckState;
-  /** 表示順に並んだ子ノード。同じレイヤーへの複数の参照も可能です。 */
+  /** Children in display order. A layer may be referenced more than once. */
   children: QgsLayerTreeNode[];
-  /** ツリーの並びから独立したカスタム描画順。 */
+  /** Custom drawing order, independent of the tree order. */
   customOrder?: {
-    /** カスタム描画順を使用するかどうか。 */
+    /** Whether custom drawing order is enabled. */
     enabled: boolean;
-    /** カスタム描画順に並べたレイヤーID。 */
+    /** Layer IDs in custom drawing order. */
     layerIds: string[];
   };
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
 
-/** レイヤー一覧の1項目をIDで参照する表示ノード。 */
+/** Tree node referencing a project layer by ID. */
 export interface QgsLayerTreeLayer {
-  /** レイヤー参照ノードを識別する値。 */
+  /** Discriminant for a layer reference. */
   type: "layer";
-  /** 参照先の {@link QgsMapLayerBase.id}。 */
+  /** Referenced {@link QgsMapLayerBase.id}. */
   layerId: string;
-  /** ツリーUIで展開するかどうか。 */
+  /** Whether the node is expanded in the layer tree. */
   expanded: boolean;
-  /** レイヤー参照のチェック状態。親グループの状態も実際の表示に影響します。 */
+  /** Layer reference check state. Parent group states also affect visibility. */
   checked: QgsCheckState;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
 
-/** `type`でグループとレイヤー参照を判別するツリーノード。 */
+/** Tree node discriminated by `type`: a group or a layer reference. */
 export type QgsLayerTreeNode = QgsLayerTreeGroup | QgsLayerTreeLayer;
 
-/** 全レイヤー種別に共通する設定。データソース自体の編集は行いません。 */
+/** Settings shared by all layer types. Edits do not modify the data source itself. */
 export interface QgsMapLayerBase {
-  /** プロジェクト内で一意かつ空でないID。外部の設定にも参照され得るため維持を推奨します。 */
+  /** Nonempty ID, unique within the project. Keep it stable when other settings reference it. */
   id: string;
-  /** レイヤー名。編集すると対応するツリー参照の名前も更新します。 */
+  /** Layer name. Edits also update matching tree references. */
   name: string;
-  /** プロバイダー固有の接続文字列・URI。存在確認や保存先に応じたパス変換は行いません。 */
+  /** Provider connection string or URI. Source availability is not checked and paths are not rewritten. */
   source: string;
-  /** QGISプロバイダーの識別子。例: `ogr`、`gdal`、`memory`、`wms`。 */
+  /** QGIS provider identifier, such as `ogr`, `gdal`, `memory`, or `wms`. */
   provider: string;
-  /** プロバイダーの文字エンコーディング設定。 */
+  /** Provider character encoding. */
   providerEncoding?: string;
-  /** レイヤーCRS。地理データの座標変換は行いません。 */
+  /** Layer CRS. Assigning it does not transform geographic data. */
   crs?: QgsCrs;
-  /** レイヤーCRSの座標単位による範囲。 */
+  /** Layer extent in its CRS coordinate units. */
   extent?: QgsRectangle;
-  /** レイヤーの不透明度。QGISでは0が透明、1が不透明です。 */
+  /** Layer opacity: 0 is transparent and 1 is opaque in QGIS. */
   opacity?: number;
-  /** QGISのminScale設定（縮尺分母）。適用はscaleBasedVisibilityで制御します。 */
+  /** QGIS `minScale` denominator. Applied when `scaleBasedVisibility` is enabled. */
   minScale?: number;
-  /** QGISのmaxScale設定（縮尺分母）。適用はscaleBasedVisibilityで制御します。 */
+  /** QGIS `maxScale` denominator. Applied when `scaleBasedVisibility` is enabled. */
   maxScale?: number;
-  /** 縮尺に応じた表示制限を有効にするかどうか。 */
+  /** Whether scale-based visibility limits are enabled. */
   scaleBasedVisibility?: boolean;
   /** @internal Unmodeled values and ordering slots. */
   readonly extensions?: QgsExtensions;
 }
 
-/** ベクターレイヤーの設定。属性の値やフィーチャーは含みません。 */
+/** Vector layer settings. Feature data and attribute values are not included. */
 export interface QgsVectorLayer extends QgsMapLayerBase {
-  /** ベクターレイヤーを識別する値。 */
+  /** Discriminant for a vector layer. */
   type: "vector";
-  /** QGISのジオメトリ種別表記。例: `Point`。 */
+  /** QGIS geometry type name, such as `Point`. */
   geometry?: string;
-  /** QGISのWKBジオメトリ型表記。 */
+  /** QGIS WKB geometry type string. */
   wkbType?: string;
-  /** QGIS上で読み取り専用にするかどうか。 */
+  /** Whether the layer is read-only in QGIS. */
   readOnly?: boolean;
-  /** ラベルを有効にするかどうか。ラベル式等の詳細は拡張データに保持します。 */
+  /** Whether labels are enabled. Label expressions and other details stay in extension data. */
   labelsEnabled?: boolean;
-  /** フィールドの表示・入力設定。データソースのスキーマは変更しません。 */
+  /** Field display and input settings. Edits do not change the data source schema. */
   fields: QgsField[];
-  /** ベクターレンダラーの共通設定。 */
+  /** Common vector renderer settings. */
   renderer?: QgsVectorRenderer;
 }
 
-/** ラスターレイヤーとバンドの表示設定。 */
+/** Raster layer and band display settings. */
 export interface QgsRasterLayer extends QgsMapLayerBase {
-  /** ラスターレイヤーを識別する値。 */
+  /** Discriminant for a raster layer. */
   type: "raster";
-  /** ラスターレンダラーの共通設定。 */
+  /** Common raster renderer settings. */
   renderer?: QgsRasterRenderer;
 }
 
-/** 共通プロパティを編集できるその他の既知レイヤー。固有設定は拡張データに保持します。 */
+/** Other recognized layer types. Common settings are editable; type-specific data stays in extensions. */
 export interface QgsOtherLayer extends QgsMapLayerBase {
-  /** レイヤー種別。入力の`pointcloud`も`point-cloud`へ正規化します。 */
+  /** Layer type. The input spelling `pointcloud` is normalized to `point-cloud`. */
   type:
     | "mesh"
     | "vector-tile"
@@ -265,16 +265,16 @@ export interface QgsOtherLayer extends QgsMapLayerBase {
     | "tiled-scene";
 }
 
-/** 未知の種別を保持するレイヤー。既知の種別の型の絞り込みを妨げません。 */
+/** Unrecognized layer type, kept separate so known layer types can still be narrowed. */
 export interface QgsUnknownLayer extends QgsMapLayerBase {
-  /** 未知のレイヤー種別を識別する値。 */
+  /** Discriminant for an unrecognized layer type. */
   type: "unknown";
-  /** 入力XMLの種別名。書き出し時に復元します。 */
+  /** Original XML type name, restored on serialization. */
   xmlType: string;
 }
 
 /**
- * `type`で判別するレイヤーのunion。
+ * Layer union discriminated by `type`.
  *
  * @example
  * ```ts
@@ -289,76 +289,76 @@ export type QgsMapLayer =
   | QgsOtherLayer
   | QgsUnknownLayer;
 
-/** ベクターフィールドの表示・入力設定。フィールドの値は扱いません。 */
+/** Vector field display and input settings, excluding field values. */
 export interface QgsField {
-  /** データソース上のフィールド名。 */
+  /** Field name in the data source. */
   name: string;
-  /** QGISの入力ウィジェット種別。例: `TextEdit`、`Range`。 */
+  /** QGIS editor widget type, such as `TextEdit` or `Range`. */
   editorWidgetType?: string;
-  /** QGIS上の表示用別名。 */
+  /** Display alias in QGIS. */
   alias?: string;
-  /** デフォルト値のQGIS式。文字列として保持し、評価は行いません。 */
+  /** QGIS default-value expression. Stored as a string without evaluation. */
   defaultExpression?: string;
-  /** 更新時にもデフォルト式を適用するかどうか。 */
+  /** Whether the default expression also applies on update. */
   applyDefaultOnUpdate?: boolean;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
 
-/** ベクターレンダラーの共通設定。シンボルや分類ルールの詳細は拡張データに保持します。 */
+/** Common vector renderer settings. Symbol and classification details stay in extension data. */
 export interface QgsVectorRenderer {
-  /** QGISのレンダラー識別子。例: `singleSymbol`、`categorizedSymbol`。 */
+  /** QGIS renderer identifier, such as `singleSymbol` or `categorizedSymbol`. */
   type: string;
-  /** 分類等で使用する属性名または式の文字列。解釈はレンダラーに依存します。 */
+  /** Attribute name or expression used by the renderer. Interpretation depends on its type. */
   attribute?: string;
-  /** シンボルレベルを使用するかどうか。 */
+  /** Whether symbol levels are enabled. */
   symbolLevels?: boolean;
-  /** 描画時のラスター化を強制するかどうか。 */
+  /** Whether to force rasterization during rendering. */
   forceRaster?: boolean;
-  /** レンダラーの基準縮尺（縮尺分母）。無効値の扱いはQGISに依存します。 */
+  /** Renderer reference-scale denominator. QGIS determines how disabled values are interpreted. */
   referenceScale?: number;
 }
 
-/** ラスターレンダラーの共通設定。色変換等の詳細は拡張データに保持します。 */
+/** Common raster renderer settings. Color mapping and other details stay in extension data. */
 export interface QgsRasterRenderer {
-  /** QGISのレンダラー識別子。例: `multibandcolor`。 */
+  /** QGIS renderer identifier, such as `multibandcolor`. */
   type: string;
-  /** レンダラーの不透明度。QGISでは0が透明、1が不透明です。 */
+  /** Renderer opacity: 0 is transparent and 1 is opaque in QGIS. */
   opacity?: number;
-  /** アルファチャンネルに使用するバンド番号。未使用等の特別値はQGISの表記を保持します。 */
+  /** Alpha band number. Special values, including unused-band markers, follow QGIS conventions. */
   alphaBand?: number;
-  /** 単一バンドのレンダラーで使用するバンド番号。通常は1始まりです。 */
+  /** Band for a single-band renderer, usually numbered from 1. */
   band?: number;
-  /** 赤チャンネルに使用するバンド番号。通常は1始まりです。 */
+  /** Red band, usually numbered from 1. */
   redBand?: number;
-  /** 緑チャンネルに使用するバンド番号。通常は1始まりです。 */
+  /** Green band, usually numbered from 1. */
   greenBand?: number;
-  /** 青チャンネルに使用するバンド番号。通常は1始まりです。 */
+  /** Blue band, usually numbered from 1. */
   blueBand?: number;
 }
 
-/** {@link parseQgisVersion} が返す、数値部分と任意のリリース名。 */
+/** Numeric version parts and an optional release name returned by {@link parseQgisVersion}. */
 export interface QgisVersion {
-  /** メジャーバージョン。 */
+  /** Major version. */
   major: number;
-  /** マイナーバージョン。 */
+  /** Minor version. */
   minor: number;
-  /** パッチバージョン。入力で省略されていた場合は0です。 */
+  /** Patch version, defaulting to 0 when omitted in the input. */
   patch: number;
-  /** ハイフンより後のリリース名。例: `Bratislava`。 */
+  /** Release name after the hyphen, such as `Bratislava`. */
   suffix?: string;
 }
 
-/** {@link createProject} の初期設定。すべて省略可能です。 */
+/** Initial settings for {@link createProject}. All options are optional. */
 export interface CreateProjectOptions {
-  /** テンプレートQGS文字列。省略時は空のプロジェクトを作ります。 */
+  /** Template QGS string. Omit it to create an empty project. */
   templateXml?: string;
-  /** タイトル。省略時はテンプレートの値を維持し、テンプレートもなければ空文字列です。 */
+  /** Title override. Defaults to the template title, or an empty string without a template. */
   title?: string;
 }
 
-/** {@link serializeQgs} の出力先設定。呼び出しごとに指定します。 */
+/** Output settings, required on each call to {@link serializeQgs}. */
 export interface SerializeOptions {
-  /** 出力先のQGIS 3/4バージョン。`3.40`は`3.40.0`へ正規化します。 */
+  /** Target QGIS 3 or 4 version. `3.40` is normalized to `3.40.0`. */
   version: string;
 }

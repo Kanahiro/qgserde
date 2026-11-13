@@ -1,75 +1,190 @@
 # qgserde
 
-QGIS 3/4のプロジェクトXML（`.qgs`）をTypeScriptのオブジェクトとして読み取り、編集して書き出すライブラリです。公開APIの関数・型・プロパティをこのサイトで参照できます。
+Read, edit, and write QGIS project files in TypeScript.
 
-## 読み取りと編集
+qgserde exposes a typed model for `.qgs` XML. The model is independent of the
+input QGIS version: choose a target version each time you serialize it. This
+site covers the editing rules and the [public API](https://kanahiro.github.io/qgserde/modules.html).
 
-`parseQgs`で読み取ったモデルは、特定のQGISバージョンに依存しません。`serializeQgs`の呼び出しごとに出力先バージョンを指定します。
+## Read and edit a project
 
 ```ts
 import { parseQgs, serializeQgs } from "qgserde";
 
 const project = parseQgs(qgsXml);
-project.title = "札幌の地図";
+project.title = "Sapporo";
 project.crs = { authId: "EPSG:4326" };
+
 for (const layer of project.layers) {
   layer.opacity = 0.8;
   if (layer.type === "vector") {
+    layer.labelsEnabled = true;
     for (const field of layer.fields) field.alias = field.name;
   }
 }
+
 const qgis3Xml = serializeQgs(project, { version: "3.44" });
 const qgis4Xml = serializeQgs(project, { version: "4.2" });
 ```
 
-## 新規作成
+Your application handles file I/O. Pass decoded Unicode strings to `parseQgs`
+and save the output of `serializeQgs` as UTF-8. An XML declaration, when present,
+is written with UTF-8 encoding.
 
-`createProject({ templateXml?, title? })`で初期設定を指定します。引数自体も省略でき、`createProject()`は空のプロジェクトを作ります。テンプレートを省略した場合は型付きの空のモデルを作り、XMLは保持しません。テンプレートを指定すると、含まれるレイヤー・メタデータ・レイヤーツリー・未知の設定を引き継ぎます。タイトルを省略するとテンプレートのタイトル（テンプレートもなければ空文字列）を維持し、空文字列を渡すと空にします。レイヤーを配列に追加すると、書き出し時にツリー参照も追加されます。
+## Create a project
 
 ```ts
 import { createProject, serializeQgs } from "qgserde";
 
-const empty = createProject();
-const named = createProject({ title: "都市の地図" });
-
-// 任意のtemplateXmlは、QGISで用意したファイル等から読み込んだ文字列
-const project = createProject({ templateXml, title: "都市の地図" });
+const project = createProject({ title: "Cities" });
 project.crs = { authId: "EPSG:4326" };
 project.layers.push({
   type: "vector",
-  id: "cities_001",
-  name: "都市",
+  id: "qgserde_cities_001",
+  name: "Cities",
   provider: "ogr",
   source: "./cities.gpkg|layername=cities",
   crs: { authId: "EPSG:4326" },
   fields: [],
 });
+
 const xml = serializeQgs(project, { version: "4.2" });
 ```
 
-## モデルの扱い
+`createProject()` returns an empty project with an empty title, metadata object,
+layer array, and root tree group. Both options are optional:
 
-- プロジェクト全体は`QgsProject`、レイヤーは`QgsMapLayer`です。レイヤーの`type`でベクター・ラスター等の型を絞り込めます。
-- CRSは`QgsCrs`、範囲は`QgsRectangle`と`QgsReferencedRectangle`で指定します。CRSを変えるときはオブジェクト全体を置き換えると、古いWKT等を引き継ぎません。
-- レイヤーの表示階層は`QgsLayerTreeGroup`、描画順は`QgsProject.layerOrder`で編集します。同じレイヤーをツリー内で複数回参照できます。
-- `QgsField`で別名・入力ウィジェット・デフォルト式を編集できます。フィールドの定義をデータソース自体へ書き込む機能はありません。
-- モデルは`JSON.stringify` / `JSON.parse`で保存・復元できます。書き出しはモデルを変更しません。
+| Option        | Behavior                                                                                        |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| `templateXml` | Read an existing QGS string and inherit its settings, layers, metadata, tree, and unknown data. |
+| `title`       | Set the title. Omit it to keep the template title, or pass `""` to clear it.                    |
 
-## 保持する情報と互換性
+```ts
+const project = createProject({ templateXml, title: "Regional map" });
+```
 
-入力XMLの文字列やツリー全体は保持しません。既知の設定は型付きプロパティへ、未知の値・属性・名前空間・要素の相対位置は内部の`extensions`へ分離します。既知の項目の位置には参照スロットを使い、モデルからXMLを再生成します。レイヤー等の関連参照を更新するための識別情報も保持します。
+A template follows the same validation rules as `parseQgs`. It is decoded into
+the model; its original XML is not retained as a backup.
 
-JSON保存時には`extensions`も残してください。取り除くと未知の値や順序を復元できません。直接編集するAPIは提供しません。`createProject()`で作る空のモデルは元データがないため、この拡張データを必要としません。
+## Work with the model
 
-未編集の値・親子関係・繰り返し要素と未知要素の順序を維持します。引用符・数値表記等の違いは許容しますが、未知の文字列の先頭ゼロ等を数値へ変換しません。未知の子要素を消さずに実行できない値の置換、未モデル化レコードとの名前衝突、独立した表示設定を併存できない旧形式への変換は`INVALID_EDIT`になります。
+`QgsProject` contains ordinary objects and arrays. Identifiers, expressions,
+dates, and data source URIs are strings. Coordinates, scales, and opacity are
+numbers; flags are booleans.
 
-表示範囲・回転などの既知の形式差はコーデックが処理します。プラグイン設定・シンボル・レイアウト等の未モデル化の設定はバージョン間変換を行いません。出力先QGISに存在しない機能を代替することもありません。
+| Type                                      | Settings                                                                               |
+| ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| `QgsProject`                              | Title, layers, CRS, home path, default view, layer tree, and drawing order.            |
+| `QgsProjectMetadata`                      | Identifier, language, author, abstract, creation date, and other descriptive metadata. |
+| `QgsCrs`                                  | Authority ID, WKT, PROJ definition, and QGIS CRS metadata.                             |
+| `QgsRectangle` / `QgsReferencedRectangle` | Numeric bounds and an optional extent CRS.                                             |
+| `QgsVectorLayer`                          | Common layer settings, geometry, labels, fields, and renderer settings.                |
+| `QgsRasterLayer`                          | Common layer settings, renderer opacity, and band selection.                           |
+| `QgsField`                                | Name, editor widget, alias, default expression, and apply-on-update flag.              |
+| `QgsLayerTreeGroup` / `QgsLayerTreeLayer` | Nested groups, layer references, check states, and custom drawing order.               |
 
-レイヤーIDの変更はレイヤーツリーと描画順に反映しますが、リレーション・結合・レイアウト・プラグイン内のID参照は更新しません。これらを持つプロジェクトのIDは維持してください。
+### Layers and fields
 
-## エラー
+Check `layer.type` to narrow the `QgsMapLayer` union. Vector layers expose
+`fields`; raster layers expose band settings through `renderer`. Other recognized
+types are `mesh`, `vector-tile`, `point-cloud`, `plugin`, `annotation`, `group`,
+and `tiled-scene`. An unrecognized type becomes `QgsUnknownLayer`, with its
+original type name in `xmlType`.
 
-`parseQgs`・`serializeQgs`・`parseQgisVersion`の失敗は`QgsError`で通知します。メッセージの文字列ではなく`code`で分類できます。
+Renderer and editor-widget identifiers remain strings because QGIS plugins can
+extend them. Detailed symbols, classification rules, label expressions,
+relations, and layouts are held in extension data. Field settings affect the
+project; they do not change the data source schema or feature values.
+
+Adding a layer to `project.layers` adds a tree reference and an entry in any
+existing drawing-order list when serialized. Removing a layer removes its tree
+and order references. Editing its name, provider, or source updates matching
+tree references. Unedited provider-generated values, such as UIDs, are retained.
+
+Changing a layer ID updates tree and drawing-order references. It does not
+update references inside relations, joins, layouts, or plugin settings. Keep
+layer IDs stable in projects that use those features.
+
+### CRS and view settings
+
+An authority ID is enough to assign a CRS:
+
+```ts
+project.crs = { authId: "EPSG:3857" };
+```
+
+Replace the CRS object when changing its definition so that old WKT or PROJ
+values are not carried over. qgserde handles QGIS's CRS lookup conventions;
+callers do not need its internal CRS database. Assigning `project.crs` also
+enables project projection. Removing an active CRS disables it. A disabled CRS
+read from XML stays in extension data rather than appearing in `project.crs`.
+No geographic data or extent coordinates are reprojected.
+
+`project.extent` can carry its own CRS in `extent.crs`. A new extent without one
+uses the project CRS. Rotation is clockwise, in degrees.
+
+The codec writes the default extent to `ProjectViewSettings` for QGIS 3.10.1
+and later, and rotation there for QGIS 3.28 and later. Older targets use
+`mapcanvas`. Equivalent representations in the input stay synchronized;
+independent view settings retain their own values. A target that cannot
+represent both settings causes `INVALID_EDIT`.
+
+Editing `project.title` updates the root title, metadata title, and
+`projectname` attribute together.
+
+## Preserve data and order
+
+The model separates known properties from unknown values, attributes,
+namespaces, and element positions in internal `extensions`. Positions of known
+items refer back to model properties. Small amounts of identity information
+support reference updates. The original XML string and a complete XML tree are
+not kept in the model.
+
+Unedited values, parent–child relationships, and the order of repeated and
+unknown elements are preserved. Comments, CDATA, and processing instructions
+are retained. Byte-for-byte reproduction is not guaranteed: numeric and boolean
+spelling, quotes, empty-element syntax, entity notation, and XML line-ending
+normalization may differ. Unknown strings, including leading zeros, remain
+strings. Existing whitespace is kept; output is not automatically formatted.
+
+Operations that would erase unknown nested elements, claim conflicting
+unmodeled records, or collapse distinct view settings fail with `INVALID_EDIT`.
+Explicit removal of a modeled object removes that object's associated data.
+
+Models can be stored as JSON:
+
+```ts
+const saved = JSON.stringify(project);
+const restored = JSON.parse(saved);
+const xml = serializeQgs(restored, { version: "4.2" });
+```
+
+Keep `extensions` in stored models. It holds the unknown data and order needed
+for reconstruction and has no public editing API. A newly created empty
+project needs no extension data. Serialization does not mutate the model,
+including when it fails.
+
+## Choose an output version
+
+Pass a QGIS 3 or 4 version to every `serializeQgs` call. `"3.40"` is normalized
+to `"3.40.0"`; release names such as `"3.40.0-Bratislava"` and
+`"4.2.0-Belém do Pará"` are accepted. Missing or malformed versions, and target
+major versions other than 3 or 4, cause `INVALID_VERSION`.
+
+The same model can be written for different versions, including after JSON
+storage. Known properties are encoded for the requested target. Unmodeled
+plugin settings, renderer details, and other features are preserved without
+version conversion. Choosing a version does not guarantee that the target QGIS
+installation supports every feature in the project.
+
+`parseQgisVersion` parses version syntax into `major`, `minor`, `patch`, and an
+optional `suffix`. It defaults a missing patch to zero; the restriction to QGIS
+3 and 4 is enforced by serialization.
+
+## Handle errors
+
+Catch `QgsError` and use its `code` to classify a failure. Messages provide
+context and should not be used for branching.
 
 ```ts
 import { parseQgs, QgsError } from "qgserde";
@@ -82,15 +197,25 @@ try {
 }
 ```
 
-| コード            | 意味                                                                       |
-| ----------------- | -------------------------------------------------------------------------- |
-| `INVALID_XML`     | XMLが不正、または内部DTD・非対応のXMLバージョン・過剰な深さ等を含む        |
-| `INVALID_PROJECT` | ルート・必須属性・モデル化する数値や真偽値等が不正                         |
-| `INVALID_VERSION` | バージョン表記が不正、出力先未指定、または出力先がQGIS 3/4以外             |
-| `INVALID_EDIT`    | データを失う編集・重複ID・循環した構造・有限でない数値等、書き出せない編集 |
+| Code              | Meaning                                                                                               |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `INVALID_XML`     | Malformed XML, unsupported XML syntax, an internal DTD subset, or excessive depth.                    |
+| `INVALID_PROJECT` | Invalid root, missing required attributes, or invalid modeled values.                                 |
+| `INVALID_VERSION` | Invalid version syntax, a missing target, or an unsupported target major version.                     |
+| `INVALID_EDIT`    | An edit that would lose data, duplicate IDs, cycles, non-finite numbers, or other invalid model data. |
 
-## 入出力の範囲
+## Scope and runtime
 
-入力と出力はUnicode文字列で、ファイルI/Oは呼び出し側で行います。XML宣言の文字コードは出力時にUTF-8に揃えます。バイト単位の再現・`.qgz`のZIP・添付ファイル・地理データ・データソースの存在確認・保存先に応じたパス変換は扱いません。
+qgserde handles QGS XML strings. QGZ archives, QGD databases, attachments, and
+geographic data are outside its scope. It does not check data source
+availability or rewrite paths for another project location. It validates XML
+and known properties, rather than the full QGIS schema.
 
-ESM形式で、`structuredClone`を利用できる環境が必要です。ブラウザーではバンドラーを利用してください。
+Only XML 1.0 is supported. External DTDs are never fetched. Internal DTD
+subsets, custom entities, cyclic structures, and XML deeper than 512 levels are
+rejected.
+
+The package is ESM and requires Node.js 24 or later. The library uses no Node.js
+APIs or browser DOM; browser applications need a bundler and `structuredClone`.
+For source setup and QGIS integration tests, see
+[CONTRIBUTING.md](https://github.com/Kanahiro/qgserde/blob/main/CONTRIBUTING.md).

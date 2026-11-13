@@ -2,13 +2,15 @@ import { QgsError } from "./errors.ts";
 import type { QgisVersion } from "./types.ts";
 
 /**
- * QGISのバージョン表記を数値部分とリリース名へ分解します。
+ * Parse a QGIS version into numeric parts and an optional release name.
  *
- * @param value - `3.40`、`3.40.0-Bratislava`等。前後の空白や先頭の`v`は許可しません。
- * @returns パッチ省略時は0、リリース名がある場合はsuffixを含む値。
- * @remarks この関数は表記を解析します。書き出し可能なメジャーバージョンの制限は
- * {@link serializeQgs} で検査します。
- * @throws {@link QgsError} 表記が不正、または数値が安全な整数の範囲外の場合は`INVALID_VERSION`。
+ * @param value - A version such as `3.40` or `3.40.0-Bratislava`. Leading or trailing
+ * whitespace and a leading `v` are not accepted.
+ * @returns Version parts, with a patch of 0 when omitted and a suffix when supplied.
+ * @remarks This function parses syntax. {@link serializeQgs} enforces the supported
+ * output major versions.
+ * @throws {@link QgsError} `INVALID_VERSION` for invalid syntax or numbers outside
+ * the safe integer range.
  * @example
  * ```ts
  * parseQgisVersion("3.40"); // { major: 3, minor: 40, patch: 0 }

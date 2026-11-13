@@ -47,16 +47,17 @@ function readTitle(document: XmlDocument): string {
 }
 
 /**
- * QGSのXMLを、バージョンに依存しない編集可能なモデルへ読み取ります。
+ * Read QGS XML into an editable model independent of the source QGIS version.
  *
- * @param xml - ファイルからデコードしたQGSのUnicode文字列。ZIP形式のQGZは扱いません。
- * @returns 未知の値と順序情報を分離して保持するプロジェクト。元XMLは保持しません。
- * @throws {@link QgsError} XMLが不正な場合は`INVALID_XML`、プロジェクト構造や
- * 値が不正な場合は`INVALID_PROJECT`、バージョン表記が不正な場合は`INVALID_VERSION`。
+ * @param xml - Decoded QGS XML as a Unicode string. QGZ archives are not supported.
+ * @returns A project with typed properties and internal unknown-data and order information.
+ * The original XML is not retained as a backup.
+ * @throws {@link QgsError} `INVALID_XML` for malformed XML, `INVALID_PROJECT` for
+ * invalid project structure or modeled values, or `INVALID_VERSION` for invalid version syntax.
  * @example
  * ```ts
  * const project = parseQgs(qgsXml);
- * project.title = "編集後の地図";
+ * project.title = "Regional map";
  * const xml = serializeQgs(project, { version: "4.2" });
  * ```
  */
@@ -226,20 +227,21 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
 }
 
 /**
- * モデルを指定したQGIS 3/4の形式でXMLに書き出します。
+ * Write a model as QGS XML for a specified QGIS 3 or 4 version.
  *
- * 同じモデルを異なるバージョンへ繰り返し書き出せます。モデルや拡張データを変更しません。
- * 既知の形式差は変換し、未知の値と順序は拡張データから復元します。
- * 出力先QGISにない機能を代替したり、プロジェクト全体の互換性を検証したりはしません。
+ * The same model can be written for different versions without mutation. Known
+ * format differences are converted; unknown data and order are reconstructed
+ * from extensions. Features unavailable in the target QGIS are not substituted,
+ * and compatibility of the entire project is not checked.
  *
- * @param project - 読み取ったモデル、または {@link createProject} で作成したモデル。
- * @param options - 出力先バージョン。省略できません。
- * @returns XML文字列。XML宣言がある場合の文字コード表記はUTF-8です。
- * @throws {@link QgsError} 出力先が不正な場合は`INVALID_VERSION`、重複ID・循環・
- * 有限でない数値・データの意味や構造を失う操作など、書き出せない編集は`INVALID_EDIT`。
+ * @param project - A parsed model or one returned by {@link createProject}.
+ * @param options - Required output version.
+ * @returns XML string. An XML declaration, when present, specifies UTF-8 encoding.
+ * @throws {@link QgsError} `INVALID_VERSION` for an invalid target, or `INVALID_EDIT`
+ * for duplicate IDs, cycles, non-finite numbers, edits that would lose data, or other invalid model data.
  * @example
  * ```ts
- * const project = createProject({ title: "同じ地図" });
+ * const project = createProject({ title: "Regional map" });
  * const qgis3 = serializeQgs(project, { version: "3.44" });
  * const qgis4 = serializeQgs(project, { version: "4.2" });
  * ```
@@ -272,19 +274,20 @@ function emptyTree(): QgsLayerTreeGroup {
 }
 
 /**
- * バージョンに依存しないプロジェクトを作成します。
+ * Create a project independent of any QGIS output version.
  *
- * テンプレート指定時は {@link parseQgs} と同じ規則で読み取り、既知の設定・レイヤー・
- * ツリー・未知のXMLをすべて引き継ぎます。省略時は型付きの空のプロジェクトを作ります。
- * 元XMLのスナップショットは保持しません。ファイルI/Oは呼び出し側で行います。
- * @param options - テンプレートとタイトル。オブジェクト全体も省略できます。
- * @returns 編集可能なモデル。テンプレート省略時は空のレイヤー配列・メタデータ・ルートグループを持ちます。
- * @throws {@link QgsError} テンプレートには {@link parseQgs} と同じ検証を行います。
- * オプションがオブジェクトでない場合やタイトルが文字列でない場合は`INVALID_EDIT`。
+ * A template is read using {@link parseQgs} and supplies its settings, layers,
+ * tree, and unknown data. Without one, the result is an empty typed model.
+ * The original XML is not retained as a backup. File I/O belongs to the caller.
+ *
+ * @param options - Optional template and title override. The object may also be omitted.
+ * @returns An editable model. Without a template, it has empty layers, metadata, and a root tree group.
+ * @throws {@link QgsError} Templates follow the validation rules of {@link parseQgs}.
+ * Invalid options or a non-string title cause `INVALID_EDIT`.
  * @example
  * ```ts
  * const empty = createProject();
- * const project = createProject({ templateXml, title: "新しい地図" });
+ * const project = createProject({ templateXml, title: "Regional map" });
  * project.crs = { authId: "EPSG:4326" };
  * const xml = serializeQgs(project, { version: "4.2" });
  * ```

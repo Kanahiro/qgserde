@@ -1,10 +1,10 @@
 /**
- * エラーの分類。メッセージの文字列に依存せず、{@link QgsError.code} で判定できます。
+ * Error categories available through {@link QgsError.code}.
  *
- * - `INVALID_XML`: 不正なXML、内部DTD、非対応XML形式、過剰な深さ等。
- * - `INVALID_PROJECT`: 不正なルート・必須属性・数値・真偽値等。
- * - `INVALID_VERSION`: 不正なバージョン表記、出力先未指定、対応範囲外の出力先。
- * - `INVALID_EDIT`: 重複ID・循環した構造・データを失う操作等の書き出せない編集。
+ * - `INVALID_XML`: Malformed or unsupported XML, internal DTD subsets, or excessive depth.
+ * - `INVALID_PROJECT`: Invalid root, required attributes, or modeled values.
+ * - `INVALID_VERSION`: Invalid version syntax, a missing target, or an unsupported target major version.
+ * - `INVALID_EDIT`: Duplicate IDs, cycles, edits that would lose data, or other invalid model data.
  */
 export type QgsErrorCode =
   | "INVALID_XML"
@@ -12,18 +12,18 @@ export type QgsErrorCode =
   | "INVALID_VERSION"
   | "INVALID_EDIT";
 
-/** コーデックが通知するエラー。{@link code} で失敗の種類を判別します。 */
+/** Codec error. Use {@link code} to classify the failure. */
 export class QgsError extends Error {
-  /** エラー名。常に`QgsError`です。 */
+  /** Error name, always `QgsError`. */
   override readonly name = "QgsError";
-  /** 機械的に判別できるエラー分類。 */
+  /** Machine-readable error category. */
   readonly code: QgsErrorCode;
 
   /**
-   * 指定した分類のエラーを作成します。
-   * @param code - エラー分類。
-   * @param message - 人間向けの説明。
-   * @param options - 元の例外をcauseとして保持するための標準ErrorOptions。
+   * Create an error with a category and message.
+   * @param code - Error category.
+   * @param message - Description of the failure.
+   * @param options - Standard ErrorOptions, including an optional original cause.
    */
   constructor(code: QgsErrorCode, message: string, options?: ErrorOptions) {
     super(message, options);
