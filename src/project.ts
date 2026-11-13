@@ -52,7 +52,20 @@ function readTitle(document: XmlDocument): string {
   );
 }
 
-/** Deserialize into the QGIS domain model. XML is retained only for unmodeled settings. */
+/**
+ * QGSのXMLを、バージョンに依存しない編集可能なモデルへ読み取ります。
+ *
+ * @param xml - ファイルからデコードしたQGSのUnicode文字列。ZIP形式のQGZは扱いません。
+ * @returns 未モデル化のXMLも内部情報として保持するプロジェクト。
+ * @throws {@link QgsError} XMLが不正な場合は`INVALID_XML`、プロジェクト構造や
+ * 値が不正な場合は`INVALID_PROJECT`、バージョン表記が不正な場合は`INVALID_VERSION`。
+ * @example
+ * ```ts
+ * const project = parseQgs(qgsXml);
+ * project.title = "編集後の地図";
+ * const xml = serializeQgs(project, { version: "4.2" });
+ * ```
+ */
 export function parseQgs(xml: string): QgsProject {
   const document = readXml(xml);
   const root = document.root;
@@ -223,7 +236,25 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
   return document;
 }
 
-/** Serialize typed properties without mutating the model or its XML snapshots. */
+/**
+ * モデルを指定したQGIS 3/4の形式でXMLに書き出します。
+ *
+ * 同じモデルを異なるバージョンへ繰り返し書き出せます。モデルや内部情報を変更しません。
+ * 既知の形式差は変換しますが、未モデル化のXMLはそのまま保持します。
+ * 出力先QGISにない機能を代替したり、プロジェクト全体の互換性を検証したりはしません。
+ *
+ * @param project - 読み取ったモデル、または {@link createProject} で作成したモデル。
+ * @param options - 出力先バージョン。省略できません。
+ * @returns XML文字列。XML宣言がある場合の文字コード表記はUTF-8です。
+ * @throws {@link QgsError} 出力先が不正な場合は`INVALID_VERSION`、重複ID・循環・
+ * 有限でない数値などの書き出せない編集は`INVALID_EDIT`。
+ * @example
+ * ```ts
+ * const project = createProject("同じ地図");
+ * const qgis3 = serializeQgs(project, { version: "3.44" });
+ * const qgis4 = serializeQgs(project, { version: "4.2" });
+ * ```
+ */
 export function serializeQgs(
   project: QgsProject,
   options: SerializeOptions,
@@ -251,6 +282,18 @@ function emptyTree(): QgsLayerTreeGroup {
   };
 }
 
+/**
+ * バージョンを持たない新規プロジェクトを作成します。
+ *
+ * @param title - タイトル。省略時は空文字列。
+ * @returns レイヤー配列とメタデータが空で、空のルートグループを持つモデル。
+ * @example
+ * ```ts
+ * const project = createProject("新しい地図");
+ * project.crs = { authId: "EPSG:4326" };
+ * const xml = serializeQgs(project, { version: "4.2" });
+ * ```
+ */
 export function createProject(title = ""): QgsProject {
   return {
     title,

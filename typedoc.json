@@ -1,0 +1,28 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "readme": "docs/index.md",
+  "name": "qgserde",
+  "lang": "ja",
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "navigationLinks": {
+    "GitHub": "https://github.com/Kanahiro/qgserde"
+  },
+  "validation": {
+    "notDocumented": true,
+    "invalidLink": true,
+    "notExported": true
+  },
+  "requiredToBeDocumented": [
+    "Function",
+    "Class",
+    "Interface",
+    "TypeAlias",
+    "Property",
+    "Constructor"
+  ],
+  "treatWarningsAsErrors": true
+}

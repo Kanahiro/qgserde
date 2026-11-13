@@ -2,6 +2,8 @@
 
 QGIS 3/4のプロジェクトXML（`.qgs`）を、型付きのTypeScriptモデルへデシリアライズし、編集後にXMLへ書き戻すライブラリです。
 
+[APIドキュメント](https://kanahiro.github.io/qgserde/)
+
 ```ts
 import { parseQgs, serializeQgs } from "qgserde";
 
@@ -132,7 +134,15 @@ pnpm check
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm docs:build
 ```
+
+TypeScript 6系を使用します。`pnpm docs:build`で公開APIのHTMLを`docs/api/`へ生成します。
+説明はソースのコメント、入門ページは`docs/index.md`で管理します。公開APIの説明漏れ・
+壊れた参照はドキュメントビルドを失敗させます。生成物はコミットしません。
+
+`Documentation`ワークフローはPRで生成を検証し、`main`へのpush時にGitHub Pagesへ公開します。
+Pagesの公開元はGitHub Actions（`build_type: workflow`）に設定します。
 
 `typecheck`には、不正なプロパティ・値の型や、unionの絞り込みを検証するコンパイル時テストも含みます。QGIS 3/4の実XMLを使って、未変更時の保持、型付きプロパティの編集、JSON保存後の再出力を検証します。GitHub ActionsでもNode.js 24/26でチェックします。
 

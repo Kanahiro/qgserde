@@ -22,6 +22,7 @@
   "packageManager": "pnpm@11.21.0",
   "scripts": {
     "build": "node scripts/clean.ts && tsc -p tsconfig.build.json",
+    "docs:build": "typedoc",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "check": "biome check .",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.6.5",
     "@types/node": "26.6.6",
-    "typescript": "7.0.2"
+    "typedoc": "0.28.20",
+    "typescript": "6.0.3"
   }
 }
