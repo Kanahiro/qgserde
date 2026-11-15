@@ -117,5 +117,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, documentation builds, and QGIS
 integration tests. CI runs on Node.js 24 and 26 and opens generated projects in
 QGIS 3.44, 4.0, and 4.2.
 
-Fixture sources and their licenses are listed in
+## License
+
+qgserde is licensed under the GNU Affero General Public License, version 3 or
+any later version ([AGPL-3.0-or-later](LICENSE)).
+
+Third-party material retains its original license. Fixture sources and their
+licenses are listed in
 [test/fixtures/README.md](test/fixtures/README.md).
