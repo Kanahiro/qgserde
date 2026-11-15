@@ -15,15 +15,18 @@ from qgis.core import (
 
 def check_memory(project):
     assert project.title() == "検証 & 地図", project.title()
+    assert project.crs().isValid(), "invalid project CRS"
     assert project.crs().authid() == "EPSG:4326"
     assert project.viewSettings().defaultRotation() == 15
     extent = project.viewSettings().defaultViewExtent()
+    assert extent.crs().isValid(), "invalid extent CRS"
     assert extent.xMinimum() == 140 and extent.yMaximum() == 45, extent.toString()
     assert extent.crs().authid() == "EPSG:4326"
     layers = list(project.mapLayers().values())
     assert len(layers) == 1, len(layers)
     assert layers[0].isValid(), "invalid memory layer"
     assert layers[0].name() == "都市"
+    assert layers[0].crs().isValid(), "invalid memory layer CRS"
     assert layers[0].crs().authid() == "EPSG:4326"
     assert len(project.layerTreeRoot().findLayers()) == 1
     assert project.layerTreeRoot().findLayers()[0].layer(), (
@@ -34,10 +37,12 @@ def check_memory(project):
 def check_gallery(project):
     layers = list(project.mapLayers().values())
     assert len(layers) == 27, len(layers)
+    assert project.crs().isValid(), "invalid gallery project CRS"
     assert project.crs().authid() == "EPSG:3857"
     vectors = 0
     for layer in layers:
         assert layer.isValid(), (layer.name(), layer.error().summary())
+        assert layer.crs().isValid(), ("invalid layer CRS", layer.name())
         assert layer.crs().authid() == "EPSG:3857", layer.name()
         provider = layer.dataProvider()
         assert provider and provider.isValid(), layer.name()
@@ -80,12 +85,14 @@ def check_gallery(project):
 
 
 def check_wms(project):
+    assert project.crs().isValid(), "invalid WMS project CRS"
     assert project.crs().authid() == "EPSG:6677"
     assert set(project.mapLayers()) == {"states_wms_layer"}
     layer = project.mapLayer("states_wms_layer")
     assert layer.isValid(), layer.error().summary()
     assert layer.providerType() == "wms"
     assert layer.dataProvider().isValid()
+    assert layer.crs().isValid(), "invalid WMS layer CRS"
     assert layer.crs().authid() == "EPSG:3857"
     assert layer.renderer() and layer.renderer().type() == "singlebandcolordata"
     references = project.layerTreeRoot().findLayers()

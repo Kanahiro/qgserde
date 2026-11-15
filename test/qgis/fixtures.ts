@@ -29,7 +29,13 @@ export function writeQgisFixtures(directory: string, version: string): void {
     join(directory, "generated.qgs"),
     serializeQgs(project, { version }),
   );
-  const legacy = parseQgs(serializeQgs(project, { version: "3.8" }));
+  // Incomplete input must get the same authority lookup support as new models.
+  const legacy = parseQgs(
+    serializeQgs(project, { version: "3.8" }).replaceAll(
+      "<srsid>1</srsid>",
+      "",
+    ),
+  );
   writeFileSync(
     join(directory, "converted.qgs"),
     serializeQgs(JSON.parse(JSON.stringify(legacy)), { version }),
@@ -54,7 +60,9 @@ export function writeQgisFixtures(directory: string, version: string): void {
   writeFileSync(join(directory, "gallery.qgs"), gallery);
   writeFileSync(
     join(directory, "gallery-roundtrip.qgs"),
-    serializeQgs(parseQgs(gallery), { version }),
+    serializeQgs(parseQgs(gallery.replaceAll("<srsid>1</srsid>", "")), {
+      version,
+    }),
   );
 
   // A real WMS (not XYZ) exercises GetCapabilities without an external service.
@@ -75,7 +83,12 @@ export function writeQgisFixtures(directory: string, version: string): void {
   writeFileSync(join(directory, "wms.qgs"), wmsXml);
   writeFileSync(
     join(directory, "wms-roundtrip.qgs"),
-    serializeQgs(JSON.parse(JSON.stringify(parseQgs(wmsXml))), { version }),
+    serializeQgs(
+      JSON.parse(
+        JSON.stringify(parseQgs(wmsXml.replaceAll("<srsid>1</srsid>", ""))),
+      ),
+      { version },
+    ),
   );
 }
 

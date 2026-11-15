@@ -16,7 +16,8 @@ import type {
   XmlElement,
   XmlNode,
 } from "./types.ts";
-import { createElement, findChild, findChildren, getText } from "./xml.ts";
+import { sameExtent } from "./view-codec.ts";
+import { createElement, findChild, findChildren } from "./xml.ts";
 
 type Property = {
   property: string[];
@@ -81,16 +82,6 @@ export class ExtensionCodec {
 
   source(owner: object): XmlElement | undefined {
     return this.sources.get(owner);
-  }
-
-  controls(element: XmlElement | undefined, property: string): boolean {
-    const binding = element && this.bindings.get(element);
-    return (
-      !!binding &&
-      [binding.value, binding.guard, ...Object.values(binding.attributes)].some(
-        (value) => value?.property[0] === property,
-      )
-    );
   }
 
   private bind(element: XmlElement): Binding {
@@ -351,7 +342,15 @@ export class ExtensionCodec {
         property: ["customOrder", "enabled"],
       });
       // Item IDs are stable identities for matching extension attributes after reordering.
-    } else this.attribute(element, "id", { property: ["layerId"] });
+    } else {
+      this.attribute(element, "id", { property: ["layerId"] });
+      for (const [attribute, property] of [
+        ["name", "name"],
+        ["source", "source"],
+        ["providerKey", "provider"],
+      ] as const)
+        this.attribute(element, attribute, { property: [property] });
+    }
     this.capture(node, element);
     this.slots.set(element, { kind: "slot", name: element.name });
   }
@@ -363,18 +362,14 @@ export class ExtensionCodec {
     this.attribute(root, "version", { property: ["$version"] });
     for (const parent of [root, findChild(root, "projectMetadata")]) {
       const title = parent && findChild(parent, "title");
-      if (title && getText(title) === project.title)
-        this.value(parent, "title", { property: ["title"], origin: true });
+      if (title) this.value(parent, "title", { property: ["title"] });
     }
-    if (root.attributes.projectname === project.title)
-      this.attribute(root, "projectname", {
-        property: ["title"],
-        origin: true,
-      });
+    this.attribute(root, "projectname", { property: ["title"] });
     const metadata = findChild(root, "projectMetadata");
     for (const [field, tag] of Object.entries(metadataTags))
       this.value(metadata, tag, { property: ["metadata", field] });
     if (project.crs) this.crs(root, "projectCrs", ["crs"]);
+    else if (project.disabledCrs) this.crs(root, "projectCrs", ["disabledCrs"]);
     if (project.verticalCrs) this.crs(root, "verticalCrs", ["verticalCrs"]);
     this.attribute(findChild(root, "homePath"), "path", {
       property: ["homePath"],
@@ -387,39 +382,27 @@ export class ExtensionCodec {
         [canvas, "extent", "destinationsrs"],
       ] as const) {
         if (!parent) continue;
-        let equal = false;
-        try {
-          const extent = readExtent(parent, tag);
-          equal =
-            !!extent &&
-            ["xmin", "ymin", "xmax", "ymax"].every(
-              (key) =>
-                extent[key as keyof typeof extent] ===
-                project.extent?.[key as keyof typeof extent],
-            ) &&
-            JSON.stringify(readCrs(parent, crsTag)) ===
-              JSON.stringify(project.extent.crs);
-        } catch {
-          // An alternate representation not understood by the model remains extension data.
-        }
-        if (equal) {
-          this.extent(parent, tag, ["extent"]);
-          this.crs(parent, crsTag, ["extent", "crs"]);
-        }
+        const extent = readExtent(parent, tag);
+        if (!extent) continue;
+        const crs = readCrs(parent, crsTag);
+        const referenced = { ...extent, ...(crs ? { crs } : {}) };
+        const prefix = sameExtent(referenced, project.extent)
+          ? ["extent"]
+          : ["legacyView", "extent"];
+        this.extent(parent, tag, prefix);
+        this.crs(parent, crsTag, [...prefix, "crs"]);
       }
     }
-    if (
-      view?.attributes.rotation !== undefined &&
-      Number(view.attributes.rotation) === project.rotation
-    )
+    if (view?.attributes.rotation !== undefined)
       this.attribute(view, "rotation", { property: ["rotation"] });
-    if (
-      canvas &&
-      text(canvas, "rotation") !== undefined &&
-      Number(text(canvas, "rotation")) === project.rotation
-    )
-      this.value(canvas, "rotation", { property: ["rotation"] });
-    this.capture(project, root, { title: project.title });
+    if (canvas && text(canvas, "rotation") !== undefined)
+      this.value(canvas, "rotation", {
+        property:
+          project.legacyView?.rotation === undefined
+            ? ["rotation"]
+            : ["legacyView", "rotation"],
+      });
+    this.capture(project, root);
     Object.assign(project.extensions ?? {}, {
       ...(document.declaration
         ? { declaration: { ...document.declaration } }
@@ -497,18 +480,7 @@ export class ExtensionCodec {
             const node = this.inflate(owner, child, version, depth + 1);
             return node && node.type !== "doctype" ? [node] : [];
           });
-          const element = createElement(content.name, attributes, children);
-          this.bindings.set(element, {
-            attributes: Object.fromEntries(
-              Object.entries(content.attributes).filter(
-                (entry): entry is [string, Property] =>
-                  typeof entry[1] !== "string",
-              ),
-            ),
-            ...(content.value ? { value: content.value } : {}),
-            ...(content.guard ? { guard: content.guard } : {}),
-          });
-          return element;
+          return createElement(content.name, attributes, children);
         }
         case "value": {
           const value = this.resolve(owner, content.value, version);

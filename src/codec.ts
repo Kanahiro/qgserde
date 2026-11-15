@@ -55,13 +55,11 @@ export function putText(
   }
   if (typeof value !== "string")
     throw new QgsError("INVALID_EDIT", `${name} must be a string`);
-  if (text(parent, name) === value) return;
   putElementText(ensure(parent, name), value);
 }
 
 /** Edit a scalar without discarding extension markup, comments, or instructions. */
 export function putElementText(element: XmlElement, value: string): void {
-  if (getText(element) === value) return;
   if (element.children.some((node) => node.type === "element"))
     throw new QgsError(
       "INVALID_EDIT",
@@ -96,9 +94,6 @@ export function putAttribute(
   }
   if (typeof value === "number" && !Number.isFinite(value))
     throw new QgsError("INVALID_EDIT", `${name} must be finite`);
-  const old = parent.attributes[name];
-  if (typeof value === "number" && number(old) === value) return;
-  if (typeof value === "boolean" && boolean(old) === value) return;
   parent.attributes[name] =
     typeof value === "boolean" ? (value ? "1" : "0") : String(value);
 }
@@ -114,8 +109,7 @@ export function putNumber(
   }
   if (typeof value !== "number" || !Number.isFinite(value))
     throw new QgsError("INVALID_EDIT", `${name} must be a finite number`);
-  if (number(text(parent, name)) !== value)
-    putText(parent, name, String(value));
+  putText(parent, name, String(value));
 }
 
 // Replacing a list in place preserves comments, whitespace, and unrelated siblings.
@@ -161,8 +155,6 @@ export function readCrs(parent: XmlElement, name: string): QgsCrs | undefined {
   if (geographic !== undefined) crs.geographic = geographic;
   if (srs.attributes.nativeFormat !== undefined)
     crs.nativeFormat = srs.attributes.nativeFormat;
-  if (crs.authId && crs.srsId === undefined && !crs.wkt && !crs.proj4)
-    Object.assign(crs, { extensions: { origin: { authId: crs.authId } } });
   return crs;
 }
 
@@ -172,11 +164,17 @@ export function writeCrs(
   crs: QgsCrs | undefined,
 ): void {
   if (!crs) {
-    // Keep a preexisting empty container; it may carry unmodeled metadata.
-    if (readCrs(parent, name) !== undefined) remove(parent, name);
+    // A shared container (e.g. DefaultViewExtent) can also own non-CRS data.
+    const container = findChild(parent, name);
+    if (container) remove(container, "spatialrefsys");
+    if (
+      container &&
+      !Object.keys(container.attributes).length &&
+      !container.children.length
+    )
+      remove(parent, name);
     return;
   }
-  const previous = readCrs(parent, name);
   const srs = ensure(ensure(parent, name), "spatialrefsys");
   for (const [field, tag] of Object.entries(crsStrings))
     putText(srs, tag, crs[field as keyof typeof crsStrings]);
@@ -184,21 +182,13 @@ export function writeCrs(
   // even though the actual definition is then resolved exclusively by authid.
   // For authority-only input, 1 is a lookup marker, not a database-ID claim.
   // Never guess an authority's QGIS database ID or require callers to know it.
+  // Apply this to parsed CRS too: preserving authid alone leaves it invalid in QGIS.
   const authorityOnly =
     crs.authId && !/^USER:/iu.test(crs.authId) && !crs.wkt && !crs.proj4;
-  const newAuthority =
-    crs.extensions?.origin?.authId === undefined ||
-    crs.extensions.origin.authId !== crs.authId ||
-    previous?.srsId !== undefined;
-  putNumber(
-    srs,
-    "srsid",
-    crs.srsId ?? (authorityOnly && newAuthority ? 1 : undefined),
-  );
+  putNumber(srs, "srsid", crs.srsId ?? (authorityOnly ? 1 : undefined));
   putNumber(srs, "srid", crs.srid);
   if (crs.geographic === undefined) remove(srs, "geographicflag");
-  else if (boolean(text(srs, "geographicflag")) !== crs.geographic)
-    putText(srs, "geographicflag", crs.geographic ? "true" : "false");
+  else putText(srs, "geographicflag", crs.geographic ? "true" : "false");
   putAttribute(srs, "nativeFormat", crs.nativeFormat);
 }
 
@@ -209,7 +199,9 @@ export function readExtent(
   const element = findChild(parent, name);
   if (
     !element ||
-    (!findChild(element, "xmin") && element.attributes.xmin === undefined)
+    !["xmin", "ymin", "xmax", "ymax"].some(
+      (key) => findChild(element, key) || element.attributes[key] !== undefined,
+    )
   )
     return undefined;
   const coordinates = ["xmin", "ymin", "xmax", "ymax"] as const;

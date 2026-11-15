@@ -16,7 +16,7 @@ function roundTrip(xml: string): string {
 
 test("partitions modeled values and extension positions without retaining XML snapshots", () => {
   const xml =
-    '<qgis version="3.40.7"><projectMetadata><author>unique-author</author></projectMetadata><properties><SpatialRefSys><ProjectionsEnabled>1</ProjectionsEnabled></SpatialRefSys></properties><projectCrs><spatialrefsys><wkt>unique-wkt-definition</wkt></spatialrefsys></projectCrs><projectlayers><maplayer type="vector"><id>v</id><renderer-v2 type="unique-renderer"><symbols><symbol name="keep"/></symbols></renderer-v2><fieldConfiguration><field name="a"><editWidget type="unique-widget"/></field></fieldConfiguration><aliases><alias field="a" name="unique-alias"/></aliases></maplayer></projectlayers></qgis>';
+    '<qgis version="3.40.7"><projectMetadata><author>unique-author</author></projectMetadata><properties><SpatialRefSys><ProjectionsEnabled>1</ProjectionsEnabled></SpatialRefSys></properties><projectCrs><spatialrefsys><wkt>unique-wkt-definition</wkt></spatialrefsys></projectCrs><projectlayers><maplayer type="vector"><id>vector_layer_001</id><renderer-v2 type="unique-renderer"><symbols><symbol name="keep"/></symbols></renderer-v2><fieldConfiguration><field name="a"><editWidget type="unique-widget"/></field></fieldConfiguration><aliases><alias field="a" name="unique-alias"/></aliases></maplayer></projectlayers></qgis>';
   const project = parseQgs(xml);
   const stored = JSON.stringify(project);
   assert.ok(!stored.includes("preservedXml"));
@@ -42,14 +42,19 @@ test("partitions modeled values and extension positions without retaining XML sn
 test("retains namespaces, unknown strings, nested and mixed content, and sibling order after JSON storage", () => {
   const xml =
     '<?xml version="1.0"?><qgis version="4.2.0" xmlns:p="urn:plugin"><p:first k="0001">before<p:nested/>after<![CDATA[&data]]></p:first><title>A<!--title-->B<?plugin kept?>C</title><p:second flag="false"/><projectMetadata><author>checked</author></projectMetadata><p:first k="false"/></qgis>';
+  const unedited = readXml(roundTrip(xml));
+  assert.equal(unedited.declaration?.encoding, "UTF-8");
   assert.deepEqual(
-    readXml(roundTrip(xml)),
-    readXml(
-      xml.replace(
-        '<?xml version="1.0"?>',
-        '<?xml version="1.0" encoding="UTF-8"?>',
-      ),
-    ),
+    findChildren(unedited.root, "p:first"),
+    findChildren(readXml(xml).root, "p:first"),
+  );
+  assert.deepEqual(
+    findChild(unedited.root, "p:second"),
+    findChild(readXml(xml).root, "p:second"),
+  );
+  assert.deepEqual(
+    findChild(unedited.root, "title"),
+    findChild(readXml(xml).root, "title"),
   );
   const project = parseQgs(xml);
   project.title = "changed";
@@ -71,7 +76,7 @@ test("retains namespaces, unknown strings, nested and mixed content, and sibling
 
 test("keeps unknown layer and field payloads attached to their identities through rename and reorder", () => {
   const xml =
-    '<qgis version="4.2.0"><projectlayers><maplayer type="vector" plugin="first"><id>a</id><fieldConfiguration><field name="one"><plugin-field/></field><field name="two"/></fieldConfiguration><aliases><alias field="two" name="Two" plugin="two"/><alias field="one" name="One" plugin="one"/></aliases></maplayer><between value="keep"/><maplayer type="vector" plugin="second"><id>b</id></maplayer></projectlayers></qgis>';
+    '<qgis version="4.2.0"><projectlayers><maplayer type="vector" plugin="first"><id>first_layer_001</id><fieldConfiguration><field name="one"><plugin-field/></field><field name="two"/></fieldConfiguration><aliases><alias field="two" name="Two" plugin="two"/><alias field="one" name="One" plugin="one"/></aliases></maplayer><between value="keep"/><maplayer type="vector" plugin="second"><id>second_layer_001</id></maplayer></projectlayers></qgis>';
   const project = JSON.parse(JSON.stringify(parseQgs(xml)));
   project.layers.reverse();
   const first = project.layers[1];
@@ -113,7 +118,7 @@ test("keeps unknown layer and field payloads attached to their identities throug
 test("rejects scalar edits that would erase nested extension elements", () => {
   const xml =
     '<qgis version="4.2.0"><title>A<plugin-part key="keep">B</plugin-part>C</title></qgis>';
-  assert.deepEqual(readXml(roundTrip(xml)), readXml(xml));
+  assert.throws(() => roundTrip(xml), /nested extension/u);
   const project = parseQgs(xml);
   project.title = "replace";
   const before = JSON.stringify(project);
@@ -127,7 +132,10 @@ test("rejects scalar edits that would erase nested extension elements", () => {
 test("retains independent legacy view state and rejects a downgrade that cannot represent both meanings", () => {
   const xml =
     '<qgis version="4.2.0"><ProjectViewSettings rotation="11"><DefaultViewExtent xmin="1" ymin="2" xmax="3" ymax="4"/></ProjectViewSettings><mapcanvas custom="keep"><extent><xmin>100</xmin><ymin>200</ymin><xmax>300</xmax><ymax>400</ymax></extent><rotation>99</rotation></mapcanvas></qgis>';
-  assert.deepEqual(readXml(roundTrip(xml)), readXml(xml));
+  assert.deepEqual(parseQgs(roundTrip(xml)).legacyView, {
+    extent: { xmin: 100, ymin: 200, xmax: 300, ymax: 400 },
+    rotation: 99,
+  });
   const project = parseQgs(xml);
   project.rotation = 45;
   project.extent!.xmin = -1;
@@ -158,35 +166,42 @@ test("creates isolated models from optional options without synthesizing or reta
     assert.equal(parseQgs(serializeQgs(stored, { version })).title, "named");
 });
 
-test("does not silently claim orphan extension records when adding a field", () => {
+test("legacy aliases become typed fields and reject duplicate additions", () => {
   const xml =
-    '<qgis version="4.2.0"><projectlayers><maplayer type="vector"><id>v</id><aliases><alias field="external" name="Keep" plugin="unknown"/></aliases></maplayer></projectlayers></qgis>';
-  assert.deepEqual(readXml(roundTrip(xml)), readXml(xml));
+    '<qgis version="4.2.0"><projectlayers><maplayer type="vector"><id>vector_layer_001</id><aliases><alias field="external" name="Keep" plugin="unknown"/></aliases></maplayer></projectlayers></qgis>';
   const project = parseQgs(xml);
   const layer = project.layers[0]!;
   if (layer.type !== "vector") throw new Error("vector expected");
+  assert.equal(layer.fields[0]?.alias, "Keep");
+  assert.match(roundTrip(xml), /plugin="unknown"/u);
   layer.fields.push({ name: "external" });
   assert.throws(
     () => serializeQgs(project, { version: "4.2" }),
-    /conflicts with an unmodeled alias/u,
+    /Duplicate field/u,
   );
 });
 
-test("retains legacy layer type spellings and rejects cyclic extension placement data", () => {
+test("normalizes layer types and rejects cyclic extension placement data", () => {
   const xml =
-    '<qgis version="4.2.0"><projectlayers><maplayer type="pointcloud"><id>cloud</id><custom key="keep"/></maplayer></projectlayers></qgis>';
-  assert.deepEqual(readXml(roundTrip(xml)), readXml(xml));
+    '<qgis version="4.2.0"><projectlayers><maplayer type="pointcloud"><id>cloud_layer_001</id><custom key="keep"/></maplayer></projectlayers></qgis>';
+  assert.match(roundTrip(xml), /type="pointcloud"/u);
+  assert.match(roundTrip(xml), /<custom key="keep"\/>/u);
   const project = parseQgs(xml);
   const layout = project.extensions!.layout!;
   layout.content.push(layout);
   assert.throws(() => serializeQgs(project, { version: "4.2" }), /Cyclic/u);
 });
 
-test("retains repeated references, incomplete records, and their distinct payloads in occurrence order", () => {
+test("retains repeated references in occurrence order and completes missing alias values", () => {
   const xml =
-    '<qgis version="4.2.0"><layer-tree-group><layer-tree-layer id="v"/><custom-order enabled="1"><item plugin="first">v</item><gap/><item plugin="second">v</item><item plugin="external">external</item></custom-order></layer-tree-group><projectlayers><maplayer type="vector"><id>v</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="a" name="A" plugin="first"/><gap/><alias field="a" name="Other" plugin="second"/><alias field="b" plugin="incomplete"/></aliases><defaults><default field="a" expression="first" plugin="first"/><default field="a" expression="second" plugin="second"/></defaults></maplayer></projectlayers><layerorder><layer id="v" plugin="first"/><gap/><layer id="v" plugin="second"/><layer id="external" plugin="external"/></layerorder></qgis>';
-  assert.deepEqual(readXml(roundTrip(xml)), readXml(xml));
-  const project = parseQgs(xml);
+    '<qgis version="4.2.0"><layer-tree-group><layer-tree-layer id="vector_layer_001"/><custom-order enabled="1"><item plugin="first">vector_layer_001</item><gap/><item plugin="second">vector_layer_001</item><item plugin="external">external</item></custom-order></layer-tree-group><projectlayers><maplayer type="vector"><id>vector_layer_001</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="a" name="A" plugin="first"/><gap/><alias field="a" name="Other" plugin="second"/><alias field="b" plugin="incomplete"/></aliases><defaults><default field="a" expression="first" plugin="first"/><default field="a" expression="second" plugin="second"/></defaults></maplayer></projectlayers><layerorder><layer id="vector_layer_001" plugin="first"/><gap/><layer id="vector_layer_001" plugin="second"/><layer id="external" plugin="external"/></layerorder></qgis>';
+  assert.throws(() => parseQgs(xml), /unique field/u);
+  const distinct = xml
+    .replace('<alias field="a" name="Other" plugin="second"/>', "")
+    .replace('<default field="a" expression="second" plugin="second"/>', "");
+  const project = parseQgs(distinct);
+  const layer = project.layers[0]!;
+  assert.equal(layer.type === "vector" && layer.fields[1]?.alias, "");
   project.layers[0]!.id = "renamed_layer_001";
   const root = readXml(serializeQgs(project, { version: "4.2" })).root;
   assert.deepEqual(
@@ -217,10 +232,12 @@ test("retains repeated references, incomplete records, and their distinct payloa
   );
 });
 
-test("retains ignored empty view values and does not invent unsupported modern rotation settings", () => {
+test("normalizes empty rotation and models an independent legacy rotation", () => {
   const xml =
     '<qgis version="4.2.0"><ProjectViewSettings rotation=""/><mapcanvas><rotation>99</rotation></mapcanvas></qgis>';
-  assert.deepEqual(readXml(roundTrip(xml)), readXml(xml));
+  const normalized = parseQgs(roundTrip(xml));
+  assert.equal(normalized.rotation, 0);
+  assert.equal(normalized.legacyView?.rotation, 99);
   const legacy = createProject();
   legacy.extent = { xmin: 1, ymin: 2, xmax: 3, ymax: 4 };
   legacy.rotation = 15;

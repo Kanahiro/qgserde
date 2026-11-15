@@ -32,10 +32,27 @@ export function readLayerId(element: XmlElement): string {
 
 function readFields(layer: XmlElement, codec: ExtensionCodec): QgsField[] {
   const configuration = findChild(layer, "fieldConfiguration");
-  if (!configuration) return [];
   const aliases = findChild(layer, "aliases");
   const defaults = findChild(layer, "defaults");
-  return findChildren(configuration, "field").map((element) => {
+  const elements = configuration ? findChildren(configuration, "field") : [];
+  for (const [container, tag] of [
+    [aliases, "alias"],
+    [defaults, "default"],
+  ] as const) {
+    const seen = new Set<string>();
+    for (const record of container ? findChildren(container, tag) : []) {
+      const name = record.attributes.field;
+      if (name === undefined || seen.has(name))
+        throw new QgsError(
+          "INVALID_PROJECT",
+          `${tag} records require a unique field name`,
+        );
+      seen.add(name);
+      if (!elements.some((element) => element.attributes.name === name))
+        elements.push(createElement("field", { name }));
+    }
+  }
+  return elements.map((element) => {
     const field: QgsField = {
       name: element.attributes.name ?? "",
     };
@@ -51,10 +68,9 @@ function readFields(layer: XmlElement, codec: ExtensionCodec): QgsField[] {
         (value) => value.attributes.field === field.name,
       );
     if (editorWidget !== undefined) field.editorWidgetType = editorWidget;
-    if (alias?.attributes.name !== undefined)
-      field.alias = alias.attributes.name;
-    if (defaultValue?.attributes.expression !== undefined)
-      field.defaultExpression = defaultValue.attributes.expression;
+    if (alias) field.alias = alias.attributes.name ?? "";
+    if (defaultValue)
+      field.defaultExpression = defaultValue.attributes.expression ?? "";
     const apply = boolean(defaultValue?.attributes.applyOnUpdate);
     if (apply !== undefined) field.applyDefaultOnUpdate = apply;
     return codec.remember(field, element);
@@ -66,62 +82,36 @@ function writeFields(
   fields: QgsField[],
   codec: ExtensionCodec,
 ): void {
-  const originalConfiguration = findChild(layer, "fieldConfiguration");
-  const originalNames = new Set(
-    originalConfiguration
-      ? findChildren(originalConfiguration, "field").map(
-          (field) => field.attributes.name,
-        )
-      : [],
-  );
   const names = new Set<string>();
   for (const field of fields) {
     if (names.has(field.name))
       throw new QgsError("INVALID_EDIT", `Duplicate field: ${field.name}`);
     names.add(field.name);
   }
-  // Orphan records are extension data. Creating a field with their name would
-  // silently claim those records, so require the caller to resolve the collision.
-  for (const [containerName, tag] of [
-    ["aliases", "alias"],
-    ["defaults", "default"],
-  ] as const) {
-    const container = findChild(layer, containerName);
-    if (container)
-      for (const record of findChildren(container, tag)) {
-        const name = record.attributes.field;
-        if (name && !originalNames.has(name) && names.has(name))
-          throw new QgsError(
-            "INVALID_EDIT",
-            `Field ${name} conflicts with an unmodeled ${tag} record`,
-          );
-      }
-  }
-  if (fields.length || findChild(layer, "fieldConfiguration")) {
-    replaceChildren(
-      ensure(layer, "fieldConfiguration"),
-      ["field"],
-      fields.map((field) => {
-        const element = structuredClone(
-          codec.source(field) ?? createElement("field"),
+  replaceChildren(
+    ensure(layer, "fieldConfiguration"),
+    ["field"],
+    fields.map((field) => {
+      const element = structuredClone(
+        codec.source(field) ?? createElement("field"),
+      );
+      putAttribute(element, "name", field.name);
+      if (field.editorWidgetType !== undefined)
+        putAttribute(
+          ensure(element, "editWidget"),
+          "type",
+          field.editorWidgetType,
         );
-        putAttribute(element, "name", field.name);
-        if (field.editorWidgetType !== undefined)
-          putAttribute(
-            ensure(element, "editWidget"),
-            "type",
-            field.editorWidgetType,
-          );
-        else remove(element, "editWidget");
-        return element;
-      }),
-    );
-  }
+      else remove(element, "editWidget");
+      return element;
+    }),
+  );
   for (const [containerName, tag] of [
     ["aliases", "alias"],
     ["defaults", "default"],
   ] as const) {
     const container = findChild(layer, containerName);
+    const previous = container ? findChildren(container, tag) : [];
     const records = fields.flatMap((field) => {
       if (tag === "alias" && field.alias === undefined) return [];
       if (
@@ -131,70 +121,24 @@ function writeFields(
       )
         return [];
       const originalName = codec.source(field)?.attributes.name ?? field.name;
-      const old =
-        container &&
-        findChildren(container, tag).find(
-          (node) => node.attributes.field === originalName,
-        );
-      const element = structuredClone(old ?? createElement(tag));
+      const index = previous.findIndex(
+        (record) => record.attributes.field === originalName,
+      );
+      const element = structuredClone(previous[index] ?? createElement(tag));
       putAttribute(element, "field", field.name);
       if (tag === "alias") putAttribute(element, "name", field.alias);
       else {
-        putAttribute(element, "expression", field.defaultExpression);
+        putAttribute(element, "expression", field.defaultExpression ?? "");
         putAttribute(element, "applyOnUpdate", field.applyDefaultOnUpdate);
       }
-      return [element];
+      return [{ element, index: index < 0 ? Infinity : index }];
     });
-    // Keep each record's original position, including entries from older writers
-    // that have aliases/defaults without a corresponding fieldConfiguration.
-    const ordered: XmlElement[] = [];
-    const remaining = new Set(records);
-    const primary = new Map<string, boolean>();
-    if (container)
-      for (const old of findChildren(container, tag)) {
-        const field = fields.find(
-          (field) =>
-            (codec.source(field)?.attributes.name ?? field.name) ===
-            old.attributes.field,
-        );
-        const record =
-          field &&
-          records.find((record) => record.attributes.field === field.name);
-        const oldName = old.attributes.field ?? "";
-        const managed =
-          codec.controls(
-            old,
-            tag === "alias" ? "alias" : "defaultExpression",
-          ) ||
-          (tag === "default" && codec.controls(old, "applyDefaultOnUpdate"));
-        const seen = primary.has(oldName);
-        if (!seen) primary.set(oldName, managed);
-        if (record && remaining.has(record)) {
-          ordered.push(record);
-          remaining.delete(record);
-        } else if (field && record) {
-          const duplicate = structuredClone(old);
-          putAttribute(duplicate, "field", field.name);
-          ordered.push(duplicate);
-        } else if (field && seen && primary.get(oldName)) {
-          throw new QgsError(
-            "INVALID_EDIT",
-            `Cannot clear ambiguous ${tag} records without losing extension data`,
-          );
-        } else if (!originalNames.has(oldName) || (field && !managed)) {
-          if (field && field.name !== oldName) {
-            const renamed = structuredClone(old);
-            putAttribute(renamed, "field", field.name);
-            ordered.push(renamed);
-          } else ordered.push(old);
-        }
-      }
-    ordered.push(...remaining);
+    records.sort((left, right) => left.index - right.index);
     if (container || records.length)
       replaceChildren(
         container ?? ensure(layer, containerName),
         [tag],
-        ordered,
+        records.map((record) => record.element),
       );
   }
 }
@@ -399,38 +343,30 @@ export function writeLayer(
     throw new QgsError("INVALID_EDIT", "A layer ID must not be empty");
   const source = codec.source(layer);
   // QGIS replaces IDs of 10 UTF-16 code units or fewer, leaving tree/order
-  // references dangling. Retain untouched input, but never create such an ID.
+  // references dangling. Validate parsed models by the same rules as new ones.
   // Rewriting IDs here would also require updating unmodeled references.
-  if (layer.id.length <= 10 && (!source || readLayerId(source) !== layer.id))
+  if (layer.id.length <= 10)
     throw new QgsError(
       "INVALID_EDIT",
       `Layer ID ${JSON.stringify(layer.id)} must contain at least 11 characters; QGIS replaces shorter IDs and breaks layer references`,
     );
   const element = structuredClone(source ?? createElement("maplayer"));
   const xmlType = layer.type === "unknown" ? layer.xmlType : layer.type;
-  const originalType = element.attributes.type?.toLowerCase();
-  if (
-    originalType !== xmlType &&
-    !(xmlType === "point-cloud" && originalType === "pointcloud") &&
-    !(xmlType === "" && originalType === undefined)
-  )
-    putAttribute(element, "type", xmlType);
+  putAttribute(
+    element,
+    "type",
+    xmlType === "point-cloud" ? "pointcloud" : xmlType,
+  );
   for (const [tag, value] of [
     ["id", layer.id],
     ["layername", layer.name],
     ["datasource", layer.source],
     ["provider", layer.provider],
   ] as const) {
-    if (
-      tag === "id" &&
-      element.attributes.id !== undefined &&
-      !findChild(element, "id")
-    ) {
-      putAttribute(element, "id", value);
-      continue;
-    }
-    if (value !== "" || findChild(element, tag)) putText(element, tag, value);
+    putText(element, tag, value);
   }
+  if (element.attributes.id !== undefined)
+    putAttribute(element, "id", layer.id);
   if (layer.providerEncoding !== undefined || findChild(element, "provider"))
     putAttribute(
       ensure(element, "provider"),

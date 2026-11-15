@@ -10,18 +10,33 @@ import {
   writeExtent,
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
-import type { ExtensionCodec } from "./extensions.ts";
 import type { QgisVersion, QgsProject, XmlElement } from "./types.ts";
 import { findChild } from "./xml.ts";
 
-type ProjectView = Pick<QgsProject, "extent" | "rotation">;
+type ProjectView = Pick<QgsProject, "extent" | "rotation" | "legacyView">;
+
+export function sameExtent(
+  left: QgsProject["extent"],
+  right: QgsProject["extent"],
+): boolean {
+  return (
+    left === right ||
+    (!!left &&
+      !!right &&
+      (["xmin", "ymin", "xmax", "ymax"] as const).every(
+        (key) => left[key] === right[key],
+      ) &&
+      JSON.stringify(left.crs) === JSON.stringify(right.crs))
+  );
+}
 
 export function readView(root: XmlElement): ProjectView {
   const view = findChild(root, "ProjectViewSettings");
   const canvas = findChild(root, "mapcanvas");
   const result: ProjectView = {};
   const modernExtent = view && readExtent(view, "DefaultViewExtent");
-  const extent = modernExtent ?? (canvas && readExtent(canvas));
+  const canvasExtent = canvas && readExtent(canvas);
+  const extent = modernExtent ?? canvasExtent;
   if (extent) {
     const crs =
       modernExtent && view
@@ -29,10 +44,30 @@ export function readView(root: XmlElement): ProjectView {
         : canvas && readCrs(canvas, "destinationsrs");
     result.extent = { ...extent, ...(crs ? { crs } : {}) };
   }
-  const rotation = number(
-    view?.attributes.rotation ?? (canvas && text(canvas, "rotation")),
-  );
+  const rotation =
+    view?.attributes.rotation !== undefined
+      ? (number(view.attributes.rotation) ?? 0)
+      : number(canvas && text(canvas, "rotation"));
   if (rotation !== undefined) result.rotation = rotation;
+  const canvasCrs = canvas && readCrs(canvas, "destinationsrs");
+  const legacyExtent = canvasExtent
+    ? {
+        ...canvasExtent,
+        ...(canvasCrs ? { crs: canvasCrs } : {}),
+      }
+    : undefined;
+  const legacyRotation = number(canvas && text(canvas, "rotation"));
+  const independentExtent =
+    legacyExtent && modernExtent && !sameExtent(legacyExtent, result.extent);
+  const independentRotation =
+    view?.attributes.rotation !== undefined &&
+    legacyRotation !== undefined &&
+    legacyRotation !== rotation;
+  if (independentExtent || independentRotation)
+    result.legacyView = {
+      ...(independentExtent ? { extent: legacyExtent } : {}),
+      ...(independentRotation ? { rotation: legacyRotation } : {}),
+    };
   return result;
 }
 
@@ -41,7 +76,6 @@ export function writeView(
   root: XmlElement,
   project: QgsProject,
   target: QgisVersion,
-  codec: ExtensionCodec,
 ): void {
   // QgsProjectViewSettings appeared in 3.10.1; its rotation property in 3.28.
   const modernExtent =
@@ -51,20 +85,11 @@ export function writeView(
   const modernRotation = target.major === 4 || target.minor >= 28;
   let view = findChild(root, "ProjectViewSettings");
   let canvas = findChild(root, "mapcanvas");
-  const canvasExtent = canvas && findChild(canvas, "extent");
-  const independentExtent =
-    !!canvasExtent &&
-    !codec.controls(canvasExtent, "extent") &&
-    (canvasExtent.attributes.xmin !== undefined ||
-      !!findChild(canvasExtent, "xmin"));
-  const canvasRotation = canvas && findChild(canvas, "rotation");
-  const independentRotation =
-    !!canvasRotation && !codec.controls(canvasRotation, "rotation");
+  const independentExtent = project.legacyView?.extent !== undefined;
+  const independentRotation = project.legacyView?.rotation !== undefined;
   if (
     (independentExtent && project.extent === undefined) ||
-    (independentRotation &&
-      project.rotation === undefined &&
-      codec.controls(view, "rotation"))
+    (independentRotation && project.rotation === undefined)
   )
     throw new QgsError(
       "INVALID_EDIT",
@@ -85,31 +110,35 @@ export function writeView(
     view ??= ensure(root, "ProjectViewSettings");
   if (
     (project.extent && !modernExtent) ||
-    (project.rotation !== undefined && !modernRotation)
+    (project.rotation !== undefined && !modernRotation) ||
+    independentExtent ||
+    independentRotation
   )
     canvas ??= ensure(root, "mapcanvas");
 
   // Synchronize existing alternate representations, preserving their unrelated settings.
   if (view) {
-    const hadExtent = findChild(view, "DefaultViewExtent");
-    const ownsExtent = modernExtent || codec.controls(hadExtent, "extent");
-    if (ownsExtent) writeExtent(view, project.extent, "DefaultViewExtent");
-    if (project.extent && ownsExtent)
-      writeCrs(
-        view,
-        "DefaultViewExtent",
-        project.extent.crs ?? (hadExtent ? undefined : project.crs),
-      );
-    if (
-      (modernRotation && project.rotation !== undefined) ||
-      codec.controls(view, "rotation")
-    )
-      putAttribute(view, "rotation", project.rotation);
+    writeExtent(view, project.extent, "DefaultViewExtent");
+    if (project.extent)
+      writeCrs(view, "DefaultViewExtent", project.extent.crs ?? project.crs);
+    putAttribute(
+      view,
+      "rotation",
+      modernRotation ? project.rotation : undefined,
+    );
   }
   if (canvas) {
-    if (!independentExtent) writeExtent(canvas, project.extent);
-    if (project.extent && !independentExtent)
-      writeCrs(canvas, "destinationsrs", project.extent.crs ?? project.crs);
-    if (!independentRotation) putNumber(canvas, "rotation", project.rotation);
+    const extent = project.legacyView?.extent ?? project.extent;
+    writeExtent(canvas, extent);
+    writeCrs(
+      canvas,
+      "destinationsrs",
+      extent?.crs ?? (extent ? project.crs : undefined),
+    );
+    putNumber(
+      canvas,
+      "rotation",
+      project.legacyView?.rotation ?? project.rotation,
+    );
   }
 }

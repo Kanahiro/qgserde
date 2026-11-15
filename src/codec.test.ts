@@ -47,7 +47,7 @@ test("booleans accept only the four QGIS scalar spellings", () => {
     );
 });
 
-test("scalar edits preserve unchanged spellings, comments and CDATA boundaries", () => {
+test("scalar writes normalize spellings and preserve comments and CDATA boundaries", () => {
   const parent = readXml(
     '<root flag="true" count="1e2"><count>1e2</count><label>A<!--keep--><![CDATA[BC]]><?plugin keep?>D</label></root>',
   ).root;
@@ -56,7 +56,9 @@ test("scalar edits preserve unchanged spellings, comments and CDATA boundaries",
   putAttribute(parent, "count", 100);
   putNumber(parent, "count", 100);
   putText(parent, "label", "ABCD");
-  assert.deepEqual(parent, before);
+  assert.deepEqual(parent.attributes, { flag: "1", count: "100" });
+  assert.equal(text(parent, "count"), "100");
+  assert.deepEqual(findChild(parent, "label"), findChild(before, "label"));
   putText(parent, "label", "longer");
   assert.deepEqual(findChild(parent, "label")!.children, [
     { type: "text", value: "l" },
@@ -70,11 +72,10 @@ test("scalar edits preserve unchanged spellings, comments and CDATA boundaries",
   assert.equal(findChild(parent, "label")!.children.length, 5);
 });
 
-test("nested scalar markup can be retained unchanged but never silently overwritten", () => {
+test("nested scalar markup is rejected even when its flattened value is unchanged", () => {
   const element = readXml("<label>A<plugin>B</plugin>C</label>").root;
   const before = structuredClone(element);
-  putElementText(element, "ABC");
-  assert.deepEqual(element, before);
+  assert.throws(() => putElementText(element, "ABC"), /nested extension/u);
   assert.throws(
     () => putElementText(element, "changed"),
     (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
@@ -180,22 +181,34 @@ test("CRS decoding keeps typed values and opaque definition strings", () => {
     nativeFormat: "Wkt",
   };
   assert.deepEqual(readCrs(parent, "srs"), expected);
-  const before = structuredClone(parent);
   writeCrs(parent, "srs", expected);
-  assert.deepEqual(parent, before);
+  assert.deepEqual(readCrs(parent, "srs"), expected);
+  assert.equal(
+    text(
+      findChild(findChild(parent, "srs")!, "spatialrefsys")!,
+      "geographicflag",
+    ),
+    "true",
+  );
 });
 
-test("authority lookup markers distinguish new, unchanged and edited legacy CRS", () => {
+test("authority-only CRS gets a lookup marker even when read unchanged from XML", () => {
   const parent = readXml(
     "<root><srs><spatialrefsys><authid>EPSG:4326</authid></spatialrefsys></srs></root>",
   ).root;
   const crs = readCrs(parent, "srs")!;
-  const before = structuredClone(parent);
+  assert.deepEqual(crs, { authId: "EPSG:4326" });
   writeCrs(parent, "srs", crs);
-  assert.deepEqual(parent, before);
+  assert.equal(readCrs(parent, "srs")!.srsId, 1);
+  const repaired = structuredClone(parent);
+  writeCrs(parent, "srs", crs);
+  assert.deepEqual(parent, repaired);
   crs.authId = "EPSG:3857";
   writeCrs(parent, "srs", crs);
   assert.equal(readCrs(parent, "srs")!.srsId, 1);
+});
+
+test("authority lookup markers preserve explicit IDs and standalone definitions", () => {
   for (const [definition, marker] of [
     [{ authId: "EPSG:4326" }, 1],
     [{ authId: "EPSG:4326", srsId: 3452 }, 3452],
@@ -218,7 +231,10 @@ test("removing a CRS retains unmodeled empty containers and removes active defin
   assert.deepEqual(parent, before);
   writeCrs(parent, "srs", { authId: "EPSG:4326" });
   writeCrs(parent, "srs", undefined);
-  assert.equal(findChild(parent, "srs"), undefined);
+  assert.deepEqual(
+    findChild(parent, "srs"),
+    readXml('<srs plugin="keep"/>').root,
+  );
 });
 
 test("extent decoding supports both representations and prefers attributes", () => {

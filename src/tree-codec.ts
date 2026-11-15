@@ -42,11 +42,21 @@ export function readTree(
     expanded: boolean(element.attributes.expanded) ?? true,
     checked: readCheckState(element.attributes.checked),
   };
-  if (element.name === "layer-tree-layer")
-    return codec.remember(
-      { type: "layer", layerId: element.attributes.id ?? "", ...state },
-      element,
-    );
+  if (element.name === "layer-tree-layer") {
+    const node: Extract<QgsLayerTreeNode, { type: "layer" }> = {
+      type: "layer",
+      layerId: element.attributes.id ?? "",
+      ...state,
+    };
+    for (const [attribute, property] of [
+      ["name", "name"],
+      ["source", "source"],
+      ["providerKey", "provider"],
+    ] as const)
+      if (element.attributes[attribute] !== undefined)
+        node[property] = element.attributes[attribute];
+    return codec.remember(node, element);
+  }
   const group: QgsLayerTreeGroup = {
     type: "group",
     name: element.attributes.name ?? "",
@@ -95,49 +105,49 @@ export function writeTree(
           node.type === "group" ? "layer-tree-group" : "layer-tree-layer",
         ),
     );
-    if (element.attributes.expanded !== undefined || !node.expanded)
-      putAttribute(element, "expanded", node.expanded);
-    if (
-      element.attributes.checked !== undefined ||
-      node.checked !== "checked"
-    ) {
-      const state = checkStates[node.checked];
-      if (!state)
-        throw new QgsError("INVALID_EDIT", "Invalid layer-tree check state");
-      putAttribute(element, "checked", state);
-    }
+    putAttribute(element, "expanded", node.expanded);
+    const state = checkStates[node.checked];
+    if (!state)
+      throw new QgsError("INVALID_EDIT", "Invalid layer-tree check state");
+    putAttribute(element, "checked", state);
     if (node.type === "layer") {
       const id = resolve(node.layerId);
       const layer = layerMap.get(id);
       active.delete(node);
       if (!layer && originalIds.has(node.layerId)) return undefined;
-      if (!layer && codec.source(node)) return element;
-      if (!layer)
+      if (!layer && !codec.source(node))
         throw new QgsError(
           "INVALID_EDIT",
           `Layer tree references missing layer: ${id}`,
         );
-      referenced.add(id);
+      if (layer) referenced.add(id);
       putAttribute(element, "id", id);
-      const sourceLayer = codec.source(layer);
-      for (const [attribute, tag, value] of [
-        ["name", "layername", layer.name],
-        ["source", "datasource", layer.source],
-        ["providerKey", "provider", layer.provider],
+      for (const [attribute, property] of [
+        ["name", "name"],
+        ["source", "source"],
+        ["providerKey", "provider"],
       ] as const) {
-        // Tree sources may legitimately contain provider-generated UIDs absent
-        // from maplayer sources. Only a typed edit should replace those values.
-        if (
-          !codec.source(node) ||
-          !sourceLayer ||
-          (text(sourceLayer, tag) ?? "") !== value
-        )
-          putAttribute(element, attribute, value);
+        // Layer edits synchronize references; otherwise the tree's own modeled
+        // connection may include a distinct provider-generated UID.
+        const sourceLayer = layer && codec.source(layer);
+        const tag =
+          property === "name"
+            ? "layername"
+            : property === "source"
+              ? "datasource"
+              : "provider";
+        const origin =
+          layer?.extensions?.origin?.[property] ??
+          (sourceLayer ? (text(sourceLayer, tag) ?? "") : undefined);
+        const value =
+          layer && origin !== undefined && origin !== layer[property]
+            ? layer[property]
+            : (node[property] ?? layer?.[property]);
+        putAttribute(element, attribute, value);
       }
       return element;
     }
-    if (element.attributes.name !== undefined || node.name !== "")
-      putAttribute(element, "name", node.name);
+    putAttribute(element, "name", node.name);
     const children = node.children.flatMap((child) => {
       const encoded = encode(child, depth + 1);
       return encoded ? [encoded] : [];
@@ -149,8 +159,7 @@ export function writeTree(
     );
     if (node.customOrder) {
       const order = ensure(element, "custom-order");
-      if (order.attributes.enabled !== undefined || node.customOrder.enabled)
-        putAttribute(order, "enabled", node.customOrder.enabled);
+      putAttribute(order, "enabled", node.customOrder.enabled);
       const items = node.customOrder.layerIds
         .map(resolve)
         .filter((id) => layerMap.has(id) || !originalIds.has(id));

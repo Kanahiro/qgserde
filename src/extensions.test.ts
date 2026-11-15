@@ -45,15 +45,7 @@ test("capture and JSON restoration preserve mixed content while resolving typed 
     findChild(document.root, "p:config"),
   );
   const title = findChild(restored.root, "title")!;
-  // Titles retain their source identity until the project writer synchronizes all title locations.
-  assert.equal(getText(title), "ABC");
-  assert.equal(restoredCodec.controls(title, "title"), true);
-  assert.equal(restoredCodec.controls(restored.root, "$version"), true);
-  assert.equal(restoredCodec.controls(undefined, "title"), false);
-  assert.equal(
-    restoredCodec.controls(findChild(restored.root, "p:config"), "title"),
-    false,
-  );
+  assert.equal(getText(title), "changed");
   assert.equal(restoredCodec.source(stored), restored.root);
 });
 

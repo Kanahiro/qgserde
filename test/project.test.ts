@@ -12,6 +12,20 @@ import { findChild, getText, readXml, writeXml } from "../src/xml.ts";
 // Only modeled numeric spellings may normalize; unknown strings such as "0001" stay exact.
 function canonicalDocument(xml: string) {
   const document = readXml(xml);
+  const tree = findChild(document.root, "layer-tree-group");
+  if (tree)
+    Object.assign(tree.attributes, {
+      checked: tree.attributes.checked ?? "Qt::Checked",
+      expanded: tree.attributes.expanded ?? "1",
+      name: tree.attributes.name ?? "",
+    });
+  const properties = findChild(document.root, "properties");
+  if (properties && !findChild(properties, "SpatialRefSys"))
+    properties.children.push(
+      readXml(
+        '<SpatialRefSys><ProjectionsEnabled type="int">0</ProjectionsEnabled></SpatialRefSys>',
+      ).root,
+    );
   const layers = findChild(document.root, "projectlayers");
   if (layers)
     for (const layer of layers.children) {
@@ -330,7 +344,7 @@ test("rejects invalid typed values before returning XML", () => {
   );
 });
 
-test("unchanged authority-only and disabled CRS payloads retain their original XML", () => {
+test("active and disabled project CRS both pass through the CRS writer", () => {
   for (const enabled of ["0", "1"]) {
     const xml = `<qgis version="4.2.0"><projectCrs><spatialrefsys><authid>EPSG:4326</authid></spatialrefsys></projectCrs><properties><SpatialRefSys><ProjectionsEnabled type="int">${enabled}</ProjectionsEnabled></SpatialRefSys></properties></qgis>`;
     const project = parseQgs(xml);
@@ -338,10 +352,9 @@ test("unchanged authority-only and disabled CRS payloads retain their original X
       project.crs?.authId,
       enabled === "1" ? "EPSG:4326" : undefined,
     );
-    assert.deepEqual(
-      readXml(serializeQgs(project, { version: "4.2" })),
-      readXml(xml),
-    );
+    const output = parseQgs(serializeQgs(project, { version: "4.2" }));
+    assert.equal((output.crs ?? output.disabledCrs)?.srsId, 1);
+    assert.equal(output.crs !== undefined, enabled === "1");
   }
 });
 
