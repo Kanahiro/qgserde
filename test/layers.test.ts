@@ -4,13 +4,14 @@ import { test } from "node:test";
 import {
   createProject,
   parseQgs,
+  QgsError,
   type QgsVectorLayer,
   serializeQgs,
 } from "../src/index.ts";
 import { findChild, readXml } from "../src/xml.ts";
 
 const definition: QgsVectorLayer = {
-  id: "cities_001",
+  id: "cities_layer_001",
   name: "都市",
   type: "vector",
   provider: "memory",
@@ -46,16 +47,16 @@ test("pushes plain typed layers and builds their XML and tree references", () =>
   project.layerTree!.customOrder = { enabled: true, layerIds: [] };
   const before = JSON.stringify(project);
   const result = parseQgs(serializeQgs(project, { version: "4.2" }));
-  assert.equal(result.layers[0]!.id, "cities_001");
+  assert.equal(result.layers[0]!.id, "cities_layer_001");
   assert.equal(result.layers[0]!.name, "都市");
-  assert.deepEqual(result.layerOrder, ["cities_001"]);
+  assert.deepEqual(result.layerOrder, ["cities_layer_001"]);
   assert.deepEqual(result.layerTree!.customOrder, {
     enabled: true,
-    layerIds: ["cities_001"],
+    layerIds: ["cities_layer_001"],
   });
   const node = result.layerTree!.children[0]!;
   assert.equal(node.type, "layer");
-  if (node.type === "layer") assert.equal(node.layerId, "cities_001");
+  if (node.type === "layer") assert.equal(node.layerId, "cities_layer_001");
   assert.equal(JSON.stringify(project), before);
 });
 
@@ -114,18 +115,20 @@ test("renaming and removing typed layers synchronizes tree and order IDs", () =>
   const project = parseQgs(
     readFileSync(new URL("./fixtures/qgis3.qgs", import.meta.url), "utf8"),
   );
-  project.layers[0]!.id = "renamed";
+  project.layers[0]!.id = "renamed_layer_001";
   project.layers.splice(1, 1);
   const result = parseQgs(serializeQgs(project, { version: "4.2" }));
   assert.deepEqual(
     result.layers.map((layer) => layer.id),
-    ["renamed"],
+    ["renamed_layer_001"],
   );
-  assert.deepEqual(result.layerOrder, ["renamed"]);
-  assert.deepEqual(result.layerTree!.customOrder!.layerIds, ["renamed"]);
+  assert.deepEqual(result.layerOrder, ["renamed_layer_001"]);
+  assert.deepEqual(result.layerTree!.customOrder!.layerIds, [
+    "renamed_layer_001",
+  ]);
   assert.equal(result.layerTree!.children.length, 1);
   const child = result.layerTree!.children[0]!;
-  assert.equal(child.type === "layer" && child.layerId, "renamed");
+  assert.equal(child.type === "layer" && child.layerId, "renamed_layer_001");
 });
 
 test("rejects duplicate IDs, empty IDs and cyclic typed trees", () => {
@@ -144,6 +147,58 @@ test("rejects duplicate IDs, empty IDs and cyclic typed trees", () => {
   project.layers = [];
   project.layerTree!.children.push(project.layerTree!);
   assert.throws(() => serializeQgs(project, { version: "4.2" }), /Cyclic/u);
+});
+
+test("new layer IDs must survive QGIS loading", () => {
+  for (const type of ["vector", "raster", "vector-tile"] as const) {
+    for (const id of ["states", "1234567890", "12345678901"]) {
+      const project = createProject();
+      project.layers.push({ ...definition, type, id });
+      if (id.length <= 10) {
+        assert.throws(
+          () => serializeQgs(project, { version: "3.44" }),
+          (error) =>
+            error instanceof QgsError &&
+            error.code === "INVALID_EDIT" &&
+            error.message.includes("at least 11"),
+        );
+      } else {
+        assert.equal(
+          parseQgs(serializeQgs(project, { version: "3.44" })).layers[0]!.id,
+          id,
+        );
+      }
+    }
+  }
+});
+
+test("short input IDs survive JSON storage but new short IDs are rejected", () => {
+  const xml =
+    '<qgis version="3.44.0"><layer-tree-group><layer-tree-layer id="states"/></layer-tree-group><projectlayers><maplayer type="raster"><id>states</id><provider>wms</provider></maplayer></projectlayers></qgis>';
+  const project = JSON.parse(JSON.stringify(parseQgs(xml)));
+  assert.deepEqual(
+    readXml(serializeQgs(project, { version: "3.44" })),
+    readXml(xml),
+  );
+  project.layers[0].id = "other";
+  const before = JSON.stringify(project);
+  assert.throws(
+    () => serializeQgs(project, { version: "3.44" }),
+    /at least 11/u,
+  );
+  assert.equal(JSON.stringify(project), before);
+  project.layers[0].id = "states_wms_layer";
+  const result = parseQgs(serializeQgs(project, { version: "3.44" }));
+  const reference = result.layerTree!.children[0]!;
+  assert.equal(
+    reference.type === "layer" && reference.layerId,
+    "states_wms_layer",
+  );
+  project.layers.push({ ...definition, id: "cities" });
+  assert.throws(
+    () => serializeQgs(project, { version: "3.44" }),
+    /at least 11/u,
+  );
 });
 
 test("raster layers have typed band settings; future types have an explicit fallback", () => {
@@ -192,7 +247,7 @@ test("fresh vector tiles include native symbology required by QGIS 3 and preserv
   const source =
     "type=xyz&url=https://tiles.example.com/{z}/{x}/{y}.pbf&urlName=base&url_2=https://tiles.example.com/overlay/{z}/{x}/{y}.pbf&urlName_2=overlay&styleUrl=https%3A%2F%2Ftiles.example.com%2Fstyle.json";
   project.layers.push({
-    id: "tiles",
+    id: "vector_tiles_001",
     name: "Tiles",
     type: "vector-tile",
     provider: "xyzvectortiles",

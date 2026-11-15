@@ -75,7 +75,7 @@ test("keeps unknown layer and field payloads attached to their identities throug
   const project = JSON.parse(JSON.stringify(parseQgs(xml)));
   project.layers.reverse();
   const first = project.layers[1];
-  first.id = "renamed";
+  first.id = "renamed_layer_001";
   first.fields.reverse();
   first.fields[1].name = "renamed-field";
   const root = readXml(serializeQgs(project, { version: "4.2" })).root;
@@ -187,7 +187,7 @@ test("retains repeated references, incomplete records, and their distinct payloa
     '<qgis version="4.2.0"><layer-tree-group><layer-tree-layer id="v"/><custom-order enabled="1"><item plugin="first">v</item><gap/><item plugin="second">v</item><item plugin="external">external</item></custom-order></layer-tree-group><projectlayers><maplayer type="vector"><id>v</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="a" name="A" plugin="first"/><gap/><alias field="a" name="Other" plugin="second"/><alias field="b" plugin="incomplete"/></aliases><defaults><default field="a" expression="first" plugin="first"/><default field="a" expression="second" plugin="second"/></defaults></maplayer></projectlayers><layerorder><layer id="v" plugin="first"/><gap/><layer id="v" plugin="second"/><layer id="external" plugin="external"/></layerorder></qgis>';
   assert.deepEqual(readXml(roundTrip(xml)), readXml(xml));
   const project = parseQgs(xml);
-  project.layers[0]!.id = "renamed";
+  project.layers[0]!.id = "renamed_layer_001";
   const root = readXml(serializeQgs(project, { version: "4.2" })).root;
   assert.deepEqual(
     findChildren(findChild(root, "layerorder")!, "layer").map((node) => [
@@ -195,8 +195,8 @@ test("retains repeated references, incomplete records, and their distinct payloa
       node.attributes.plugin,
     ]),
     [
-      ["renamed", "first"],
-      ["renamed", "second"],
+      ["renamed_layer_001", "first"],
+      ["renamed_layer_001", "second"],
       ["external", "external"],
     ],
   );
@@ -210,8 +210,8 @@ test("retains repeated references, incomplete records, and their distinct payloa
       node.attributes.plugin,
     ]),
     [
-      ["renamed", "first"],
-      ["renamed", "second"],
+      ["renamed_layer_001", "first"],
+      ["renamed_layer_001", "second"],
       ["external", "external"],
     ],
   );

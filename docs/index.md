@@ -101,6 +101,13 @@ Changing a layer ID updates tree and drawing-order references. It does not
 update references inside relations, joins, layouts, or plugin settings. Keep
 layer IDs stable in projects that use those features.
 
+New or changed layer IDs must have at least 11 UTF-16 code units. QGIS replaces
+shorter IDs on load, leaving tree and drawing-order references unresolved, even
+when the provider is valid. Serialization rejects these IDs with `INVALID_EDIT`.
+Unchanged IDs from parsed XML are preserved, including short IDs. To repair a
+short ID, assign a longer one (for example, `"states_wms_layer"`); tree and order
+references update on serialization.
+
 ### CRS and view settings
 
 An authority ID is enough to assign a CRS:

@@ -1,5 +1,12 @@
 # Fixtures
 
+## wms-capabilities.xml
+
+A minimal WMS 1.1.1 capabilities document authored for these tests. It is read
+through a local file URL to check WMS layer validity and tree references without
+network access. It advertises `OSM-WMS` but contains no OpenStreetMap data. The
+verifier never requests map images from its placeholder GetMap URL.
+
 ## qgis3.qgs
 
 An unmodified copy of

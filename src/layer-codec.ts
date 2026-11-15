@@ -397,9 +397,16 @@ export function writeLayer(
 ): XmlElement {
   if (typeof layer.id !== "string" || !layer.id.trim())
     throw new QgsError("INVALID_EDIT", "A layer ID must not be empty");
-  const element = structuredClone(
-    codec.source(layer) ?? createElement("maplayer"),
-  );
+  const source = codec.source(layer);
+  // QGIS replaces IDs of 10 UTF-16 code units or fewer, leaving tree/order
+  // references dangling. Retain untouched input, but never create such an ID.
+  // Rewriting IDs here would also require updating unmodeled references.
+  if (layer.id.length <= 10 && (!source || readLayerId(source) !== layer.id))
+    throw new QgsError(
+      "INVALID_EDIT",
+      `Layer ID ${JSON.stringify(layer.id)} must contain at least 11 characters; QGIS replaces shorter IDs and breaks layer references`,
+    );
+  const element = structuredClone(source ?? createElement("maplayer"));
   const xmlType = layer.type === "unknown" ? layer.xmlType : layer.type;
   const originalType = element.attributes.type?.toLowerCase();
   if (

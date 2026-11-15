@@ -102,6 +102,10 @@ The target QGIS installation must support those features.
 - Layer ID edits update tree references and drawing order. References in
   relations, joins, layouts, or plugin settings are not updated; keep IDs stable
   in projects that use them.
+- New or changed layer IDs must contain at least 11 UTF-16 code units. QGIS
+  replaces shorter IDs on load, breaking tree and drawing-order references.
+  Serialization rejects these IDs with `INVALID_EDIT`; unchanged IDs read from
+  XML are preserved. This constraint applies to every layer provider.
 - XML 1.0 only. External DTDs are never fetched. Internal DTD subsets, custom
   entities, cycles, and XML deeper than 512 levels are rejected.
 - ESM. Node.js 24 or later; browser use requires a bundler and `structuredClone`.

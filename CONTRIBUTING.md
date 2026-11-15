@@ -31,9 +31,10 @@ must be set to GitHub Actions (`build_type: workflow`).
 
 ## QGIS integration tests
 
-CI opens five projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
+CI opens seven projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
 images: a new project, a conversion from an older format, an edited fixture,
-a tile project with nested groups and repeated references, and its round trip.
+a tile project with nested groups and repeated references, its round trip,
+and a WMS project with a repaired short layer ID and its round trip.
 Checks cover title, CRS, extent, rotation, layer and provider validity,
 vector-tile symbols and zoom ranges, tree references, and the initial visible
 layer.
@@ -51,7 +52,8 @@ docker run --rm --network none -e QT_QPA_PLATFORM=offscreen \
 For QGIS 4.0, use `qgis/qgis:4.0-trixie`; for 4.2, use
 `qgis/qgis:4.2-trixie`. Set the version in both the generation and verification
 commands to match the image. Containers run without network access. Tests read
-projects without fetching tiles or rendering maps.
+projects without fetching tiles or rendering maps. WMS capabilities come from
+a local XML fixture.
 
 With a local PyQGIS installation, the test runner can use its Python executable:
 

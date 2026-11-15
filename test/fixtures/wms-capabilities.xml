@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WMT_MS_Capabilities version="1.1.1">
+  <Service><Name>OGC:WMS</Name><Title>Offline WMS fixture</Title></Service>
+  <Capability>
+    <Request>
+      <GetMap>
+        <Format>image/png</Format>
+        <DCPType><HTTP><Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://127.0.0.1/wms"/></Get></HTTP></DCPType>
+      </GetMap>
+    </Request>
+    <Layer>
+      <Title>Offline WMS fixture</Title>
+      <SRS>EPSG:3857</SRS>
+      <LatLonBoundingBox minx="-180" miny="-85" maxx="180" maxy="85"/>
+      <Layer>
+        <Name>OSM-WMS</Name><Title>OpenStreetMap</Title><SRS>EPSG:3857</SRS>
+        <BoundingBox SRS="EPSG:3857" minx="-20037508" miny="-20037508" maxx="20037508" maxy="20037508"/>
+      </Layer>
+    </Layer>
+  </Capability>
+</WMT_MS_Capabilities>
