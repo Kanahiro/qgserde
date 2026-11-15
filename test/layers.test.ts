@@ -4,7 +4,6 @@ import { test } from "node:test";
 import {
   createProject,
   parseQgs,
-  QgsError,
   type QgsVectorLayer,
   serializeQgs,
 } from "../src/index.ts";
@@ -147,29 +146,6 @@ test("rejects duplicate IDs, empty IDs and cyclic typed trees", () => {
   project.layers = [];
   project.layerTree!.children.push(project.layerTree!);
   assert.throws(() => serializeQgs(project, { version: "4.2" }), /Cyclic/u);
-});
-
-test("new layer IDs must survive QGIS loading", () => {
-  for (const type of ["vector", "raster", "vector-tile"] as const) {
-    for (const id of ["states", "1234567890", "12345678901"]) {
-      const project = createProject();
-      project.layers.push({ ...definition, type, id });
-      if (id.length <= 10) {
-        assert.throws(
-          () => serializeQgs(project, { version: "3.44" }),
-          (error) =>
-            error instanceof QgsError &&
-            error.code === "INVALID_EDIT" &&
-            error.message.includes("at least 11"),
-        );
-      } else {
-        assert.equal(
-          parseQgs(serializeQgs(project, { version: "3.44" })).layers[0]!.id,
-          id,
-        );
-      }
-    }
-  }
 });
 
 test("short input IDs survive JSON storage but new short IDs are rejected", () => {

@@ -17,6 +17,14 @@ data and order preservation, JSON storage, invalid input, and real QGIS project
 fixtures. Type checking also verifies public API usage and union narrowing.
 CI runs these checks on Node.js 24 and 26.
 
+Place unit tests beside the module they exercise as `module.test.ts`.
+Unit tests exercise individual modules directly. Keep integration tests that
+exercise parsing, editing, and serialization together through the public API
+in `test/`, alongside shared fixtures and QGIS verification scripts.
+`pnpm test` runs both suites; use `pnpm test:unit` or `pnpm test:integration`
+to run one suite. `src/types.test.ts` contains compile-time assertions checked
+by `pnpm typecheck`. Unit tests are excluded from build output and package files.
+
 ## Documentation
 
 Public API descriptions live in source comments. `docs/index.md` is the guide

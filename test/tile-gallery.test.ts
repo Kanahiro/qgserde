@@ -5,11 +5,7 @@ import {
   type QgsLayerTreeGroup,
   serializeQgs,
 } from "../src/index.ts";
-import {
-  createTileGallery,
-  createTileTree,
-  tileSources,
-} from "./qgis/tile-gallery.ts";
+import { createTileGallery, tileSources } from "./qgis/tile-gallery.ts";
 
 test("tile fixture contains the expected raster/vector layers and has a single visible OSM reference", () => {
   const project = parseQgs(
@@ -66,9 +62,14 @@ test("tile fixture contains the expected raster/vector layers and has a single v
   assert.deepEqual(roundTrip, project);
 });
 
-test("tile gallery tree is recreated without sharing mutable tree nodes", () => {
-  const original = createTileTree();
-  const updated = createTileTree();
-  updated.children.length = 0;
-  assert.ok(original.children.length >= 5);
+test("tile galleries keep independent tree state through serialization", () => {
+  const original = createTileGallery();
+  const updated = createTileGallery();
+  updated.layerTree!.children.length = 0;
+  assert.ok(original.layerTree!.children.length >= 5);
+  const result = parseQgs(serializeQgs(original, { version: "4.2" }));
+  assert.equal(
+    result.layerTree!.children.length,
+    original.layerTree!.children.length,
+  );
 });

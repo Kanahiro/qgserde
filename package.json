@@ -7,6 +7,7 @@
   "files": [
     "dist",
     "src",
+    "!src/**/*.test.ts",
     "README.md"
   ],
   "exports": {
@@ -23,7 +24,9 @@
     "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
     "docs:build": "typedoc",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "test": "pnpm test:unit && pnpm test:integration",
+    "test:unit": "node --experimental-strip-types --test src/*.test.ts",
+    "test:integration": "node --experimental-strip-types --test test/*.test.ts",
     "check": "biome check .",
     "format": "biome check --write .",
     "prepack": "pnpm build"
