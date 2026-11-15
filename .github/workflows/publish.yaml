@@ -1,0 +1,50 @@
+name: Publish
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      NPM_DIST_TAG: ${{ github.event.release.prerelease && 'next' || 'latest' }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Verify release version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [[ "$RELEASE_TAG" != "v$version" ]]; then
+            echo "Release tag must be v$version; got $RELEASE_TAG" >&2
+            exit 1
+          fi
+          if [[ "$NPM_DIST_TAG" == latest && "$version" == *-* ]]; then
+            echo "Prerelease versions must be marked as a GitHub prerelease" >&2
+            exit 1
+          fi
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Publish to npm
+        run: npm publish --access public --tag "$NPM_DIST_TAG"

@@ -37,6 +37,35 @@ The `Documentation` workflow checks pull requests and publishes `main` to
 [GitHub Pages](https://kanahiro.github.io/qgserde/). The repository's Pages source
 must be set to GitHub Actions (`build_type: workflow`).
 
+## Publishing
+
+The `Publish` workflow publishes to npm when a GitHub Release is published.
+It checks formatting, types, and tests; the `prepack` hook builds the package.
+Draft releases and tag pushes alone do not publish.
+
+Before the first automated release, configure a GitHub Actions
+[trusted publisher](https://docs.npmjs.com/trusted-publishers/) in the npm
+package settings:
+
+- Organization or user: `Kanahiro`
+- Repository: `qgserde`
+- Workflow filename: `publish.yaml`
+- Environment name: leave empty
+- Allow direct publishing with `npm publish`
+
+No npm token secret is required. If the package does not exist on npm yet,
+publish the initial version manually from a clean release checkout using
+`pnpm install --frozen-lockfile`, the checks above, and
+`npm publish --access public` after authenticating with `npm login`.
+Then configure the trusted publisher for subsequent versions.
+
+To release, update `package.json`'s version in a PR and merge it. Create a
+GitHub Release from that commit with the tag `v<version>` (for example,
+`v0.1.1`); the workflow rejects mismatched tags. Stable releases publish under
+the npm `latest` tag. For prereleases, use a version such as `0.2.0-beta.1`
+and mark the GitHub Release as a prerelease; these publish under `next`.
+Each version can only be published once.
+
 ## QGIS integration tests
 
 CI opens seven projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
