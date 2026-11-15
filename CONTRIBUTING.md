@@ -1,7 +1,8 @@
 # Contributing
 
-Use Node.js 24 or later and the pnpm version pinned in `package.json`.
-The project uses TypeScript 6.
+Use the Active LTS Node.js version in `.node-version` and the pnpm version
+pinned in `package.json`. The supported LTS lines are Node.js 24.22.1+ and
+26.12.1+. The project uses TypeScript 6.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -16,6 +17,30 @@ Run `pnpm format` to apply formatting fixes. Tests cover typed edits, unknown
 data and order preservation, JSON storage, invalid input, and real QGIS project
 fixtures. Type checking also verifies public API usage and union narrowing.
 CI runs these checks on Node.js 24 and 26.
+
+Dependency updates must pass a strict seven-day quarantine, configured in
+`pnpm-workspace.yaml`. Do not lower the release age or disable strict mode to
+resolve an installation failure.
+
+The QGIS verifier is Python. Install uv 0.13.5 or later, then run:
+
+```sh
+uv sync --locked
+uv run --locked ruff check .
+uv run --locked ruff format --check .
+```
+
+Python tooling uses `.python-version`, `pyproject.toml`, and the committed
+`uv.lock`, with a seven-day dependency quarantine. CI checks Python lint and
+formatting separately. Run `uv run --locked ruff format .` to format Python.
+PyQGIS itself comes from the QGIS installation; it is not a PyPI dependency.
+The verifier runs with that installation's Python to match the PyQGIS binary
+ABI, even when its version differs from the development Python. Do not replace
+the Python interpreter inside the official QGIS images.
+
+GitHub Actions use release tags with commits pinned in
+`.github/workflows/actions.lock`. After adding or updating an action, run
+`gh actions-lock` and commit the updated lockfile with the workflow.
 
 Place unit tests beside the module they exercise as `module.test.ts`.
 Unit tests exercise individual modules directly. Keep integration tests that

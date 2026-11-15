@@ -1,0 +1,19 @@
+[project]
+name = "qgserde-dev"
+version = "0.0.0"
+requires-python = ">=3.15.1"
+
+[dependency-groups]
+dev = ["ruff==0.15.22"]
+
+[tool.uv]
+required-version = ">=0.13.5"
+exclude-newer = "7 days"
+package = false
+
+[tool.ruff]
+# The verifier also runs in QGIS images with their own Python and PyQGIS ABI.
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
