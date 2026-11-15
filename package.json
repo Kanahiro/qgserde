@@ -2,13 +2,15 @@
   "name": "qgserde",
   "version": "0.1.0",
   "description": "Editable, information-preserving QGIS project XML for TypeScript",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "sideEffects": false,
   "files": [
     "dist",
     "src",
     "!src/**/*.test.ts",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "exports": {
     ".": {

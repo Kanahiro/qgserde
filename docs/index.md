@@ -222,3 +222,10 @@ The package is ESM and requires Node.js 24 or later. The library uses no Node.js
 APIs or browser DOM; browser applications need a bundler and `structuredClone`.
 For source setup and QGIS integration tests, see
 [CONTRIBUTING.md](https://github.com/Kanahiro/qgserde/blob/main/CONTRIBUTING.md).
+
+## License
+
+qgserde is licensed under the GNU Affero General Public License, version 3 or
+any later version ([AGPL-3.0-or-later](https://github.com/Kanahiro/qgserde/blob/main/LICENSE)).
+Third-party material retains its original license; see the
+[fixture sources and licenses](https://github.com/Kanahiro/qgserde/blob/main/test/fixtures/README.md).
