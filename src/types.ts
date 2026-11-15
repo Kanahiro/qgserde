@@ -72,6 +72,8 @@ export interface QgsProject {
   metadata: QgsProjectMetadata;
   /** Horizontal CRS. Removing an active CRS disables project projection. */
   crs?: QgsCrs;
+  /** Stored horizontal CRS while project projection is disabled. An active `crs` takes precedence. */
+  disabledCrs?: QgsCrs;
   /** Vertical CRS, for use with QGIS versions that support it. */
   verticalCrs?: QgsCrs;
   /** Project home path, passed to QGIS without rewriting file paths. */
@@ -80,6 +82,13 @@ export interface QgsProject {
   extent?: QgsReferencedRectangle;
   /** Default clockwise view rotation in degrees. Must be finite. */
   rotation?: number;
+  /** Independent legacy map canvas settings, when different from the default view. */
+  legacyView?: {
+    /** Legacy canvas extent and its CRS. */
+    extent?: QgsReferencedRectangle;
+    /** Legacy clockwise rotation in degrees. */
+    rotation?: number;
+  };
   /** Groups and layer references in display order. */
   layerTree?: QgsLayerTreeGroup;
   /** Drawing order as layer IDs. Removed project layers are excluded on serialization. */
@@ -95,8 +104,6 @@ export interface QgsProject {
  * `{ authId: "EPSG:3857" }`, so old WKT or PROJ values are not carried over.
  */
 export interface QgsCrs {
-  /** @internal Provenance needed to distinguish authority lookup from an unchanged legacy CRS. */
-  readonly extensions?: QgsExtensions;
   /** Authority ID, such as `EPSG:4326`. */
   authId?: string;
   /** CRS definition in Well-Known Text. */
@@ -133,7 +140,7 @@ export interface QgsRectangle {
 
 /** View extent with an optional CRS. Coordinates are not reprojected. */
 export interface QgsReferencedRectangle extends QgsRectangle {
-  /** Extent CRS. A new extent without one uses the project CRS. */
+  /** Extent CRS. An extent without one uses the project CRS on serialization. */
   crs?: QgsCrs;
 }
 
@@ -187,6 +194,12 @@ export interface QgsLayerTreeLayer {
   type: "layer";
   /** Referenced {@link QgsMapLayerBase.id}. */
   layerId: string;
+  /** Tree display name, including references to external layers. */
+  name?: string;
+  /** Tree connection URI, which may include provider-generated UIDs. */
+  source?: string;
+  /** Tree connection provider identifier. */
+  provider?: string;
   /** Whether the node is expanded in the layer tree. */
   expanded: boolean;
   /** Layer reference check state. Parent group states also affect visibility. */
@@ -200,7 +213,7 @@ export type QgsLayerTreeNode = QgsLayerTreeGroup | QgsLayerTreeLayer;
 
 /** Settings shared by all layer types. Edits do not modify the data source itself. */
 export interface QgsMapLayerBase {
-  /** Unique, nonempty ID. New or changed IDs need at least 11 UTF-16 code units, or QGIS replaces them and breaks references. Unchanged input IDs are preserved. */
+  /** Unique ID with at least 11 UTF-16 code units. Shorter IDs are rejected on serialization, including when read from XML. */
   id: string;
   /** Layer name. Edits also update matching tree references. */
   name: string;

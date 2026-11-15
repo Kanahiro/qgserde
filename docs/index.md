@@ -101,10 +101,10 @@ Changing a layer ID updates tree and drawing-order references. It does not
 update references inside relations, joins, layouts, or plugin settings. Keep
 layer IDs stable in projects that use those features.
 
-New or changed layer IDs must have at least 11 UTF-16 code units. QGIS replaces
+Layer IDs must have at least 11 UTF-16 code units. QGIS replaces
 shorter IDs on load, leaving tree and drawing-order references unresolved, even
 when the provider is valid. Serialization rejects these IDs with `INVALID_EDIT`.
-Unchanged IDs from parsed XML are preserved, including short IDs. To repair a
+This also applies to unchanged IDs read from XML. To repair a
 short ID, assign a longer one (for example, `"states_wms_layer"`); tree and order
 references update on serialization.
 
@@ -120,16 +120,23 @@ Replace the CRS object when changing its definition so that old WKT or PROJ
 values are not carried over. qgserde handles QGIS's CRS lookup conventions;
 callers do not need its internal CRS database. Assigning `project.crs` also
 enables project projection. Removing an active CRS disables it. A disabled CRS
-read from XML stays in extension data rather than appearing in `project.crs`.
+read from XML is modeled as `project.disabledCrs`. An active `project.crs` takes
+precedence over that stored definition. Both use the same CRS writer.
 No geographic data or extent coordinates are reprojected.
 
-`project.extent` can carry its own CRS in `extent.crs`. A new extent without one
+If a CRS read from XML contains only an authority ID, serialization adds
+the missing `srsid` lookup marker required by QGIS. Existing IDs, WKT and PROJ
+definitions are preserved as modeled values. User-defined
+(`USER:`) IDs require a definition and are not completed.
+
+`project.extent` can carry its own CRS in `extent.crs`. An extent without one
 uses the project CRS. Rotation is clockwise, in degrees.
 
 The codec writes the default extent to `ProjectViewSettings` for QGIS 3.10.1
 and later, and rotation there for QGIS 3.28 and later. Older targets use
 `mapcanvas`. Equivalent representations in the input stay synchronized;
-independent view settings retain their own values. A target that cannot
+independent view settings are modeled in `project.legacyView` and encoded from
+those values. A target that cannot
 represent both settings causes `INVALID_EDIT`.
 
 Editing `project.title` updates the root title, metadata title, and
@@ -143,15 +150,20 @@ items refer back to model properties. Small amounts of identity information
 support reference updates. The original XML string and a complete XML tree are
 not kept in the model.
 
-Unedited values, parent–child relationships, and the order of repeated and
-unknown elements are preserved. Comments, CDATA, and processing instructions
+Known settings always pass through the intermediate model and are reconstructed
+on every write, even when unchanged. Parsed, JSON-restored, and new models use
+the same validation and normalization rules. Unknown elements and their
+parent–child relationships and order are preserved. Comments, CDATA, and processing instructions
 are retained. Byte-for-byte reproduction is not guaranteed: numeric and boolean
 spelling, quotes, empty-element syntax, entity notation, and XML line-ending
 normalization may differ. Unknown strings, including leading zeros, remain
 strings. Existing whitespace is kept; output is not automatically formatted.
 
-Operations that would erase unknown nested elements, claim conflicting
-unmodeled records, or collapse distinct view settings fail with `INVALID_EDIT`.
+Legacy aliases and defaults without field configuration become typed fields.
+Duplicate alias/default records for the same field are rejected with
+`INVALID_PROJECT`; missing alias names or default expressions become empty strings.
+Operations that would erase unknown nested elements or collapse distinct view
+settings fail with `INVALID_EDIT`.
 Explicit removal of a modeled object removes that object's associated data.
 
 Models can be stored as JSON:

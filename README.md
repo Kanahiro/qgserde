@@ -78,11 +78,17 @@ A parsed model stores known settings in typed properties and unknown data in
 internal `extensions`, along with ordering and reference information. It does
 not keep the original XML string or a complete XML tree as a backup.
 
-Unedited values, parent–child relationships, and element order are preserved,
-including unknown elements, attributes, namespaces, comments, and CDATA.
+Known settings are always reconstructed from the model, including when unchanged.
+Parsed, JSON-restored, and new models use the same validation and output rules.
+Missing format metadata and redundant settings are normalized. Unknown elements,
+attributes, namespaces, comments, CDATA, and their placement are preserved.
 Numeric spelling, quotes, and entity syntax can change. Operations that would
 erase unknown nested data or collapse distinct view settings fail with
 `INVALID_EDIT`.
+
+When a CRS contains only an authority ID, serialization adds a missing
+`srsid` lookup marker so QGIS can resolve it, including for CRS read from XML.
+Existing IDs, WKT and PROJ definitions are preserved as modeled values. User-defined (`USER:`) IDs require a definition and are not completed.
 
 Models can be saved with `JSON.stringify` and restored with `JSON.parse`.
 Keep `extensions` when doing so; removing it loses unknown data and order.
@@ -102,10 +108,10 @@ The target QGIS installation must support those features.
 - Layer ID edits update tree references and drawing order. References in
   relations, joins, layouts, or plugin settings are not updated; keep IDs stable
   in projects that use them.
-- New or changed layer IDs must contain at least 11 UTF-16 code units. QGIS
+- Layer IDs must contain at least 11 UTF-16 code units. QGIS
   replaces shorter IDs on load, breaking tree and drawing-order references.
-  Serialization rejects these IDs with `INVALID_EDIT`; unchanged IDs read from
-  XML are preserved. This constraint applies to every layer provider.
+  Serialization rejects shorter IDs with `INVALID_EDIT`, including unchanged
+  IDs read from XML. This constraint applies to every layer provider.
 - XML 1.0 only. External DTDs are never fetched. Internal DTD subsets, custom
   entities, cycles, and XML deeper than 512 levels are rejected.
 - ESM. Node.js 24.22.1+ or 26.12.1+ within those LTS lines; browser use requires

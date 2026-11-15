@@ -50,6 +50,23 @@ in `test/`, alongside shared fixtures and QGIS verification scripts.
 to run one suite. `src/types.test.ts` contains compile-time assertions checked
 by `pnpm typecheck`. Unit tests are excluded from build output and package files.
 
+## Codec contract
+
+Every supported setting must be decoded into the intermediate model and encoded
+from that model on every write. Never bypass validation or reconstruction because
+a value is unchanged or came from XML. Apply the same output rules to parsed,
+JSON-restored, and newly created models. Missing values may be completed only
+when the codec knows their meaning; ambiguous or invalid data must fail explicitly.
+
+Extensions hold unknown values and placement information. They must not provide
+a fallback copy of known settings. If a supported setting has distinct meanings
+(such as a disabled CRS or an independent legacy view), represent those meanings
+in the model. Origin information is only for identity matching and reference
+synchronization, never an exemption from validation or encoding.
+
+Test semantic reconstruction, normalization, unknown-data preservation, and
+repeated-write stability. Exact reproduction of input XML is not the contract.
+
 ## Documentation
 
 Public API descriptions live in source comments. `docs/index.md` is the guide
@@ -97,6 +114,8 @@ CI opens seven projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
 images: a new project, a conversion from an older format, an edited fixture,
 a tile project with nested groups and repeated references, its round trip,
 and a WMS project with a repaired short layer ID and its round trip.
+The conversion and gallery/WMS round trips also exercise incomplete input
+containing authority IDs without CRS lookup markers.
 Checks cover title, CRS, extent, rotation, layer and provider validity,
 vector-tile symbols and zoom ranges, tree references, and the initial visible
 layer.

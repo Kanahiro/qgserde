@@ -91,6 +91,7 @@ export function parseQgs(xml: string): QgsProject {
   const crs = readCrs(root, "projectCrs");
   const verticalCrs = readCrs(root, "verticalCrs");
   if (crs && projectionsEnabled(document)) project.crs = crs;
+  else if (crs) project.disabledCrs = crs;
   if (verticalCrs) project.verticalCrs = verticalCrs;
   const homePath = findChild(root, "homePath")?.attributes.path;
   if (homePath !== undefined) project.homePath = homePath;
@@ -128,13 +129,9 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
   putAttribute(root, "version", version);
   if (typeof project.title !== "string")
     throw new QgsError("INVALID_EDIT", "Project title must be a string");
-  // Avoid changing redundant legacy values on untouched input. A title edit owns all
-  // three storage locations, so QGIS cannot override it with stale project metadata.
-  if (readTitle(document) !== project.title) {
-    putText(root, "title", project.title);
-    putText(ensure(root, "projectMetadata"), "title", project.title);
-    putAttribute(root, "projectname", project.title);
-  }
+  putText(root, "title", project.title);
+  putText(ensure(root, "projectMetadata"), "title", project.title);
+  putAttribute(root, "projectname", project.title);
   const metadata = findChild(root, "projectMetadata");
   for (const [field, tag] of Object.entries(metadataTags)) {
     const value = project.metadata[field as keyof QgsProjectMetadata];
@@ -143,17 +140,15 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
   }
   // QGIS ignores <projectCrs> unless this legacy property is enabled. Keep this
   // duplication inside the codec: assigning/removing project.crs controls both.
-  if (project.crs || projectionsEnabled(document)) {
-    writeCrs(root, "projectCrs", project.crs);
-    const spatial = ensure(ensure(root, "properties"), "SpatialRefSys");
-    putText(spatial, "ProjectionsEnabled", project.crs ? "1" : "0");
-    putAttribute(ensure(spatial, "ProjectionsEnabled"), "type", "int");
-  }
+  writeCrs(root, "projectCrs", project.crs ?? project.disabledCrs);
+  const spatial = ensure(ensure(root, "properties"), "SpatialRefSys");
+  putText(spatial, "ProjectionsEnabled", project.crs ? "1" : "0");
+  putAttribute(ensure(spatial, "ProjectionsEnabled"), "type", "int");
   writeCrs(root, "verticalCrs", project.verticalCrs);
   if (project.homePath !== undefined)
     putAttribute(ensure(root, "homePath"), "path", project.homePath);
   else remove(root, "homePath");
-  writeView(root, project, parseQgisVersion(version), codec);
+  writeView(root, project, parseQgisVersion(version));
   const oldContainer = findChild(root, "projectlayers");
   const oldIds = new Set(
     oldContainer ? findChildren(oldContainer, "maplayer").map(readLayerId) : [],

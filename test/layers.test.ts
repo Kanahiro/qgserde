@@ -7,7 +7,7 @@ import {
   type QgsVectorLayer,
   serializeQgs,
 } from "../src/index.ts";
-import { findChild, readXml } from "../src/xml.ts";
+import { findChild, findChildren, readXml } from "../src/xml.ts";
 
 const definition: QgsVectorLayer = {
   id: "cities_layer_001",
@@ -19,23 +19,42 @@ const definition: QgsVectorLayer = {
   fields: [],
 };
 
-test("unknown field records, custom order payloads and embedded references survive untouched", () => {
+test("legacy fields are modeled while custom order payloads and embedded references survive", () => {
   const xml =
-    '<qgis version="4.2.0"><layer-tree-group><custom-order><item plugin="keep"><![CDATA[v]]></item></custom-order><layer-tree-layer id="v"/><layer-tree-group><layer-tree-layer id="external" source="external.qgs"/></layer-tree-group></layer-tree-group><projectlayers><maplayer type="vector"><id>v</id><aliases><alias field="older" name="keep"/></aliases><defaults><default field="older" expression="001" applyOnUpdate="0"/></defaults></maplayer><maplayer embedded="1" project="other.qgs" id="embedded"/></projectlayers><layerorder><layer id="v" plugin="keep"/></layerorder></qgis>';
+    '<qgis version="4.2.0"><layer-tree-group><custom-order><item plugin="keep"><![CDATA[vector_layer_001]]></item></custom-order><layer-tree-layer id="vector_layer_001"/><layer-tree-group><layer-tree-layer id="external" source="external.qgs"/></layer-tree-group></layer-tree-group><projectlayers><maplayer type="vector"><id>vector_layer_001</id><aliases><alias field="older" name="keep"/></aliases><defaults><default field="older" expression="001" applyOnUpdate="0"/></defaults></maplayer><maplayer embedded="1" project="other.qgs" id="embedded_layer_001"/></projectlayers><layerorder><layer id="vector_layer_001" plugin="keep"/></layerorder></qgis>';
   const project = parseQgs(xml);
-  assert.equal(project.layers[1]!.id, "embedded");
-  assert.deepEqual(
-    readXml(serializeQgs(project, { version: "4.2" })),
-    readXml(xml),
+  assert.equal(project.layers[1]!.id, "embedded_layer_001");
+  const output = serializeQgs(project, { version: "4.2" });
+  const root = readXml(output).root;
+  const layer = project.layers[0]!;
+  assert.equal(layer.type === "vector" && layer.fields[0]?.alias, "keep");
+  assert.equal(
+    layer.type === "vector" && layer.fields[0]?.defaultExpression,
+    "001",
   );
+  assert.match(
+    output,
+    /<item plugin="keep"><!\[CDATA\[vector_layer_001\]\]><\/item>/u,
+  );
+  const embedded = findChildren(
+    findChild(root, "projectlayers")!,
+    "maplayer",
+  )[1]!;
+  assert.equal(embedded.attributes.project, "other.qgs");
+  assert.match(output, /source="external.qgs"/u);
 });
 
 test("retains the original alias order when it differs from field configuration order", () => {
   const xml =
-    '<qgis version="4.2.0"><projectlayers><maplayer type="vector"><id>v</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="external" name="keep"/><alias field="b" name="B"/><alias field="a" name="A"/></aliases></maplayer></projectlayers></qgis>';
+    '<qgis version="4.2.0"><projectlayers><maplayer type="vector"><id>vector_layer_001</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="external" name="keep"/><alias field="b" name="B"/><alias field="a" name="A"/></aliases></maplayer></projectlayers></qgis>';
+  const root = readXml(serializeQgs(parseQgs(xml), { version: "4.2" })).root;
+  const layer = findChild(findChild(root, "projectlayers")!, "maplayer")!;
   assert.deepEqual(
-    readXml(serializeQgs(parseQgs(xml), { version: "4.2" })),
-    readXml(xml),
+    findChild(layer, "aliases"),
+    findChild(
+      findChild(findChild(readXml(xml).root, "projectlayers")!, "maplayer")!,
+      "aliases",
+    ),
   );
 });
 
@@ -148,13 +167,13 @@ test("rejects duplicate IDs, empty IDs and cyclic typed trees", () => {
   assert.throws(() => serializeQgs(project, { version: "4.2" }), /Cyclic/u);
 });
 
-test("short input IDs survive JSON storage but new short IDs are rejected", () => {
+test("short IDs are rejected even when read unchanged from XML or JSON", () => {
   const xml =
     '<qgis version="3.44.0"><layer-tree-group><layer-tree-layer id="states"/></layer-tree-group><projectlayers><maplayer type="raster"><id>states</id><provider>wms</provider></maplayer></projectlayers></qgis>';
   const project = JSON.parse(JSON.stringify(parseQgs(xml)));
-  assert.deepEqual(
-    readXml(serializeQgs(project, { version: "3.44" })),
-    readXml(xml),
+  assert.throws(
+    () => serializeQgs(project, { version: "3.44" }),
+    /at least 11/u,
   );
   project.layers[0].id = "other";
   const before = JSON.stringify(project);
@@ -179,7 +198,7 @@ test("short input IDs survive JSON storage but new short IDs are rejected", () =
 
 test("raster layers have typed band settings; future types have an explicit fallback", () => {
   const project = parseQgs(
-    '<qgis version="4.2.0"><projectlayers><maplayer type="raster"><id>r</id><layername>raster</layername><provider>gdal</provider><datasource>file.tif</datasource><pipe><rasterrenderer type="multibandcolor" opacity="0.75" redBand="1" greenBand="2" blueBand="3"><custom value="keep"/></rasterrenderer></pipe></maplayer><maplayer type="future"><id>u</id><plugin-data/></maplayer></projectlayers></qgis>',
+    '<qgis version="4.2.0"><projectlayers><maplayer type="raster"><id>raster_layer_001</id><layername>raster</layername><provider>gdal</provider><datasource>file.tif</datasource><pipe><rasterrenderer type="multibandcolor" opacity="0.75" redBand="1" greenBand="2" blueBand="3"><custom value="keep"/></rasterrenderer></pipe></maplayer><maplayer type="future"><id>unknown_layer_001</id><plugin-data/></maplayer></projectlayers></qgis>',
   );
   const layer = project.layers[0]!;
   assert.equal(layer.type, "raster");
@@ -200,7 +219,7 @@ test("raster layers have typed band settings; future types have an explicit fall
 
 test("field configurations, aliases and defaults have editable types", () => {
   const project = parseQgs(
-    '<qgis version="3.40"><projectlayers><maplayer type="vector"><id>v</id><fieldConfiguration><field name="name"><editWidget type="TextEdit"><config><Option type="Map"/></config></editWidget></field></fieldConfiguration><aliases><alias field="name" index="0" name="名称"/></aliases><defaults><default field="name" expression="\'A\'" applyOnUpdate="1"/></defaults></maplayer></projectlayers></qgis>',
+    '<qgis version="3.40"><projectlayers><maplayer type="vector"><id>vector_layer_001</id><fieldConfiguration><field name="name"><editWidget type="TextEdit"><config><Option type="Map"/></config></editWidget></field></fieldConfiguration><aliases><alias field="name" index="0" name="名称"/></aliases><defaults><default field="name" expression="\'A\'" applyOnUpdate="1"/></defaults></maplayer></projectlayers></qgis>',
   );
   const layer = project.layers[0]!;
   if (layer.type !== "vector") throw new Error("Expected vector");

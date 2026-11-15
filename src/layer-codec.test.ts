@@ -60,11 +60,11 @@ for (const [xmlType, type] of [
 
 test("decodes all common layer scalars without treating empty strings as missing", () => {
   const element = readXml(
-    '<maplayer type="vector" minScale="1e2" maxScale="200" hasScaleBasedVisibilityFlag="0" geometry="Point" wkbType="1" readOnly="1" labelsEnabled="false"><id>v</id><layername/><datasource>./cities.gpkg</datasource><provider encoding="UTF-8">ogr</provider><layerOpacity>0</layerOpacity><srs><spatialrefsys><wkt>opaque WKT</wkt></spatialrefsys></srs><extent xmin="1" ymin="2" xmax="3" ymax="4"/></maplayer>',
+    '<maplayer type="vector" minScale="1e2" maxScale="200" hasScaleBasedVisibilityFlag="0" geometry="Point" wkbType="1" readOnly="1" labelsEnabled="false"><id>vector_layer_001</id><layername/><datasource>./cities.gpkg</datasource><provider encoding="UTF-8">ogr</provider><layerOpacity>0</layerOpacity><srs><spatialrefsys><wkt>opaque WKT</wkt></spatialrefsys></srs><extent xmin="1" ymin="2" xmax="3" ymax="4"/></maplayer>',
   ).root;
   assert.deepEqual(readLayer(element, new ExtensionCodec()), {
     type: "vector",
-    id: "v",
+    id: "vector_layer_001",
     name: "",
     source: "./cities.gpkg",
     provider: "ogr",
@@ -85,7 +85,7 @@ test("decodes all common layer scalars without treating empty strings as missing
 
 test("decodes vector field settings and renderer scalars", () => {
   const element = readXml(
-    '<maplayer type="vector"><id>v</id><fieldConfiguration><field name="a"><editWidget type="Range"/></field></fieldConfiguration><aliases><alias field="a" name="Amount"/></aliases><defaults><default field="a" expression="001" applyOnUpdate="0"/></defaults><renderer-v2 type="categorizedSymbol" attr="a" symbollevels="true" forceraster="0" referencescale="1000"/></maplayer>',
+    '<maplayer type="vector"><id>vector_layer_001</id><fieldConfiguration><field name="a"><editWidget type="Range"/></field></fieldConfiguration><aliases><alias field="a" name="Amount"/></aliases><defaults><default field="a" expression="001" applyOnUpdate="0"/></defaults><renderer-v2 type="categorizedSymbol" attr="a" symbollevels="true" forceraster="0" referencescale="1000"/></maplayer>',
   ).root;
   const layer = readLayer(element, new ExtensionCodec());
   assert.equal(layer.type, "vector");
@@ -144,7 +144,7 @@ test("writes plain vector fields and renderers without mutating the model", () =
 
 test("removes vector renderers, fields and common scalars while preserving unrelated XML", () => {
   const source = readXml(
-    '<maplayer type="vector" plugin="keep" minScale="100"><id>v</id><provider encoding="UTF-8">ogr</provider><layerOpacity>0.5</layerOpacity><fieldConfiguration><!--keep--><field name="a"/></fieldConfiguration><aliases><alias field="a" name="A"/><alias field="external" name="Keep"/></aliases><defaults><default field="a" expression="1"/></defaults><renderer-v2 type="singleSymbol"/><custom/></maplayer>',
+    '<maplayer type="vector" plugin="keep" minScale="100"><id>vector_layer_001</id><provider encoding="UTF-8">ogr</provider><layerOpacity>0.5</layerOpacity><fieldConfiguration><!--keep--><field name="a"/></fieldConfiguration><aliases><alias field="a" name="A"/><alias field="external" name="Keep"/></aliases><defaults><default field="a" expression="1"/></defaults><renderer-v2 type="singleSymbol"/><custom/></maplayer>',
   ).root;
   const codec = new ExtensionCodec();
   const layer = readLayer(source, codec);
@@ -167,7 +167,7 @@ test("removes vector renderers, fields and common scalars while preserving unrel
     findChildren(findChild(output, "aliases")!, "alias").map(
       (node) => node.attributes.field,
     ),
-    ["external"],
+    [],
   );
   assert.equal(
     findChildren(findChild(output, "defaults")!, "default").length,
@@ -179,7 +179,7 @@ test("removes vector renderers, fields and common scalars while preserving unrel
 
 test("raster renderer removal retains other pipe stages", () => {
   const source = readXml(
-    '<maplayer type="raster"><id>r</id><pipe><brightnesscontrast value="keep"/><rasterrenderer type="multibandcolor" opacity="0" alphaBand="-1" band="1" redBand="1" greenBand="2" blueBand="3"/></pipe></maplayer>',
+    '<maplayer type="raster"><id>raster_layer_001</id><pipe><brightnesscontrast value="keep"/><rasterrenderer type="multibandcolor" opacity="0" alphaBand="-1" band="1" redBand="1" greenBand="2" blueBand="3"/></pipe></maplayer>',
   ).root;
   const codec = new ExtensionCodec();
   const layer = readLayer(source, codec);
@@ -200,7 +200,7 @@ test("raster renderer removal retains other pipe stages", () => {
   ]);
 });
 
-test("rejects blank layer IDs, duplicate fields and orphan defaults conflicts", () => {
+test("rejects blank layer IDs and duplicate fields including inferred legacy fields", () => {
   for (const id of ["", " \t\n"])
     assert.throws(
       () => writeLayer({ ...vector, id }, new ExtensionCodec()),
@@ -215,16 +215,13 @@ test("rejects blank layer IDs, duplicate fields and orphan defaults conflicts", 
     /Duplicate field/u,
   );
   const source = readXml(
-    '<maplayer type="vector"><id>v</id><defaults><default field="external" expression="keep"/></defaults></maplayer>',
+    '<maplayer type="vector"><id>vector_layer_001</id><defaults><default field="external" expression="keep"/></defaults></maplayer>',
   ).root;
   const codec = new ExtensionCodec();
   const layer = readLayer(source, codec);
   if (layer.type !== "vector") throw new Error("Expected vector");
   layer.fields.push({ name: "external" });
-  assert.throws(
-    () => writeLayer(layer, codec),
-    /conflicts with an unmodeled default/u,
-  );
+  assert.throws(() => writeLayer(layer, codec), /Duplicate field/u);
 });
 
 test("new and renamed layer IDs must survive QGIS loading", () => {
@@ -290,7 +287,7 @@ test("fresh vector tiles get complete native styles while existing renderers sta
     ["SimpleFill", "SimpleLine", "SimpleMarker"],
   );
   const source = readXml(
-    '<maplayer type="vector-tile"><id>tiles</id><renderer type="custom"><plugin/></renderer></maplayer>',
+    '<maplayer type="vector-tile"><id>tiles_layer_001</id><renderer type="custom"><plugin/></renderer></maplayer>',
   ).root;
   const codec = new ExtensionCodec();
   const parsed = readLayer(source, codec);

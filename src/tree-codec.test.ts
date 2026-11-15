@@ -108,7 +108,19 @@ test("unknown new references fail, while embedded references from source XML sur
   const codec = new ExtensionCodec();
   const parsed = readTree(source, codec);
   if (parsed.type !== "group") throw new Error("Expected group");
-  assert.deepEqual(writeTree(parsed, [], new Set(), identity, codec), source);
+  const output = writeTree(parsed, [], new Set(), identity, codec);
+  assert.equal(
+    findChild(output, "layer-tree-layer")!.attributes.source,
+    "external.qgs",
+  );
+  assert.equal(
+    findChild(output, "layer-tree-layer")!.attributes.plugin,
+    "keep",
+  );
+  assert.equal(
+    findChild(output, "layer-tree-layer")!.attributes.checked,
+    "Qt::Checked",
+  );
 });
 
 test("removes deleted references, resolves renamed IDs and adds only new unreferenced layers", () => {
