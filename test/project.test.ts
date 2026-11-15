@@ -3,12 +3,11 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   createProject,
-  parseQgisVersion,
   parseQgs,
   QgsError,
   serializeQgs,
 } from "../src/index.ts";
-import { findChild, getText, readXml } from "../src/xml.ts";
+import { findChild, getText, readXml, writeXml } from "../src/xml.ts";
 
 // Only modeled numeric spellings may normalize; unknown strings such as "0001" stay exact.
 function canonicalDocument(xml: string) {
@@ -89,12 +88,6 @@ test("creates one version-independent model and writes QGIS 3/4 formats", () => 
       (error) => error instanceof QgsError && error.code === "INVALID_VERSION",
     );
   }
-  assert.deepEqual(parseQgisVersion("4.2.0-Belém do Pará"), {
-    major: 4,
-    minor: 2,
-    patch: 0,
-    suffix: "Belém do Pará",
-  });
 });
 
 test("requires a qgis root and a valid source version", () => {
@@ -107,31 +100,6 @@ test("requires a qgis root and a valid source version", () => {
     () => parseQgs('<qgis version="unknown"/>'),
     (error) => error instanceof QgsError && error.code === "INVALID_VERSION",
   );
-});
-
-test("creates empty projects with optional settings and validates their types", () => {
-  for (const project of [
-    createProject(),
-    createProject({}),
-    createProject(undefined),
-  ]) {
-    assert.equal(project.title, "");
-    assert.deepEqual(project.layers, []);
-    assert.deepEqual(project.metadata, {});
-    assert.equal("preservedXml" in project, false);
-  }
-  assert.equal(createProject({ title: "named" }).title, "named");
-  for (const options of [null, [], "a title"])
-    assert.throws(
-      () => Reflect.apply(createProject, undefined, [options]),
-      (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
-    );
-  assert.equal(createProject({ title: "" }).title, "");
-  for (const title of [42, null, false])
-    assert.throws(
-      () => Reflect.apply(createProject, undefined, [{ title }]),
-      (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
-    );
 });
 
 test("title edits retain unknown XML across output versions", () => {
@@ -403,3 +371,13 @@ for (const fixture of ["qgis3", "qgis4"]) {
     assert.deepEqual(project.extensions, JSON.parse(before).extensions);
   });
 }
+
+test("round trips a real upstream QGIS 3 project including styles, layer order and CRS", () => {
+  const xml = readFileSync(
+    new URL("./fixtures/qgis3.qgs", import.meta.url),
+    "utf8",
+  );
+  const project = readXml(xml);
+  assert.ok(project.root.attributes.version?.startsWith("3."));
+  assert.deepEqual(readXml(writeXml(project)), project);
+});

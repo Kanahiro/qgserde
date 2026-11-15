@@ -1,4 +1,5 @@
-"""Read qgserde output in real QGIS; no tile downloads or rendering required."""
+"""Read qgserde output in real QGIS; no external downloads or rendering required."""
+import os
 import sys
 from pathlib import Path
 from qgis.core import QgsApplication, QgsDataSourceUri, QgsLayerTreeGroup, QgsProject, Qgis
@@ -60,8 +61,25 @@ def check_gallery(project):
     assert depth(tree) >= 5, "missing nested groups"
 
 
+def check_wms(project):
+    assert project.crs().authid() == "EPSG:6677"
+    assert set(project.mapLayers()) == {"states_wms_layer"}
+    layer = project.mapLayer("states_wms_layer")
+    assert layer.isValid(), layer.error().summary()
+    assert layer.providerType() == "wms"
+    assert layer.dataProvider().isValid()
+    assert layer.crs().authid() == "EPSG:3857"
+    assert layer.renderer() and layer.renderer().type() == "singlebandcolordata"
+    references = project.layerTreeRoot().findLayers()
+    assert len(references) == 1
+    assert references[0].layer() == layer, "dangling WMS tree reference"
+    assert references[0].isVisible()
+    assert references[0].parent().name() == "公開 WMS"
+
+
 def main():
-    directory = Path(sys.argv[1])
+    directory = Path(sys.argv[1]).resolve()
+    os.chdir(directory)
     expected = tuple(map(int, sys.argv[2].split(".")[:2]))
     actual = (Qgis.QGIS_VERSION_INT // 10000, Qgis.QGIS_VERSION_INT // 100 % 100)
     assert actual == expected, ("unexpected QGIS runtime", expected, Qgis.QGIS_VERSION)
@@ -74,6 +92,8 @@ def main():
             ("edited.qgs", check_memory),
             ("gallery.qgs", check_gallery),
             ("gallery-roundtrip.qgs", check_gallery),
+            ("wms.qgs", check_wms),
+            ("wms-roundtrip.qgs", check_wms),
         ]:
             project = QgsProject()
             path = str(directory / name)
@@ -86,7 +106,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 5 projects", flush=True)
+    print("QGIS verified 7 projects", flush=True)
 
 
 if __name__ == "__main__":

@@ -56,6 +56,27 @@ export function writeQgisFixtures(directory: string, version: string): void {
     join(directory, "gallery-roundtrip.qgs"),
     serializeQgs(parseQgs(gallery), { version }),
   );
+
+  // A real WMS (not XYZ) exercises GetCapabilities without an external service.
+  // The verifier runs in this directory so the file URL also works in Docker.
+  writeFileSync(
+    join(directory, "wms-capabilities.xml"),
+    readFileSync(new URL("../fixtures/wms-capabilities.xml", import.meta.url)),
+  );
+  const wms = parseQgs(
+    '<qgis version="3.44.0"><layer-tree-group><layer-tree-group name="公開 WMS"><layer-tree-layer id="states" name="OpenStreetMap" checked="Qt::Checked"/></layer-tree-group></layer-tree-group><projectlayers><maplayer type="raster"><id>states</id><layername>OpenStreetMap</layername><provider>wms</provider></maplayer></projectlayers></qgis>',
+  );
+  wms.layers[0]!.id = "states_wms_layer";
+  wms.layers[0]!.source =
+    "crs=EPSG:3857&format=image/png&layers=OSM-WMS&styles=&version=1.1.1&url=file:wms-capabilities.xml";
+  wms.layers[0]!.crs = { authId: "EPSG:3857" };
+  wms.crs = { authId: "EPSG:6677" };
+  const wmsXml = serializeQgs(wms, { version });
+  writeFileSync(join(directory, "wms.qgs"), wmsXml);
+  writeFileSync(
+    join(directory, "wms-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(wmsXml))), { version }),
+  );
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

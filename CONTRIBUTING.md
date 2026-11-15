@@ -17,6 +17,14 @@ data and order preservation, JSON storage, invalid input, and real QGIS project
 fixtures. Type checking also verifies public API usage and union narrowing.
 CI runs these checks on Node.js 24 and 26.
 
+Place unit tests beside the module they exercise as `module.test.ts`.
+Unit tests exercise individual modules directly. Keep integration tests that
+exercise parsing, editing, and serialization together through the public API
+in `test/`, alongside shared fixtures and QGIS verification scripts.
+`pnpm test` runs both suites; use `pnpm test:unit` or `pnpm test:integration`
+to run one suite. `src/types.test.ts` contains compile-time assertions checked
+by `pnpm typecheck`. Unit tests are excluded from build output and package files.
+
 ## Documentation
 
 Public API descriptions live in source comments. `docs/index.md` is the guide
@@ -31,9 +39,10 @@ must be set to GitHub Actions (`build_type: workflow`).
 
 ## QGIS integration tests
 
-CI opens five projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
+CI opens seven projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
 images: a new project, a conversion from an older format, an edited fixture,
-a tile project with nested groups and repeated references, and its round trip.
+a tile project with nested groups and repeated references, its round trip,
+and a WMS project with a repaired short layer ID and its round trip.
 Checks cover title, CRS, extent, rotation, layer and provider validity,
 vector-tile symbols and zoom ranges, tree references, and the initial visible
 layer.
@@ -51,7 +60,8 @@ docker run --rm --network none -e QT_QPA_PLATFORM=offscreen \
 For QGIS 4.0, use `qgis/qgis:4.0-trixie`; for 4.2, use
 `qgis/qgis:4.2-trixie`. Set the version in both the generation and verification
 commands to match the image. Containers run without network access. Tests read
-projects without fetching tiles or rendering maps.
+projects without fetching tiles or rendering maps. WMS capabilities come from
+a local XML fixture.
 
 With a local PyQGIS installation, the test runner can use its Python executable:
 

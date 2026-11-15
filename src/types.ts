@@ -200,7 +200,7 @@ export type QgsLayerTreeNode = QgsLayerTreeGroup | QgsLayerTreeLayer;
 
 /** Settings shared by all layer types. Edits do not modify the data source itself. */
 export interface QgsMapLayerBase {
-  /** Nonempty ID, unique within the project. Keep it stable when other settings reference it. */
+  /** Unique, nonempty ID. New or changed IDs need at least 11 UTF-16 code units, or QGIS replaces them and breaks references. Unchanged input IDs are preserved. */
   id: string;
   /** Layer name. Edits also update matching tree references. */
   name: string;

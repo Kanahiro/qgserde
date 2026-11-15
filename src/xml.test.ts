@@ -1,16 +1,15 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
-import { QgsError } from "../src/index.ts";
+import { QgsError } from "./errors.ts";
 import {
   createElement,
   findChild,
   findChildren,
   getText,
-  readXml as parseQgs,
-  writeXml as serializeQgs,
+  readXml,
   setText,
-} from "../src/xml.ts";
+  writeXml,
+} from "./xml.ts";
 
 const sample = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
@@ -32,8 +31,8 @@ function errorCode(code: string): (error: unknown) => boolean {
 }
 
 test("preserves ordered unknown elements, attributes, namespaces, comments, CDATA and instructions", () => {
-  const project = parseQgs(sample);
-  assert.deepEqual(parseQgs(serializeQgs(project)), project);
+  const project = readXml(sample);
+  assert.deepEqual(readXml(writeXml(project)), project);
   assert.deepEqual(JSON.parse(JSON.stringify(project)), project);
   const config = findChild(project.root, "plugin:config");
   assert.ok(config);
@@ -51,7 +50,7 @@ test("preserves ordered unknown elements, attributes, namespaces, comments, CDAT
 });
 
 test("edits text, attributes and arbitrary added elements without losing other content", () => {
-  const project = parseQgs(sample);
+  const project = readXml(sample);
   setText(findChild(project.root, "title")!, '札幌 < & > "');
   project.root.attributes.projectname = '\tA\nB\rC & < > "';
   project.root.children.push(
@@ -59,33 +58,33 @@ test("edits text, attributes and arbitrary added elements without losing other c
       { type: "text", value: "\r\n001 & <" },
     ]),
   );
-  const updated = parseQgs(serializeQgs(project));
+  const updated = readXml(writeXml(project));
   assert.deepEqual(updated, project);
   assert.equal(getText(findChild(updated.root, "title")!), '札幌 < & > "');
 });
 
 test("output does not mutate the source and normalizes only the XML encoding", () => {
-  const project = parseQgs(sample.replace("UTF-8", "ISO-8859-1"));
+  const project = readXml(sample.replace("UTF-8", "ISO-8859-1"));
   const before = JSON.stringify(project);
-  assert.match(serializeQgs(project), /encoding="UTF-8"/u);
+  assert.match(writeXml(project), /encoding="UTF-8"/u);
   assert.equal(JSON.stringify(project), before);
 });
 
 test("splits edited CDATA terminators and preserves CR characters", () => {
-  const project = parseQgs('<qgis version="4.2.0"><value/></qgis>');
+  const project = readXml('<qgis version="4.2.0"><value/></qgis>');
   findChild(project.root, "value")!.children = [
     { type: "cdata", value: "a]]>b\rc" },
   ];
-  const result = parseQgs(serializeQgs(project));
+  const result = readXml(writeXml(project));
   assert.equal(getText(findChild(result.root, "value")!), "a]]>b\rc");
 });
 
 test("accepts BOM, entities, empty elements and no XML declaration", () => {
-  const project = parseQgs(
+  const project = readXml(
     '\uFEFF<qgis version="4.2"><a/><b></b><text>&#x1F5FA; &apos; &quot; &amp;</text></qgis>',
   );
   assert.equal(getText(findChild(project.root, "text")!), "🗺 ' \" &");
-  assert.deepEqual(parseQgs(serializeQgs(project)), project);
+  assert.deepEqual(readXml(writeXml(project)), project);
 });
 
 for (const xml of [
@@ -102,66 +101,148 @@ for (const xml of [
   '<!DOCTYPE other><qgis version="3.40"/>',
 ]) {
   test(`rejects malformed or unsupported XML: ${JSON.stringify(xml).slice(0, 80)}`, () => {
-    assert.throws(() => parseQgs(xml), errorCode("INVALID_XML"));
+    assert.throws(() => readXml(xml), errorCode("INVALID_XML"));
   });
 }
 
 test("never resolves an external DTD", () => {
-  const project = parseQgs(
+  const project = readXml(
     '<!DOCTYPE qgis SYSTEM "https://invalid.invalid/never-fetch.dtd"><qgis version="3.40"/>',
   );
-  assert.deepEqual(parseQgs(serializeQgs(project)), project);
+  assert.deepEqual(readXml(writeXml(project)), project);
+});
+
+test("element lookups include only direct children in document order", () => {
+  const root = readXml(
+    '<root><item id="first"/><!--keep--><group><item id="nested"/></group><item id="last"/></root>',
+  ).root;
+  assert.deepEqual(
+    findChildren(root).map((node) => node.name),
+    ["item", "group", "item"],
+  );
+  assert.deepEqual(
+    findChildren(root, "item").map((node) => node.attributes.id),
+    ["first", "last"],
+  );
+  assert.equal(findChild(root, "item"), findChildren(root, "item")[0]);
+  assert.equal(findChild(root, "absent"), undefined);
+});
+
+test("text extraction includes nested text and CDATA but excludes comments and instructions", () => {
+  const root = readXml(
+    "<root>A<child>B<![CDATA[C]]></child><!--ignored--><?plugin ignored?>D</root>",
+  ).root;
+  assert.equal(getText(root), "ABCD");
+  setText(root, "replacement");
+  assert.deepEqual(root.children, [{ type: "text", value: "replacement" }]);
+  setText(root, "");
+  assert.deepEqual(root.children, []);
+});
+
+test("element construction copies attributes including prototype-like names", () => {
+  const attributes: Record<string, string> = JSON.parse(
+    '{"id":"first","__proto__":"literal"}',
+  );
+  const element = createElement("item", attributes);
+  attributes.id = "changed";
+  assert.equal(element.attributes.id, "first");
+  assert.equal(
+    Object.getOwnPropertyDescriptor(element.attributes, "__proto__")?.value,
+    "literal",
+  );
+  assert.deepEqual(element.children, []);
+});
+
+test("the XML depth limit accepts 512 levels and rejects level 513 on read and write", () => {
+  const nested = (depth: number) => "<x>".repeat(depth) + "</x>".repeat(depth);
+  const document = readXml(nested(512));
+  assert.equal(getText(document.root), "");
+  assert.doesNotThrow(() => writeXml(document));
+  assert.throws(() => readXml(nested(513)), errorCode("INVALID_XML"));
+  const root = createElement("root", {}, [document.root]);
+  assert.throws(() => getText(root), errorCode("INVALID_EDIT"));
+  assert.throws(
+    () => writeXml({ before: [], root, after: [] }),
+    errorCode("INVALID_EDIT"),
+  );
+});
+
+test("shared acyclic XML subtrees can occur more than once", () => {
+  const child = createElement("child", {}, [{ type: "text", value: "text" }]);
+  const root = createElement("root", {}, [child, child]);
+  assert.equal(getText(root), "texttext");
+  assert.equal(
+    writeXml({ before: [], root, after: [] }),
+    "<root><child>text</child><child>text</child></root>",
+  );
+});
+
+test("invalid runtime XML shapes report INVALID_EDIT", () => {
+  for (const document of [
+    {
+      declaration: { version: "1.1" },
+      before: [],
+      root: createElement("root"),
+      after: [],
+    },
+    {
+      before: [],
+      root: {
+        type: "element",
+        name: "root",
+        attributes: { value: 42 },
+        children: [],
+      },
+      after: [],
+    },
+    { before: [], root: { type: "unknown" }, after: [] },
+  ]) {
+    assert.throws(
+      () => Reflect.apply(writeXml, undefined, [document]),
+      errorCode("INVALID_EDIT"),
+    );
+  }
 });
 
 test("rejects cyclic and excessively deep edited trees", () => {
-  const project = parseQgs('<qgis version="3.40"/>');
+  const project = readXml('<qgis version="3.40"/>');
   project.root.children.push(project.root);
-  assert.throws(() => serializeQgs(project), errorCode("INVALID_EDIT"));
+  assert.throws(() => writeXml(project), errorCode("INVALID_EDIT"));
   assert.throws(() => getText(project.root), errorCode("INVALID_EDIT"));
   const nested =
     '<qgis version="3.40">' +
     "<x>".repeat(513) +
     "</x>".repeat(513) +
     "</qgis>";
-  assert.throws(() => parseQgs(nested), errorCode("INVALID_XML"));
+  assert.throws(() => readXml(nested), errorCode("INVALID_XML"));
 });
 
 for (const mutate of [
-  (p: ReturnType<typeof parseQgs>) => {
+  (p: ReturnType<typeof readXml>) => {
     p.root.children.push(createElement("x/><injected"));
   },
-  (p: ReturnType<typeof parseQgs>) => {
+  (p: ReturnType<typeof readXml>) => {
     p.root.attributes['a="value" injected'] = "oops";
   },
-  (p: ReturnType<typeof parseQgs>) => {
+  (p: ReturnType<typeof readXml>) => {
     p.root.children.push({ type: "comment", value: "a--b" });
   },
-  (p: ReturnType<typeof parseQgs>) => {
+  (p: ReturnType<typeof readXml>) => {
     p.root.children.push({ type: "comment", value: "a-" });
   },
-  (p: ReturnType<typeof parseQgs>) => {
+  (p: ReturnType<typeof readXml>) => {
     p.root.children.push({ type: "instruction", target: "x", body: "?>" });
   },
-  (p: ReturnType<typeof parseQgs>) => {
+  (p: ReturnType<typeof readXml>) => {
     p.root.children.push({ type: "text", value: "\u0001" });
   },
-  (p: ReturnType<typeof parseQgs>) => {
+  (p: ReturnType<typeof readXml>) => {
     p.root.children.push(createElement("missing:namespace"));
   },
 ]) {
   test("rejects invalid edits before returning XML", () => {
-    const project = parseQgs(sample);
+    const project = readXml(sample);
     mutate(project);
-    assert.throws(() => serializeQgs(project), errorCode("INVALID_EDIT"));
+    assert.throws(() => writeXml(project), errorCode("INVALID_EDIT"));
   });
 }
-
-test("round trips a real upstream QGIS 3 project including styles, layer order and CRS", () => {
-  const xml = readFileSync(
-    new URL("./fixtures/qgis3.qgs", import.meta.url),
-    "utf8",
-  );
-  const project = parseQgs(xml);
-  assert.ok(project.root.attributes.version?.startsWith("3."));
-  assert.deepEqual(parseQgs(serializeQgs(project)), project);
-});

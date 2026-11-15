@@ -3,8 +3,8 @@ import type {
   QgsMapLayer,
   QgsProject,
   QgsVectorLayer,
-} from "../src/index.ts";
-import { createProject, serializeQgs } from "../src/index.ts";
+} from "./index.ts";
+import { createProject, serializeQgs } from "./index.ts";
 
 /** Compile-time assertions. This function is intentionally never executed. */
 export function checkPublicTypes(
