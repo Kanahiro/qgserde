@@ -1,8 +1,16 @@
 """Read qgserde output in real QGIS; no external downloads or rendering required."""
+
 import os
 import sys
 from pathlib import Path
-from qgis.core import QgsApplication, QgsDataSourceUri, QgsLayerTreeGroup, QgsProject, Qgis
+
+from qgis.core import (
+    Qgis,
+    QgsApplication,
+    QgsDataSourceUri,
+    QgsLayerTreeGroup,
+    QgsProject,
+)
 
 
 def check_memory(project):
@@ -18,7 +26,9 @@ def check_memory(project):
     assert layers[0].name() == "都市"
     assert layers[0].crs().authid() == "EPSG:4326"
     assert len(project.layerTreeRoot().findLayers()) == 1
-    assert project.layerTreeRoot().findLayers()[0].layer(), "dangling memory layer reference"
+    assert project.layerTreeRoot().findLayers()[0].layer(), (
+        "dangling memory layer reference"
+    )
 
 
 def check_gallery(project):
@@ -36,11 +46,17 @@ def check_gallery(project):
             uri = QgsDataSourceUri()
             uri.setEncodedUri(layer.source())
             assert uri.param("url").startswith("https://"), layer.source()
-            assert all(part in uri.param("url") for part in ("{z}", "{x}", "{y}")), layer.source()
-            assert uri.param("styleUrl").startswith("https://tiles.openfreemap.org/styles/")
+            assert all(part in uri.param("url") for part in ("{z}", "{x}", "{y}")), (
+                layer.source()
+            )
+            assert uri.param("styleUrl").startswith(
+                "https://tiles.openfreemap.org/styles/"
+            )
             styles = layer.renderer().styles()
             assert len(styles) == 3, (layer.name(), len(styles))
-            assert all(style.symbol() and style.symbol().symbolLayerCount() for style in styles)
+            assert all(
+                style.symbol() and style.symbol().symbolLayerCount() for style in styles
+            )
             assert layer.tileMatrixSet().minimumZoom() == 0
             assert layer.tileMatrixSet().maximumZoom() == 14
         else:
@@ -55,7 +71,9 @@ def check_gallery(project):
     assert visible == ["osm_standard"], visible
 
     def depth(group):
-        children = [child for child in group.children() if isinstance(child, QgsLayerTreeGroup)]
+        children = [
+            child for child in group.children() if isinstance(child, QgsLayerTreeGroup)
+        ]
         return 1 + max((depth(child) for child in children), default=0)
 
     assert depth(tree) >= 5, "missing nested groups"

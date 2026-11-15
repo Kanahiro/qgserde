@@ -108,7 +108,8 @@ The target QGIS installation must support those features.
   XML are preserved. This constraint applies to every layer provider.
 - XML 1.0 only. External DTDs are never fetched. Internal DTD subsets, custom
   entities, cycles, and XML deeper than 512 levels are rejected.
-- ESM. Node.js 24 or later; browser use requires a bundler and `structuredClone`.
+- ESM. Node.js 24.22.1+ or 26.12.1+ within those LTS lines; browser use requires
+  a bundler and `structuredClone`.
   The library itself uses no Node.js APIs or browser DOM.
 
 ## Development

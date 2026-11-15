@@ -4,3 +4,6 @@ dist/
 docs/api/
 *.tgz
 .DS_Store
+.venv/
+.ruff_cache/
+__pycache__/
