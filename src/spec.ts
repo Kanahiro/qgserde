@@ -54,6 +54,10 @@ export type Entry =
     }
   /** Every attribute not claimed by an "attribute" entry at the same path, as strings. */
   | { kind: "attributes"; field: string; at?: At; exclude?: readonly string[] }
+  /** Text of every leaf child element of `at`, by element name. */
+  | { kind: "texts"; field: string; at: At }
+  /** Fixed attribute written by the codec, such as a reference name. */
+  | { kind: "constant"; attribute: string; value: string; at?: At }
   /** Text of the element at `at`. */
   | { kind: "text"; field: string; at: At; type: Scalar }
   /** Single sub-object stored inline; it shares the owner's extension data. */
@@ -103,6 +107,12 @@ export interface Spec {
 
 type Model = Record<string, unknown>;
 const MAX_DEPTH = 128;
+
+/** Child elements without element children: scalar settings stored as text. */
+const leaves = (element: XmlElement) =>
+  findChildren(element).filter(
+    (child) => !child.children.some((node) => node.type === "element"),
+  );
 
 function locate(element: XmlElement, at: At = []): XmlElement | undefined {
   let current: XmlElement | undefined = element;
@@ -208,9 +218,15 @@ export function readSpec(
       if (value !== undefined) model[entry.field] = value;
       continue;
     }
+    if (entry.kind === "constant") continue;
     const target = locate(element, entry.at);
     if (!target) continue;
     switch (entry.kind) {
+      case "texts":
+        model[entry.field] = Object.fromEntries(
+          leaves(target).map((child) => [child.name, getText(child)]),
+        );
+        break;
       case "attribute": {
         const raw = target.attributes[entry.attribute];
         if (raw === undefined) break;
@@ -220,9 +236,13 @@ export function readSpec(
       }
       case "attributes": {
         const skip = claimed(spec, entry);
-        model[entry.field] = Object.fromEntries(
+        const map = Object.fromEntries(
           Object.entries(target.attributes).filter(([name]) => !skip.has(name)),
         );
+        // A child element's presence is meaningful; an empty map of the
+        // element's own remaining attributes is not.
+        if (entry.at?.length || Object.keys(map).length)
+          model[entry.field] = map;
         break;
       }
       case "text": {
@@ -305,11 +325,16 @@ export function captureSpec(
       ]);
       continue;
     }
+    if (entry.kind === "constant") continue;
     const target = locate(element, entry.at);
     if (!target) continue;
     const at = [...path, ...fieldPath(entry.field)];
     const value = getPath(model, fieldPath(entry.field));
     switch (entry.kind) {
+      case "texts":
+        for (const child of leaves(target))
+          codec.bindText(target, child.name, [...at, child.name]);
+        break;
       case "attribute":
         codec.bindAttribute(
           target,
@@ -400,6 +425,7 @@ export function restoreSpec(
   if (depth > MAX_DEPTH)
     throw new QgsError("INVALID_EDIT", "Cyclic or excessively deep model");
   for (const entry of spec.entries) {
+    if (entry.kind === "constant") continue;
     const value = getPath(model, fieldPath(entry.field));
     switch (entry.kind) {
       case "custom":
@@ -466,11 +492,39 @@ export function writeSpec(
       entry.custom.write(model[entry.field], element, codec, target);
       continue;
     }
+    if (entry.kind === "constant") {
+      ensurePath(element, entry.at).attributes[entry.attribute] = entry.value;
+      continue;
+    }
     const name = fieldPath(entry.field).join(".");
     const value = getPath(model, fieldPath(entry.field));
     const existing = locate(element, entry.at);
     if (value === undefined && !existing) continue;
+    // Removing a list kept in its own container removes the container, so the
+    // model reads back unchanged.
+    if (
+      value === undefined &&
+      (entry.kind === "owners" ||
+        entry.kind === "values" ||
+        entry.kind === "records") &&
+      entry.at?.length
+    ) {
+      removePath(element, entry.at);
+      continue;
+    }
     switch (entry.kind) {
+      case "texts": {
+        if (value === undefined) {
+          removePath(element, entry.at);
+          break;
+        }
+        const host = existing ?? ensurePath(element, entry.at);
+        const map = stringMap(value, name);
+        for (const child of leaves(host))
+          if (!Object.hasOwn(map, child.name)) remove(host, child.name);
+        for (const [tag, item] of Object.entries(map)) putText(host, tag, item);
+        break;
+      }
       case "attribute": {
         const host = existing ?? ensurePath(element, entry.at);
         if (value === undefined) delete host.attributes[entry.attribute];

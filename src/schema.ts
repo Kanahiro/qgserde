@@ -17,12 +17,3 @@ export const crsStrings = {
   projectionAcronym: "projectionacronym",
   ellipsoidAcronym: "ellipsoidacronym",
 } as const;
-
-export const rasterAttributes = {
-  opacity: "opacity",
-  alphaBand: "alphaBand",
-  band: "band",
-  redBand: "redBand",
-  greenBand: "greenBand",
-  blueBand: "blueBand",
-} as const;

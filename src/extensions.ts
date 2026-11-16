@@ -1,7 +1,8 @@
 import { readCrs, readExtent, text } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import { vectorLayerSpec } from "./layer-codec.ts";
-import { crsStrings, metadataTags, rasterAttributes } from "./schema.ts";
+import { rasterLayerSpec } from "./raster.ts";
+import { crsStrings, metadataTags } from "./schema.ts";
 import { captureSpec, restoreSpec } from "./spec.ts";
 import { captureRenderer, restoreRenderer } from "./symbology.ts";
 import type {
@@ -345,15 +346,8 @@ export class ExtensionCodec {
       }
       if (layer.renderer) captureRenderer(layer.renderer, this);
       captureSpec(vectorLayerSpec, layer as never, element, this, []);
-    } else if (layer.type === "raster") {
-      const pipe = findChild(element, "pipe");
-      const renderer = pipe && findChild(pipe, "rasterrenderer");
-      for (const [field, attribute] of Object.entries({
-        type: "type",
-        ...rasterAttributes,
-      }))
-        this.attribute(renderer, attribute, { property: ["renderer", field] });
-    }
+    } else if (layer.type === "raster")
+      captureSpec(rasterLayerSpec, layer as never, element, this, []);
     this.capture(layer, element, {
       id: layer.id,
       name: layer.name,
@@ -600,7 +594,8 @@ export class ExtensionCodec {
         for (const field of layer.fields) this.restore(field, version, "field");
         if (layer.renderer) restoreRenderer(layer.renderer, this, version);
         restoreSpec(vectorLayerSpec, layer as never, this, version, 0);
-      }
+      } else if (layer.type === "raster")
+        restoreSpec(rasterLayerSpec, layer as never, this, version, 0);
       this.restore(layer, version, "maplayer");
     }
     const active = new Set<QgsLayerTreeNode>();

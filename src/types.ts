@@ -263,8 +263,20 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
 export interface QgsRasterLayer extends QgsMapLayerBase {
   /** Discriminant for a raster layer. */
   type: "raster";
-  /** Common raster renderer settings. */
+  /** Renderer and its type-specific settings. */
   renderer?: QgsRasterRenderer;
+  /** Brightness, contrast, and gamma (`<brightnesscontrast>`). */
+  brightnessContrast?: QgsAttributes;
+  /** Saturation, grayscale, colorize, and inversion (`<huesaturation>`). */
+  hueSaturation?: QgsAttributes;
+  /** Resampling filter settings (`<rasterresampler>`), such as `zoomedInResampler`. */
+  resampler?: QgsAttributes;
+  /** Pipe stage that resamples: `resamplingFilter` or `provider`. */
+  resamplingStage?: string;
+  /** Provider resampling settings (`<provider><resampling>`). */
+  providerResampling?: QgsAttributes;
+  /** User no-data values per band. */
+  noData?: QgsRasterNoData[];
 }
 
 /** Mesh layer. Type-specific settings stay in extension data. */
@@ -647,7 +659,7 @@ export type QgsAttributes = Record<string, string>;
 /** Text background shape (`<background>`). */
 export interface QgsTextBackground {
   /** Shape settings, such as `shapeDraw`, `shapeType`, and `shapeFillColor`. */
-  attributes: QgsAttributes;
+  attributes?: QgsAttributes;
   /** Marker symbol for marker-type shapes. */
   markerSymbol?: QgsSymbol;
   /** Fill symbol for the shape. */
@@ -657,7 +669,7 @@ export interface QgsTextBackground {
 /** Text format shared by labels, annotations, and layout items (`<text-style>`). */
 export interface QgsTextFormat {
   /** Font and color settings, such as `fontFamily`, `fontSize`, `fontSizeUnit`, and `textColor`. */
-  style: QgsAttributes;
+  style?: QgsAttributes;
   /** Font families in priority order. */
   families?: string[];
   /** Tab stops, each with attributes such as `position`. */
@@ -762,9 +774,32 @@ export type QgsVectorLabeling =
   | QgsRuleBasedLabeling
   | QgsUnknownLabeling;
 
-/** Common raster renderer settings. Color mapping and other details stay in extension data. */
+/** Color ramp shader of a pseudocolor renderer (`<colorrampshader>`). */
+export interface QgsColorRampShader {
+  /** Shader settings, such as `colorRampType`, `classificationMode`, `minimumValue`, and `clip`. */
+  attributes?: QgsAttributes;
+  /** Source color ramp used to create the items. */
+  colorRamp?: QgsColorRamp;
+  /** Color stops, each with `value`, `color`, `alpha`, and `label`. */
+  items?: QgsAttributes[];
+  /** Legend settings (`<rampLegendSettings>`). */
+  legend?: QgsAttributes;
+}
+
+/** Pixel transparency of a raster renderer. */
+export interface QgsRasterTransparency {
+  /** Single-band ranges, each with `min`, `max`, and `percentTransparent`. */
+  singleValuePixelList?: QgsAttributes[];
+  /** RGB values, each with `red`, `green`, `blue`, and `percentTransparent`. */
+  threeValuePixelList?: QgsAttributes[];
+}
+
+/**
+ * Raster renderer and its type-specific settings. QGIS reads only the parts
+ * that apply to {@link QgsRasterRenderer.type}.
+ */
 export interface QgsRasterRenderer {
-  /** QGIS renderer identifier, such as `multibandcolor`. */
+  /** QGIS renderer identifier, such as `multibandcolor`, `singlebandgray`, `singlebandpseudocolor`, `paletted`, or `hillshade`. */
   type: string;
   /** Renderer opacity: 0 is transparent and 1 is opaque in QGIS. */
   opacity?: number;
@@ -778,6 +813,38 @@ export interface QgsRasterRenderer {
   greenBand?: number;
   /** Blue band, usually numbered from 1. */
   blueBand?: number;
+  /** Other renderer settings, such as `grayBand`, `gradient`, `classificationMin`, or `azimuth`. */
+  attributes?: QgsAttributes;
+  /** How minimum and maximum values are computed, such as `limits` and `extent`. */
+  minMaxOrigin?: QgsAttributes;
+  /** Single-band contrast enhancement, such as `minValue`, `maxValue`, and `algorithm`. */
+  contrastEnhancement?: QgsAttributes;
+  /** Red band contrast enhancement. */
+  redContrastEnhancement?: QgsAttributes;
+  /** Green band contrast enhancement. */
+  greenContrastEnhancement?: QgsAttributes;
+  /** Blue band contrast enhancement. */
+  blueContrastEnhancement?: QgsAttributes;
+  /** Pixel transparency. */
+  transparency?: QgsRasterTransparency;
+  /** Pseudocolor shader. */
+  shader?: QgsColorRampShader;
+  /** Paletted classes, each with `value`, `color`, `alpha`, and `label`. */
+  palette?: QgsAttributes[];
+  /** Source color ramp of a paletted renderer. */
+  colorRamp?: QgsColorRamp;
+  /** Legend settings of a single-band gray renderer. */
+  legend?: QgsAttributes;
+}
+
+/** No-data values of a raster band. */
+export interface QgsRasterNoData {
+  /** Band number, from 1. */
+  band: number;
+  /** Whether the provider's own no-data value is used. */
+  useSourceNoData?: boolean;
+  /** Additional no-data ranges, each with `min` and `max`. */
+  ranges?: QgsAttributes[];
 }
 
 /** Numeric version parts and an optional release name returned by {@link parseQgisVersion}. */

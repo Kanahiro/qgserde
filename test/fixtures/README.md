@@ -63,3 +63,12 @@ contains two memory layers: `simple` with simple labeling (text buffer, marker
 background shape, simple callout, and a data-defined size) and `rules` with
 nested rule-based labeling, including an expression label and a disabled
 `ELSE` rule.
+
+## qgis3-raster-styles.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package) from a
+2x2 ASCII grid and a three-band VRT of it, which are not committed. Layers use
+single-band gray (contrast enhancement, brightness, hue/saturation, bilinear
+provider resampling, user no-data), pseudocolor (gradient color ramp shader),
+paletted, multiband color (per-band contrast, RGB transparency), and hillshade
+renderers.

@@ -16,7 +16,7 @@ import {
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
 import { labeling } from "./labeling.ts";
-import { rasterAttributes } from "./schema.ts";
+import { rasterLayerSpec } from "./raster.ts";
 import { readSpec, type Spec, writeSpec } from "./spec.ts";
 import { readRenderer, writeRenderer } from "./symbology.ts";
 import type {
@@ -24,7 +24,6 @@ import type {
   QgsField,
   QgsMapLayer,
   QgsMapLayerBase,
-  QgsRasterRenderer,
   XmlElement,
 } from "./types.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
@@ -152,38 +151,6 @@ function writeFields(
   }
 }
 
-function readRasterRenderer(layer: XmlElement): QgsRasterRenderer | undefined {
-  const pipe = findChild(layer, "pipe");
-  const element = pipe && findChild(pipe, "rasterrenderer");
-  if (!element) return undefined;
-  const renderer: QgsRasterRenderer = { type: element.attributes.type ?? "" };
-  for (const [field, attr] of Object.entries(rasterAttributes)) {
-    const value = number(element.attributes[attr]);
-    if (value !== undefined)
-      renderer[field as keyof typeof rasterAttributes] = value;
-  }
-  return renderer;
-}
-
-function writeRasterRenderer(
-  layer: XmlElement,
-  renderer: QgsRasterRenderer | undefined,
-): void {
-  if (!renderer) {
-    const pipe = findChild(layer, "pipe");
-    if (pipe) remove(pipe, "rasterrenderer");
-    return;
-  }
-  const element = ensure(ensure(layer, "pipe"), "rasterrenderer");
-  putAttribute(element, "type", renderer.type);
-  for (const [field, attr] of Object.entries(rasterAttributes))
-    putAttribute(
-      element,
-      attr,
-      renderer[field as keyof typeof rasterAttributes],
-    );
-}
-
 export function readLayer(
   element: XmlElement,
   codec: ExtensionCodec,
@@ -233,13 +200,11 @@ export function readLayer(
       Object.assign(layer, readSpec(vectorLayerSpec, element, codec));
       return codec.remember(layer, element);
     }
-    case "raster": {
-      const renderer = readRasterRenderer(element);
+    case "raster":
       return codec.remember(
-        { ...base, type, ...(renderer ? { renderer } : {}) },
+        { ...base, type, ...readSpec(rasterLayerSpec, element, codec) },
         element,
       );
-    }
     case "pointcloud":
       return codec.remember({ ...base, type: "point-cloud" }, element);
     case "mesh":
@@ -377,7 +342,7 @@ export function writeLayer(
     );
     writeSpec(vectorLayerSpec, layer as never, element, codec, target);
   } else if (layer.type === "raster")
-    writeRasterRenderer(element, layer.renderer);
+    writeSpec(rasterLayerSpec, layer as never, element, codec, target);
   // QGIS 3.x rejects vector tile layer XML without a renderer, even with a valid URI.
   // styleUrl is connection metadata; it does not replace native renderer XML.
   else if (layer.type === "vector-tile" && !findChild(element, "renderer"))

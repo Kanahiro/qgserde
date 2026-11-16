@@ -78,7 +78,7 @@ numbers; flags are booleans.
 | `QgsVectorRenderer`                       | Single-symbol, categorized, graduated, rule-based, and null renderers.                 |
 | `QgsVectorLabeling`                       | Simple and rule-based labeling, label settings, text formats, and callouts.            |
 | `QgsSymbol` / `QgsSymbolLayer`            | Symbol layers, their properties, data-defined properties, and sub-symbols.             |
-| `QgsRasterLayer`                          | Common layer settings, renderer opacity, and band selection.                           |
+| `QgsRasterLayer`                          | Renderer, contrast, shader, palette, transparency, filters, resampling, and no-data.   |
 | `QgsField`                                | Name, editor widget, alias, default expression, and apply-on-update flag.              |
 | `QgsLayerTreeGroup` / `QgsLayerTreeLayer` | Nested groups, layer references, check states, and custom drawing order.               |
 
@@ -180,6 +180,19 @@ Values are strings as stored by QGIS, and absent keys take QGIS defaults.
 Font families, tab positions, substitutions, background symbols, callouts, and
 data-defined properties have their own structure. Effects and other unmodeled
 children stay with the element that contains them.
+
+### Raster rendering
+
+`QgsRasterRenderer` keeps band numbers and opacity typed, and models the parts
+each renderer type uses: contrast enhancements, min/max origin, a pseudocolor
+`shader` with color `items`, a paletted `palette`, pixel `transparency`, and
+legend settings. Settings QGIS stores as attributes or as child text, such as
+`classificationMin` or `minValue`, are `QgsAttributes` maps. The layer's
+`brightnessContrast`, `hueSaturation`, `resampler`, `resamplingStage`,
+`providerResampling`, and per-band `noData` hold the other pipe stages.
+
+Removing an optional setting removes the element that stores it; a list stored
+in its own container, such as `noData`, removes the container.
 
 Adding a layer to `project.layers` adds a tree reference and an entry in any
 existing drawing-order list when serialized. Removing a layer removes its tree

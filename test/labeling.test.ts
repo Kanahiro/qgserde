@@ -52,9 +52,9 @@ test("reads simple and rule-based labeling written by QGIS", () => {
   const settings = simple.settings;
   assert.equal(settings.fieldName, "name");
   assert.equal(settings.isExpression, false);
-  assert.equal(settings.format.style.fontSize, "12");
-  assert.equal(settings.format.style.textColor, "10,20,30,255");
-  assert.equal(settings.format.style.fieldName, undefined);
+  assert.equal(settings.format.style!.fontSize, "12");
+  assert.equal(settings.format.style!.textColor, "10,20,30,255");
+  assert.equal(settings.format.style!.fieldName, undefined);
   assert.equal(settings.format.buffer?.bufferDraw, "1");
   assert.equal(
     settings.format.background?.markerSymbol?.layers[0]?.properties.name,
@@ -86,7 +86,7 @@ test("edits labeling and keeps unmodeled data with its owner", () => {
   const settings = simple.settings;
   settings.fieldName = "\"name\" || '!'";
   settings.isExpression = true;
-  settings.format.style.fontSize = "20";
+  settings.format.style!.fontSize = "20";
   settings.format.families = ["Noto Sans", "Arial"];
   delete settings.format.buffer;
   settings.format.background!.markerSymbol!.layers[0]!.properties.name =

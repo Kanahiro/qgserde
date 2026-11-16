@@ -11,6 +11,8 @@ from qgis.core import (
     QgsLayerTreeGroup,
     QgsPalLayerSettings,
     QgsProject,
+    QgsRasterDataProvider,
+    QgsSingleBandGrayRenderer,
     QgsSymbol,
     QgsSymbolLayer,
 )
@@ -195,6 +197,63 @@ def check_symbology(project):
     assert layers["nothing"].renderer().type() == "nullSymbol"
 
 
+def check_raster(project):
+    layers = {layer.name(): layer for layer in project.mapLayers().values()}
+    assert len(layers) == 5, sorted(layers)
+    for layer in layers.values():
+        assert layer.isValid(), (layer.name(), layer.error().summary())
+
+    gray = layers["gray"]
+    renderer = gray.renderer()
+    assert renderer.type() == "singlebandgray", renderer.type()
+    assert renderer.gradient() == prop(
+        QgsSingleBandGrayRenderer, "WhiteToBlack", "Gradient"
+    )
+    enhancement = renderer.contrastEnhancement()
+    assert enhancement.minimumValue() == 1 and enhancement.maximumValue() == 4
+    assert gray.brightnessFilter().brightness() == 10
+    assert gray.brightnessFilter().contrast() == 20
+    assert gray.brightnessFilter().gamma() == 1.5
+    assert gray.hueSaturationFilter().saturation() == -50
+    assert gray.dataProvider().zoomedInResamplingMethod() == (
+        QgsRasterDataProvider.ResamplingMethod.Bilinear
+    )
+    no_data = gray.dataProvider().userNoDataValues(1)
+    assert [(r.min(), r.max()) for r in no_data] == [(1, 1)], no_data
+    assert not gray.dataProvider().useSourceNoDataValue(1)
+
+    pseudo = layers["pseudo"].renderer()
+    assert pseudo.type() == "singlebandpseudocolor"
+    shader = pseudo.shader().rasterShaderFunction()
+    methods = getattr(Qgis, "ShaderInterpolationMethod", None)
+    discrete = methods.Discrete if methods else shader.Discrete
+    assert shader.colorRampType() == discrete
+    items = shader.colorRampItemList()
+    assert [(item.value, item.label) for item in items] == [(2, "low"), (4, "high")]
+    assert items[1].color.alpha() == 128
+    assert shader.sourceColorRamp().color2().name() == "#ff0000"
+
+    paletted = layers["paletted"].renderer()
+    assert paletted.type() == "paletted"
+    assert [c.label for c in paletted.classes()] == ["one", "two"]
+    assert paletted.classes()[1].color.name() == "#28323c"
+
+    rgb = layers["rgb"].renderer()
+    assert rgb.type() == "multibandcolor" and rgb.opacity() == 0.7
+    assert (rgb.redBand(), rgb.greenBand(), rgb.blueBand()) == (3, 2, 1)
+    assert rgb.redContrastEnhancement().maximumValue() == 4
+    pixels = rgb.rasterTransparency().transparentThreeValuePixelList()
+    assert len(pixels) == 1 and pixels[0].percentTransparent == 100
+
+    hillshade = layers["hillshade"].renderer()
+    assert hillshade.type() == "hillshade"
+    assert (hillshade.azimuth(), hillshade.altitude(), hillshade.zFactor()) == (
+        300,
+        40,
+        2,
+    )
+
+
 def main():
     directory = Path(sys.argv[1]).resolve()
     os.chdir(directory)
@@ -212,6 +271,8 @@ def main():
             ("gallery-roundtrip.qgs", check_gallery),
             ("symbology.qgs", check_symbology),
             ("symbology-roundtrip.qgs", check_symbology),
+            ("raster.qgs", check_raster),
+            ("raster-roundtrip.qgs", check_raster),
             ("wms.qgs", check_wms),
             ("wms-roundtrip.qgs", check_wms),
         ]:
@@ -226,7 +287,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 9 projects", flush=True)
+    print("QGIS verified 11 projects", flush=True)
 
 
 if __name__ == "__main__":
