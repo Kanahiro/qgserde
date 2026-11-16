@@ -95,7 +95,8 @@ original type name in `xmlType`.
 
 Vector tile layers model their basic renderer and labeling styles; mesh layers
 their renderer settings (scalar shaders, mesh frames, averaging); annotation
-layers their items with symbols and text formats; group layers their child
+layers their items with symbols and text formats (vector tile layers also their
+tile matrix set); group layers their child
 layer IDs; point cloud and tiled scene layers their renderers. The project's
 main annotation layer, with its items, is `project.mainAnnotationLayer`.
 
@@ -189,6 +190,7 @@ QGIS label settings have well over a hundred options. Groups that QGIS stores
 as element attributes are modeled as `QgsAttributes` maps named after the
 QGIS attributes, such as `fontSize` in `format.style` or `dist` in `placement`.
 Values are strings as stored by QGIS, and absent keys take QGIS defaults.
+Namespace declarations (`xmlns:*`) are never part of these maps.
 Font families, tab positions, substitutions, background symbols, callouts, and
 data-defined properties have their own structure. Effects and other unmodeled
 children stay with the element that contains them.
@@ -304,7 +306,8 @@ The project also models its transaction mode and flags, relations and
 polymorphic relations, map themes, bookmarks, the coordinate transform
 context, snapping, server data-defined properties, elevation shading,
 predefined scales, style, time, terrain, display, and GPS settings, map canvas
-annotations, and
+annotations, the QGIS 2 legend of older projects, other root attributes such as
+`saveUser`, and
 project metadata keywords, contacts, links, history, and dates. Layer-tree
 nodes model their other attributes, such as `mutually-exclusive`, and custom
 properties.

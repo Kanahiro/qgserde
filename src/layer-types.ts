@@ -45,7 +45,33 @@ export const paintEffectEntry = (
   at: ["paintEffect", "effect"],
 });
 
+const tileMatrix = (tag: string): Spec => ({
+  tag,
+  entries: [
+    { kind: "attributes", field: "attributes" },
+    { kind: "crs", field: "crs", tag: "" },
+  ],
+});
+
 export const vectorTileEntries: Entry[] = [
+  {
+    kind: "object",
+    field: "tileMatrixSet",
+    at: ["matrixSet"],
+    spec: {
+      tag: "matrixSet",
+      entries: [
+        { kind: "attributes", field: "attributes" },
+        {
+          kind: "object",
+          field: "rootMatrix",
+          at: ["rootMatrix"],
+          spec: tileMatrix("rootMatrix"),
+        },
+        { kind: "owners", field: "matrices", spec: tileMatrix("matrix") },
+      ],
+    },
+  },
   {
     kind: "custom",
     field: "renderer",

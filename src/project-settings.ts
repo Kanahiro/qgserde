@@ -42,7 +42,12 @@ const annotationItem: Spec = {
     { kind: "attributes", field: "attributes" },
     { kind: "crs", field: "crs", tag: "" },
     { kind: "symbol", field: "markerSymbol", name: "marker symbol" },
-    { kind: "symbol", field: "fillSymbol", name: "", at: ["fillSymbol"] },
+    {
+      kind: "symbol",
+      field: "fillSymbol",
+      name: "fill symbol",
+      at: ["fillSymbol"],
+    },
   ],
 };
 const canvasAnnotation = (tag: string): Spec => ({
@@ -58,10 +63,42 @@ const canvasAnnotation = (tag: string): Spec => ({
   ],
 });
 
+const legacyLegendEntries: Entry[] = [
+  { kind: "attributes", field: "attributes" },
+];
+const legacyLegendGroup: Spec = {
+  tag: "legendgroup",
+  entries: legacyLegendEntries,
+};
+const legacyLegendLayer: Spec = {
+  tag: "legendlayer",
+  entries: [
+    { kind: "attributes", field: "attributes" },
+    attributes("fileGroup", "filegroup"),
+    {
+      kind: "records",
+      field: "files",
+      at: ["filegroup"],
+      item: "legendlayerfile",
+    },
+  ],
+};
+const legacyLegendNodes: Entry = {
+  kind: "nodes",
+  field: "children",
+  specs: { group: legacyLegendGroup, layer: legacyLegendLayer },
+};
+legacyLegendEntries.push(legacyLegendNodes);
+
 /** Project-level settings described declaratively. */
 export const projectSpec: Spec = {
   tag: "qgis",
   entries: [
+    {
+      kind: "attributes",
+      field: "attributes",
+      exclude: ["version", "projectname"],
+    },
     { kind: "custom", field: "properties", custom: projectProperties },
     { kind: "owners", field: "layouts", at: ["Layouts"], spec: layoutSpec },
     {
@@ -213,6 +250,18 @@ export const projectSpec: Spec = {
       tag: "dataDefinedServerProperties",
     },
     attributes("elevationShading", "elevation-shading-renderer"),
+    {
+      kind: "object",
+      field: "legacyLegend",
+      at: ["legend"],
+      spec: {
+        tag: "legend",
+        entries: [
+          { kind: "attributes", field: "attributes" },
+          legacyLegendNodes,
+        ],
+      },
+    },
     attributes("autoTransaction", "autotransaction"),
     attributes("evaluateDefaultValues", "evaluateDefaultValues"),
     attributes("trust", "trust"),

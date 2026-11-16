@@ -93,6 +93,8 @@ export interface QgsProject {
   layerTree?: QgsLayerTreeGroup;
   /** Drawing order as layer IDs. Removed project layers are excluded on serialization. */
   layerOrder?: string[];
+  /** Other root attributes, such as `saveUser` and `saveDateTime`. */
+  attributes?: QgsAttributes;
   /**
    * Project property tree, such as `Variables`, `Measurement`, `Measure`, or
    * `WMSServiceTitle`. `SpatialRefSys/ProjectionsEnabled` follows {@link QgsProject.crs}.
@@ -132,6 +134,8 @@ export interface QgsProject {
   trust?: QgsAttributes;
   /** Map canvas units of older projects, such as `degrees` or `meters`. */
   canvasUnits?: string;
+  /** QGIS 2 legend of older projects; QGIS uses it only without a layer tree. */
+  legacyLegend?: QgsLegacyLegend;
   /** Whether the project's predefined scales replace the global ones. */
   useProjectScales?: boolean;
   /** Predefined scale denominators, as stored. */
@@ -391,6 +395,30 @@ export interface QgsMainAnnotationLayer
   extends Partial<Omit<QgsMapLayerBase, "extensions">> {
   /** Annotation items. */
   items?: QgsAnnotationItem[];
+}
+
+/** Node of a QGIS 2 legend. */
+export interface QgsLegacyLegendNode {
+  /** Node kind. */
+  kind: "group" | "layer";
+  /** Settings such as `name`, `checked`, and `open`. */
+  attributes?: QgsAttributes;
+  /** Layer file group settings. */
+  fileGroup?: QgsAttributes;
+  /** Layer files, each with `layerid` and `visible`. */
+  files?: QgsAttributes[];
+  /** Children of a group. */
+  children?: QgsLegacyLegendNode[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** QGIS 2 legend. */
+export interface QgsLegacyLegend {
+  /** Settings such as `updateDrawingOrder`. */
+  attributes?: QgsAttributes;
+  /** Top-level nodes. */
+  children?: QgsLegacyLegendNode[];
 }
 
 /** Map canvas annotation. */
@@ -1155,10 +1183,32 @@ export interface QgsMeshDatasetGroups {
 export interface QgsVectorTileLayer extends QgsMapLayerBase {
   /** Discriminant for a vector tile layer. */
   type: "vector-tile";
+  /** Tile matrix set read from the tile source. */
+  tileMatrixSet?: QgsTileMatrixSet;
   /** Tile styles. A basic renderer is added for new layers without one. */
   renderer?: QgsVectorTileRenderer;
   /** Tile labeling. */
   labeling?: QgsVectorTileLabeling;
+}
+
+/** Tile matrix of a vector tile layer. */
+export interface QgsTileMatrix {
+  /** Settings such as `zoomLevel`, `matrixWidth`, `scale`, and bounds. */
+  attributes?: QgsAttributes;
+  /** Matrix CRS. */
+  crs?: QgsCrs;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Tile matrix set of a vector tile layer. */
+export interface QgsTileMatrixSet {
+  /** Settings such as `scaleToZoomMethod`. */
+  attributes?: QgsAttributes;
+  /** Root matrix. */
+  rootMatrix?: QgsTileMatrix;
+  /** Matrices by zoom level. */
+  matrices?: QgsTileMatrix[];
 }
 
 /** Style of a vector tile renderer. */

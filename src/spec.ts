@@ -260,8 +260,12 @@ function scalarText(value: unknown, type: Scalar, name: string): string {
 const sameAt = (left: At = [], right: At = []) =>
   left.length === right.length && left.every((tag, i) => tag === right[i]);
 
-function claimed(spec: Spec, entry: Entry & { kind: "attributes" }) {
-  return new Set([
+/** Attributes an attribute map does not own: typed ones, exclusions, and namespace declarations. */
+function claimed(
+  spec: Spec,
+  entry: Entry & { kind: "attributes" },
+): { has(name: string): boolean } {
+  const names = new Set([
     ...(entry.exclude ?? []),
     ...spec.entries.flatMap((other) =>
       other.kind === "attribute" && sameAt(other.at, entry.at)
@@ -269,6 +273,10 @@ function claimed(spec: Spec, entry: Entry & { kind: "attributes" }) {
         : [],
     ),
   ]);
+  return {
+    has: (name) =>
+      names.has(name) || name === "xmlns" || name.startsWith("xmlns:"),
+  };
 }
 
 function stringMap(value: unknown, name: string): Record<string, string> {
