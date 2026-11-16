@@ -235,8 +235,142 @@ export interface QgsMapLayerBase {
   maxScale?: number;
   /** Whether scale-based visibility limits are enabled. */
   scaleBasedVisibility?: boolean;
+  /** Other `<maplayer>` attributes, such as `autoRefreshMode`, `styleCategories`, or `simplifyDrawingTol`. */
+  attributes?: QgsAttributes;
+  /** Layer flags (`<flags>`): `Identifiable`, `Removable`, `Searchable`, and `Private`, as `1` or `0`. */
+  flags?: QgsAttributes;
+  /** Plugin and application properties stored with the layer. */
+  customProperties?: QgsVariantMap;
+  /** QPainter composition mode used to draw the layer, as a QGIS blend mode number. */
+  blendMode?: number;
+  /** Map tip HTML template. */
+  mapTip?: string;
+  /** Whether the map tip is enabled. */
+  mapTipEnabled?: boolean;
+  /** Legend settings (`<legend>`), such as `type` and `showLabelLegend`. */
+  legend?: QgsAttributes;
+  /** Time settings (`<temporal>`). */
+  temporal?: QgsTemporalProperties;
+  /** Elevation and profile settings (`<elevation>`). */
+  elevation?: QgsElevationProperties;
+  /** Descriptive layer metadata. */
+  metadata?: QgsLayerMetadata;
+  /** Publishing settings used by QGIS Server and legends. */
+  server?: QgsLayerServerProperties;
   /** @internal Unmodeled values and ordering slots. */
   readonly extensions?: QgsExtensions;
+}
+
+/** Layer time settings. */
+export interface QgsTemporalProperties {
+  /** Settings such as `enabled`, `mode`, `startField`, and `durationUnit`. */
+  attributes?: QgsAttributes;
+  /** Fixed range (`start`, `end`) for fixed-range modes. */
+  fixedRange?: QgsAttributes;
+}
+
+/** Layer elevation and profile settings. */
+export interface QgsElevationProperties {
+  /** Settings such as `zoffset`, `zscale`, `clamping`, and `binding`. */
+  attributes?: QgsAttributes;
+  /** Elevation data-defined properties, such as `ZOffset`. */
+  dataDefinedProperties?: QgsDataDefinedProperties;
+  /** Symbol for line profiles. */
+  profileLineSymbol?: QgsSymbol;
+  /** Symbol for filled profiles. */
+  profileFillSymbol?: QgsSymbol;
+  /** Symbol for marker profiles. */
+  profileMarkerSymbol?: QgsSymbol;
+}
+
+/** Layer publishing settings (QGIS Server short name, URLs, and keywords). */
+export interface QgsLayerServerProperties {
+  /** Short name used as the server layer name. */
+  shortName?: string;
+  /** Server title. */
+  title?: string;
+  /** Server abstract. */
+  abstract?: string;
+  /** Server keywords. */
+  keywords?: string[];
+  /** Data URL. */
+  dataUrl?: string;
+  /** Format of {@link QgsLayerServerProperties.dataUrl}. */
+  dataUrlFormat?: string;
+  /** Attribution text. */
+  attribution?: string;
+  /** Attribution link. */
+  attributionUrl?: string;
+  /** Legend image URL. */
+  legendUrl?: string;
+  /** Format of {@link QgsLayerServerProperties.legendUrl}. */
+  legendUrlFormat?: string;
+  /** Metadata URLs, each with attributes such as `type` and `format` and the URL in `url`. */
+  metadataUrls?: QgsAttributes[];
+}
+
+/** Contact in metadata. */
+export interface QgsMetadataContact {
+  /** Contact fields such as `name`, `organization`, `position`, `email`, and `role`. */
+  fields?: QgsAttributes;
+  /** Postal addresses, each with fields such as `type`, `address`, and `city`. */
+  addresses?: QgsAttributes[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Keywords of one vocabulary. */
+export interface QgsMetadataKeywords {
+  /** Vocabulary, such as `gmd:topicCategory`. */
+  vocabulary?: string;
+  /** Keywords. */
+  keywords: string[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Descriptive metadata shared by layers and projects (QGIS `QgsAbstractMetadataBase`). */
+export interface QgsMetadataBase {
+  /** Keyword lists by vocabulary. */
+  keywords?: QgsMetadataKeywords[];
+  /** Contacts. */
+  contacts?: QgsMetadataContact[];
+  /** Links, each with `name`, `type`, `url`, and other attributes. */
+  links?: QgsAttributes[];
+  /** History entries. */
+  history?: string[];
+  /** Dates, each with `type` and `value`. */
+  dates?: QgsAttributes[];
+}
+
+/** Layer metadata (`<resourceMetadata>`). */
+export interface QgsLayerMetadata extends QgsMetadataBase {
+  /** Identifier. */
+  identifier?: string;
+  /** Parent identifier. */
+  parentIdentifier?: string;
+  /** Language code. */
+  language?: string;
+  /** Resource type. */
+  type?: string;
+  /** Title. */
+  title?: string;
+  /** Abstract. */
+  abstract?: string;
+  /** Fees. */
+  fees?: string;
+  /** Character encoding. */
+  encoding?: string;
+  /** Rights statements. */
+  rights?: string[];
+  /** Licenses. */
+  licenses?: string[];
+  /** Access constraints, each with a `type` and the constraint text in `value`. */
+  constraints?: QgsAttributes[];
+  /** Metadata CRS. */
+  crs?: QgsCrs;
+  /** Spatial extents, each with attributes such as `crs`, `minx`, and `maxy`. */
+  spatialExtents?: QgsAttributes[];
 }
 
 /** Vector layer settings. Feature data and attribute values are not included. */
@@ -257,6 +391,182 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   fields: QgsField[];
   /** Renderer and symbols. */
   renderer?: QgsVectorRenderer;
+  /** Blend mode between features of this layer, as a QGIS blend mode number. */
+  featureBlendMode?: number;
+  /** Display expression, used for feature titles (`<previewExpression>`). */
+  displayExpression?: string;
+  /** Virtual fields, each with `name`, `expression`, `type`, and other attributes. */
+  expressionFields?: QgsAttributes[];
+  /** Joins to other layers. */
+  joins?: QgsVectorJoin[];
+  /** IDs of layers whose data this layer depends on. */
+  dataDependencies?: string[];
+  /** IDs of layers whose rendering this layer depends on. */
+  layerDependencies?: string[];
+  /** Feature actions. */
+  actions?: QgsAction[];
+  /** Default actions, each with `key` and `value`. */
+  defaultActions?: QgsAttributes[];
+  /** Attribute table settings. */
+  attributeTable?: QgsAttributeTableConfig;
+  /** Conditional formatting of the attribute table. */
+  conditionalStyles?: QgsConditionalStyles;
+  /** Stored expressions, each with `name`, `expression`, and `tag`. */
+  storedExpressions?: QgsAttributes[];
+  /** Attribute form settings. */
+  form?: QgsEditForm;
+  /** Relation editor widget settings by relation. */
+  widgets?: QgsFormWidget[];
+  /** Geometry validation and precision settings. */
+  geometryOptions?: QgsGeometryOptions;
+  /** Selection settings (`<selection>`), such as `mode`. */
+  selection?: QgsAttributes;
+  /** Auxiliary storage settings (`<auxiliaryLayer>`). */
+  auxiliaryLayer?: QgsAttributes;
+  /** Relations to referenced layers, kept with the layer for portable styles. */
+  referencedLayers?: QgsRelation[];
+  /** Relations from referencing layers, kept with the layer for portable styles. */
+  referencingLayers?: QgsRelation[];
+}
+
+/** Join to another vector layer. */
+export interface QgsVectorJoin {
+  /** Join settings, such as `joinLayerId`, `joinFieldName`, `targetFieldName`, and `customPrefix`. */
+  attributes?: QgsAttributes;
+  /** Joined field names; all fields when absent. */
+  fields?: string[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Feature action. */
+export interface QgsAction {
+  /** Action settings, such as `name`, `type`, `action`, and `capture`. */
+  attributes?: QgsAttributes;
+  /** Scopes where the action is shown, such as `Feature` or `Canvas`. */
+  scopes?: string[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Attribute table settings. */
+export interface QgsAttributeTableConfig {
+  /** Settings such as `sortExpression`, `sortOrder`, and `actionWidgetStyle`. */
+  attributes?: QgsAttributes;
+  /** Columns, each with `type`, `name`, `width`, and `hidden`. */
+  columns?: QgsAttributes[];
+}
+
+/** Conditional formatting rule. */
+export interface QgsConditionalStyle {
+  /** Rule and colors, such as `rule`, `name`, `background_color`, and `text_color`. */
+  attributes?: QgsAttributes;
+  /** Font settings. */
+  font?: QgsAttributes;
+  /** Icon symbol. */
+  symbol?: QgsSymbol;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Conditional formatting rules for one field. */
+export interface QgsFieldConditionalStyles {
+  /** Field name. */
+  field: string;
+  /** Rules. */
+  styles: QgsConditionalStyle[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Conditional formatting of the attribute table. */
+export interface QgsConditionalStyles {
+  /** Rules applied to whole rows. */
+  rowStyles?: QgsConditionalStyle[];
+  /** Rules applied to single fields. */
+  fieldStyles?: QgsFieldConditionalStyles[];
+}
+
+/** Label appearance of a form item. */
+export interface QgsFormLabelStyle {
+  /** Settings such as `labelColor`, `overrideLabelColor`, and `overrideLabelFont`. */
+  attributes?: QgsAttributes;
+  /** Font settings. */
+  font?: QgsAttributes;
+}
+
+/** Item of a drag-and-drop attribute form. */
+export interface QgsFormNode {
+  /** Item kind: `container`, `field`, `relation`, `action`, `qml`, `html`, `text`, or `spacer`. */
+  kind:
+    | "container"
+    | "field"
+    | "relation"
+    | "action"
+    | "qml"
+    | "html"
+    | "text"
+    | "spacer";
+  /** Item settings, such as `name`, `showLabel`, or a container's `type` and `columnCount`. */
+  attributes?: QgsAttributes;
+  /** Label appearance. */
+  labelStyle?: QgsFormLabelStyle;
+  /** Items of a container. */
+  children?: QgsFormNode[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Attribute form settings. */
+export interface QgsEditForm {
+  /** Form layout: `generatedlayout`, `tablayout`, or `uifilelayout`. */
+  layout?: string;
+  /** Path to a Qt Designer form for `uifilelayout`. */
+  uiFile?: string;
+  /** Python init function name. */
+  initFunction?: string;
+  /** Python init code source: 0 none, 1 file, 2 dialog, 3 environment. */
+  initCodeSource?: number;
+  /** Python init file path. */
+  initFilePath?: string;
+  /** Python init code. */
+  initCode?: string;
+  /** Form suppression: 0 default, 1 suppress, 2 show. */
+  suppress?: number;
+  /** Root label appearance of a drag-and-drop form. */
+  labelStyle?: QgsFormLabelStyle;
+  /** Items of a drag-and-drop form. */
+  items?: QgsFormNode[];
+}
+
+/** Relation editor widget settings (`<widget>`). */
+export interface QgsFormWidget {
+  /** Relation ID. */
+  name: string;
+  /** Widget settings. */
+  config?: QgsVariant;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Geometry validation and precision settings. */
+export interface QgsGeometryOptions {
+  /** Settings such as `geometryPrecision` and `removeDuplicateNodes`. */
+  attributes?: QgsAttributes;
+  /** Active geometry checks. */
+  activeChecks?: QgsVariant;
+  /** Geometry check settings. */
+  checkConfiguration?: QgsVariant;
+}
+
+/** Relation between a referencing (child) and a referenced (parent) layer. */
+export interface QgsRelation {
+  /** Settings such as `id`, `name`, `referencingLayer`, `referencedLayer`, and `strength`. */
+  attributes?: QgsAttributes;
+  /** Field pairs, each with `referencingField` and `referencedField`. */
+  fieldRefs?: QgsAttributes[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** Raster layer and band display settings. */
@@ -363,6 +673,34 @@ export interface QgsField {
   defaultExpression?: string;
   /** Whether the default expression also applies on update. */
   applyDefaultOnUpdate?: boolean;
+  /** Editor widget settings, such as `Min` and `Max` for `Range`. Keys depend on the widget type. */
+  editorWidgetConfig?: QgsVariant;
+  /** QGIS field configuration flags, such as `NoFlag` or `HideFromWms`. */
+  configurationFlags?: string;
+  /** Enabled constraints as a QGIS bit mask: 1 not null, 2 unique, 4 expression. */
+  constraints?: number;
+  /** Not-null constraint strength: 0 not set, 1 hard, 2 soft. */
+  notNullStrength?: number;
+  /** Unique constraint strength: 0 not set, 1 hard, 2 soft. */
+  uniqueStrength?: number;
+  /** Expression constraint strength: 0 not set, 1 hard, 2 soft. */
+  expressionStrength?: number;
+  /** Constraint expression. */
+  constraintExpression?: string;
+  /** Description shown when the constraint expression fails. */
+  constraintDescription?: string;
+  /** Behavior when a feature is split, such as `Duplicate` or `GeometryRatio`. */
+  splitPolicy?: string;
+  /** Behavior when a feature is duplicated, such as `Duplicate` or `UnsetField`. */
+  duplicatePolicy?: string;
+  /** Behavior when features are merged, such as `UnsetField` or `Sum`. */
+  mergePolicy?: string;
+  /** Whether the field can be edited in forms. */
+  editable?: boolean;
+  /** Whether the form label is placed above the widget. */
+  labelOnTop?: boolean;
+  /** Whether new features reuse the last entered value. */
+  reuseLastValue?: boolean;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }

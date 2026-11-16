@@ -8,7 +8,9 @@ from qgis.core import (
     Qgis,
     QgsApplication,
     QgsDataSourceUri,
+    QgsFieldConstraints,
     QgsLayerTreeGroup,
+    QgsMapLayer,
     QgsPalLayerSettings,
     QgsProject,
     QgsRasterDataProvider,
@@ -197,6 +199,75 @@ def check_symbology(project):
     assert layers["nothing"].renderer().type() == "nullSymbol"
 
 
+def check_settings(project):
+    layers = {layer.name(): layer for layer in project.mapLayers().values()}
+    cities = layers["cities"]
+    assert cities.isValid()
+    fields = cities.fields()
+    name = fields.indexOf("name")
+    pop = fields.indexOf("pop")
+    assert cities.attributeAlias(name) == "City name"
+    setup = cities.editorWidgetSetup(pop)
+    assert setup.type() == "Range" and setup.config()["Max"] == 1000, setup.config()
+    assert cities.defaultValueDefinition(pop).expression() == "0"
+    assert cities.defaultValueDefinition(pop).applyOnUpdate()
+    constraints = fields.at(pop).constraints()
+    assert constraints.constraintExpression() == '"pop" >= 0'
+    assert constraints.constraintDescription() == "positive"
+    unique = fields.at(fields.indexOf("id")).constraints()
+    assert unique.constraints() & prop(
+        QgsFieldConstraints, "ConstraintUnique", "Constraint"
+    )
+    config = cities.editFormConfig()
+    assert config.readOnly(fields.indexOf("id"))
+    assert config.labelOnTop(name) and config.reuseLastValue(name)
+    assert config.initFunction() == "my_init" and "pass" in config.initCode()
+    tabs = config.tabs()
+    assert [tab.name() for tab in tabs] == ["Main"], [tab.name() for tab in tabs]
+    children = tabs[0].children()
+    assert [child.name() for child in children] == ["name", "Numbers"]
+    assert children[1].children()[0].name() == "pop"
+    assert cities.displayExpression() == '"name"'
+    assert cities.mapTipTemplate() == "<b>[% name %]</b>"
+    assert "pop_k" in [field.name() for field in cities.fields()]
+    joins = cities.vectorJoins()
+    assert len(joins) == 1 and joins[0].joinLayerId() == "countries_layer_01"
+    assert joins[0].joinFieldNamesSubset() == ["cname"]
+    assert [d.layerId() for d in cities.dependencies()] == ["countries_layer_01"]
+    actions = cities.actions().actions()
+    assert [a.name() for a in actions] == ["Say hi"]
+    assert set(actions[0].actionScopes()) == {"Feature", "Canvas"}
+    table = cities.attributeTableConfig()
+    assert table.sortExpression() == '"pop"'
+    assert [c.name for c in table.columns()][:2] == ["name", "pop"]
+    assert table.columns()[1].hidden
+    styles = cities.conditionalStyles()
+    assert styles.rowStyles()[0].name() == "big"
+    assert styles.fieldStyles("pop")[0].rule() == "@value > 10"
+    assert cities.customProperty("plugin/key") == "value"
+    assert cities.customProperty("plugin/count") == 3
+    assert not cities.flags() & prop(QgsMapLayer, "Removable", "LayerFlag")
+    assert cities.flags() & prop(QgsMapLayer, "Identifiable", "LayerFlag")
+    server = cities.serverProperties()
+
+    def served(name):
+        # Server getters moved from the layer to its server properties in 3.38.
+        return getattr(server if hasattr(server, name) else cities, name)()
+
+    assert served("shortName") == "cities"
+    assert served("keywordList").replace(" ", "") == "one,two"
+    assert served("dataUrl") == "https://example.com/data"
+    assert served("attributionUrl") == "https://example.com"
+    metadata = cities.metadata()
+    assert metadata.title() == "Cities metadata"
+    assert metadata.keywords() == {"gmd:topicCategory": ["location"]}
+    assert metadata.contacts()[0].email == "a@example.com"
+    assert metadata.licenses() == ["CC-BY"] and metadata.history() == ["created"]
+    assert cities.temporalProperties().isActive()
+    assert cities.temporalProperties().startField() == "pop"
+    assert cities.geometryOptions().geometryPrecision() == 0.01
+
+
 def check_raster(project):
     layers = {layer.name(): layer for layer in project.mapLayers().values()}
     assert len(layers) == 5, sorted(layers)
@@ -271,6 +342,8 @@ def main():
             ("gallery-roundtrip.qgs", check_gallery),
             ("symbology.qgs", check_symbology),
             ("symbology-roundtrip.qgs", check_symbology),
+            ("settings.qgs", check_settings),
+            ("settings-roundtrip.qgs", check_settings),
             ("raster.qgs", check_raster),
             ("raster-roundtrip.qgs", check_raster),
             ("wms.qgs", check_wms),
@@ -287,7 +360,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 11 projects", flush=True)
+    print("QGIS verified 13 projects", flush=True)
 
 
 if __name__ == "__main__":

@@ -110,11 +110,13 @@ Each version can only be published once.
 
 ## QGIS integration tests
 
-CI opens eleven projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
+CI opens thirteen projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
 images: a new project, a conversion from an older format, an edited fixture,
 a tile project with nested groups and repeated references, its round trip,
 a project with every modeled vector renderer and labeling and its round
-trip, a raster project with every modeled pipe setting and its round trip, and
+trip, a project with field, form, join, action, table, and common layer
+settings and its round trip, a raster project with every modeled pipe setting
+and its round trip, and
 a WMS project with a repaired short layer ID and its round trip.
 The conversion and gallery/WMS round trips also exercise incomplete input
 containing authority IDs without CRS lookup markers.

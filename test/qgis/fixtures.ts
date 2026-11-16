@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
 import { createRasterProject, writeRasterData } from "./raster.ts";
+import { createSettingsProject } from "./settings.ts";
 import { createSymbologyProject } from "./symbology.ts";
 import { createTileGallery } from "./tile-gallery.ts";
 
@@ -72,6 +73,13 @@ export function writeQgisFixtures(directory: string, version: string): void {
   writeFileSync(
     join(directory, "symbology-roundtrip.qgs"),
     serializeQgs(JSON.parse(JSON.stringify(parseQgs(symbology))), { version }),
+  );
+
+  const settings = serializeQgs(createSettingsProject(), { version });
+  writeFileSync(join(directory, "settings.qgs"), settings);
+  writeFileSync(
+    join(directory, "settings-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(settings))), { version }),
   );
 
   writeRasterData(directory);

@@ -79,7 +79,8 @@ numbers; flags are booleans.
 | `QgsVectorLabeling`                       | Simple and rule-based labeling, label settings, text formats, and callouts.            |
 | `QgsSymbol` / `QgsSymbolLayer`            | Symbol layers, their properties, data-defined properties, and sub-symbols.             |
 | `QgsRasterLayer`                          | Renderer, contrast, shader, palette, transparency, filters, resampling, and no-data.   |
-| `QgsField`                                | Name, editor widget, alias, default expression, and apply-on-update flag.              |
+| `QgsField`                                | Alias, editor widget and its settings, default value, constraints, and form behavior.  |
+| `QgsMapLayerBase`                         | Flags, custom properties, blend mode, map tip, legend, time, elevation, and metadata.  |
 | `QgsLayerTreeGroup` / `QgsLayerTreeLayer` | Nested groups, layer references, check states, and custom drawing order.               |
 
 ### Layers and fields
@@ -193,6 +194,27 @@ legend settings. Settings QGIS stores as attributes or as child text, such as
 
 Removing an optional setting removes the element that stores it; a list stored
 in its own container, such as `noData`, removes the container.
+
+### Fields, forms, and other layer settings
+
+QGIS stores per-field settings in layer-level lists keyed by field name. Each
+`QgsField` collects them: alias, `editorWidgetType` and `editorWidgetConfig`,
+default value, constraints and their strengths, split, duplicate, and merge
+policies, and `editable`, `labelOnTop`, and `reuseLastValue`. Renaming a field
+renames all of its records.
+
+Vector layers also model virtual `expressionFields`, `joins`, data and layer
+dependencies, `actions`, the attribute table, conditional styles, stored
+expressions, the attribute `form` (including drag-and-drop `items` with
+`container`, `field`, and other `kind`s), relation editor `widgets`, geometry
+options, and relations kept with the layer.
+
+Every layer type models its other `<maplayer>` attributes, `flags`,
+`customProperties`, `blendMode`, map tip, legend settings, `temporal` and
+`elevation` settings, `metadata`, and `server` publishing settings. Custom
+properties are written as `<property>` elements for QGIS before 3.20, which
+cannot store nested values, and as an `<Option>` map afterwards. QGIS writes
+`<expressionfields>` twice; both copies are kept identical.
 
 Adding a layer to `project.layers` adds a tree reference and an entry in any
 existing drawing-order list when serialized. Removing a layer removes its tree

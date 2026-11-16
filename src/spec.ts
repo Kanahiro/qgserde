@@ -10,8 +10,12 @@ import {
   putAttribute,
   putElementText,
   putText,
+  readCrs,
+  readExtent,
   remove,
   replaceChildren,
+  writeCrs,
+  writeExtent,
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
@@ -74,8 +78,31 @@ export type Entry =
   | { kind: "symbol"; field: string; name: string; at?: At }
   /** Repeated `item` children of `at`, as strings from `attribute` or their text. */
   | { kind: "values"; field: string; at: At; item: string; attribute?: string }
-  /** Repeated `item` children of `at`, each as a string attribute map. */
-  | { kind: "records"; field: string; at: At; item: string }
+  /**
+   * Repeated `item` children of `at`, each as a string attribute map. With
+   * `mirror`, later same-named copies of the container that QGIS also writes
+   * are kept identical to the first, which QGIS reads.
+   */
+  | {
+      kind: "records";
+      field: string;
+      at: At;
+      item: string;
+      mirror?: true;
+      /** Map key for the item's own text, such as `url`. */
+      text?: string;
+      /** Read the item's leaf child elements instead of its attributes. */
+      texts?: true;
+    }
+  /** CRS stored as `<tag><spatialrefsys>` under `at`. */
+  | { kind: "crs"; field: string; tag: string; at?: At }
+  /** Rectangle stored as `<tag>` under `at`, with coordinates as attributes or child text. */
+  | { kind: "extent"; field: string; tag: string; at?: At }
+  /**
+   * Ordered owned children of several element names under `at`. Each item's
+   * `kind` names its element through `specs`.
+   */
+  | { kind: "nodes"; field: string; at?: At; specs: Record<string, Spec> }
   /** Custom handling for structures that do not fit an entry above. */
   | { kind: "custom"; field: string; custom: Custom };
 
@@ -107,6 +134,53 @@ export interface Spec {
 
 type Model = Record<string, unknown>;
 const MAX_DEPTH = 128;
+
+type RecordEntry = Extract<Entry, { kind: "records" }>;
+
+function readRecord(
+  entry: RecordEntry,
+  item: XmlElement,
+): Record<string, string> {
+  const record: Record<string, string> = entry.texts
+    ? Object.fromEntries(
+        leaves(item).map((child) => [child.name, getText(child)]),
+      )
+    : { ...item.attributes };
+  if (entry.text !== undefined && !findChildren(item).length)
+    record[entry.text] = getText(item);
+  return record;
+}
+
+function writeRecord(
+  entry: RecordEntry,
+  child: XmlElement,
+  map: Record<string, string>,
+): void {
+  const { [entry.text ?? ""]: own, ...rest } = map;
+  if (entry.texts) {
+    for (const leaf of leaves(child))
+      if (!Object.hasOwn(rest, leaf.name)) remove(child, leaf.name);
+    for (const [tag, value] of Object.entries(rest)) putText(child, tag, value);
+  } else child.attributes = { ...rest };
+  if (entry.text !== undefined) putElementText(child, own ?? "");
+}
+
+/** The element at `at` and same-named siblings after it. */
+function copies(element: XmlElement, at: At): XmlElement[] {
+  const parent = locate(element, at.slice(0, -1));
+  const name = at.at(-1);
+  return parent && name ? findChildren(parent, name) : [];
+}
+
+function nodeKind(specs: Record<string, Spec>, tag: string) {
+  return Object.keys(specs).find((kind) => specs[kind]?.tag === tag);
+}
+
+function nodeSpec(specs: Record<string, Spec>, item: Model): Spec | undefined {
+  return typeof item.kind === "string" && Object.hasOwn(specs, item.kind)
+    ? specs[item.kind]
+    : undefined;
+}
 
 /** Child elements without element children: scalar settings stored as text. */
 const leaves = (element: XmlElement) =>
@@ -222,6 +296,25 @@ export function readSpec(
     const target = locate(element, entry.at);
     if (!target) continue;
     switch (entry.kind) {
+      case "crs": {
+        const crs = readCrs(target, entry.tag);
+        if (crs) model[entry.field] = crs;
+        break;
+      }
+      case "extent": {
+        const extent = readExtent(target, entry.tag);
+        if (extent) model[entry.field] = extent;
+        break;
+      }
+      case "nodes":
+        model[entry.field] = findChildren(target).flatMap((child) => {
+          const kind = nodeKind(entry.specs, child.name);
+          if (kind === undefined) return [];
+          const spec = entry.specs[kind] as Spec;
+          const item = readSpec(spec, child, codec, depth + 1);
+          return [codec.remember({ kind, ...item }, child)];
+        });
+        break;
       case "texts":
         model[entry.field] = Object.fromEntries(
           leaves(target).map((child) => [child.name, getText(child)]),
@@ -250,9 +343,13 @@ export function readSpec(
         if (value !== undefined) model[entry.field] = value;
         break;
       }
-      case "object":
-        model[entry.field] = readSpec(entry.spec, target, codec, depth + 1);
+      case "object": {
+        const value = readSpec(entry.spec, target, codec, depth + 1);
+        // A sub-object sharing its parent element exists only through its settings.
+        if (entry.at.length || Object.keys(value).length)
+          model[entry.field] = value;
         break;
+      }
       case "owner": {
         const child = findChild(target, entry.spec.tag);
         if (child)
@@ -290,9 +387,9 @@ export function readSpec(
         );
         break;
       case "records":
-        model[entry.field] = findChildren(target, entry.item).map((item) => ({
-          ...item.attributes,
-        }));
+        model[entry.field] = findChildren(target, entry.item).map((item) =>
+          readRecord(entry, item),
+        );
         break;
     }
   }
@@ -331,6 +428,23 @@ export function captureSpec(
     const at = [...path, ...fieldPath(entry.field)];
     const value = getPath(model, fieldPath(entry.field));
     switch (entry.kind) {
+      case "crs":
+        codec.bindCrs(target, entry.tag, at);
+        break;
+      case "extent":
+        codec.bindExtent(target, entry.tag, at);
+        break;
+      case "nodes":
+        if (Array.isArray(value))
+          for (const item of value)
+            if (isMap(item)) {
+              const spec = nodeSpec(entry.specs, item);
+              const child = codec.source(item);
+              if (!spec || !child) continue;
+              captureSpec(spec, item, child, codec, []);
+              codec.own(item, child);
+            }
+        break;
       case "texts":
         for (const child of leaves(target))
           codec.bindText(target, child.name, [...at, child.name]);
@@ -386,9 +500,21 @@ export function captureSpec(
             codec.bindAttribute(item, entry.attribute, [...at, String(index)]);
         break;
       case "records":
-        for (const [index, item] of findChildren(target, entry.item).entries())
-          for (const name of Object.keys(item.attributes))
-            codec.bindAttribute(item, name, [...at, String(index), name]);
+        for (const host of entry.mirror ? copies(element, entry.at) : [target])
+          for (const [index, item] of findChildren(
+            host,
+            entry.item,
+          ).entries()) {
+            const prefix = [...at, String(index)];
+            if (entry.texts)
+              for (const child of leaves(item))
+                codec.bindText(item, child.name, [...prefix, child.name]);
+            else
+              for (const name of Object.keys(item.attributes))
+                codec.bindAttribute(item, name, [...prefix, name]);
+            if (entry.text !== undefined)
+              codec.bindElementText(item, [...prefix, entry.text]);
+          }
         break;
     }
   }
@@ -445,6 +571,14 @@ export function restoreSpec(
             if (isMap(item))
               restoreOwned(entry.spec, item, codec, version, depth + 1);
         break;
+      case "nodes":
+        if (Array.isArray(value))
+          for (const item of value) {
+            const spec = isMap(item) && nodeSpec(entry.specs, item);
+            if (spec)
+              restoreOwned(spec, item as Model, codec, version, depth + 1);
+          }
+        break;
       case "symbol":
         if (isMap(value)) restoreSymbol(value as never, codec, version);
         break;
@@ -500,19 +634,60 @@ export function writeSpec(
     const value = getPath(model, fieldPath(entry.field));
     const existing = locate(element, entry.at);
     if (value === undefined && !existing) continue;
-    // Removing a list kept in its own container removes the container, so the
-    // model reads back unchanged.
+    // Removing a list kept in a container removes its items, and the container
+    // once nothing else is left in it, so the model reads back unchanged.
     if (
       value === undefined &&
+      existing &&
       (entry.kind === "owners" ||
         entry.kind === "values" ||
         entry.kind === "records") &&
       entry.at?.length
     ) {
-      removePath(element, entry.at);
+      const item = "spec" in entry ? entry.spec.tag : entry.item;
+      remove(existing, item);
+      if (
+        !findChildren(existing).length &&
+        !Object.keys(existing.attributes).length
+      )
+        removePath(element, entry.at);
       continue;
     }
     switch (entry.kind) {
+      case "crs":
+        writeCrs(
+          existing ?? ensurePath(element, entry.at),
+          entry.tag,
+          value as never,
+        );
+        break;
+      case "extent":
+        writeExtent(
+          existing ?? ensurePath(element, entry.at),
+          value as never,
+          entry.tag,
+        );
+        break;
+      case "nodes": {
+        if (value !== undefined && !Array.isArray(value))
+          throw new QgsError("INVALID_EDIT", `${name} must be an array`);
+        const host = existing ?? ensurePath(element, entry.at);
+        const tags = Object.values(entry.specs).map((spec) => spec.tag);
+        replaceChildren(
+          host,
+          tags,
+          ((value ?? []) as unknown[]).map((item) => {
+            const spec = isMap(item) ? nodeSpec(entry.specs, item) : undefined;
+            if (!spec || !isMap(item))
+              throw new QgsError(
+                "INVALID_EDIT",
+                `${name} items require a known kind`,
+              );
+            return writeOwned(spec, item, codec, target, depth + 1);
+          }),
+        );
+        break;
+      }
       case "texts": {
         if (value === undefined) {
           removePath(element, entry.at);
@@ -561,7 +736,9 @@ export function writeSpec(
         break;
       }
       case "object":
-        if (value === undefined) removePath(element, entry.at);
+        if (value === undefined && !entry.at.length)
+          writeSpec(entry.spec, {}, element, codec, target, depth + 1);
+        else if (value === undefined) removePath(element, entry.at);
         else
           writeSpec(
             entry.spec,
@@ -648,24 +825,30 @@ export function writeSpec(
         if (value !== undefined && !Array.isArray(value))
           throw new QgsError("INVALID_EDIT", `${name} must be an array`);
         const host = existing ?? ensurePath(element, entry.at);
-        const items = findChildren(host, entry.item);
-        replaceChildren(
-          host,
-          [entry.item],
-          ((value ?? []) as unknown[]).map((item, index) => {
-            const child = structuredClone(
-              items[index] ?? createElement(entry.item),
-            );
-            if (entry.kind === "records") {
-              const map = stringMap(item, name);
-              child.attributes = { ...map };
-            } else if (typeof item !== "string")
-              throw new QgsError("INVALID_EDIT", `${name} must hold strings`);
-            else if (entry.attribute === undefined) putElementText(child, item);
-            else child.attributes[entry.attribute] = item;
-            return child;
-          }),
-        );
+        const hosts =
+          entry.kind === "records" && entry.mirror
+            ? copies(element, entry.at)
+            : [host];
+        for (const copy of hosts) {
+          const items = findChildren(copy, entry.item);
+          replaceChildren(
+            copy,
+            [entry.item],
+            ((value ?? []) as unknown[]).map((item, index) => {
+              const child = structuredClone(
+                items[index] ?? createElement(entry.item),
+              );
+              if (entry.kind === "records")
+                writeRecord(entry, child, stringMap(item, name));
+              else if (typeof item !== "string")
+                throw new QgsError("INVALID_EDIT", `${name} must hold strings`);
+              else if (entry.attribute === undefined)
+                putElementText(child, item);
+              else child.attributes[entry.attribute] = item;
+              return child;
+            }),
+          );
+        }
         break;
       }
     }

@@ -72,3 +72,14 @@ single-band gray (contrast enhancement, brightness, hue/saturation, bilinear
 provider resampling, user no-data), pseudocolor (gradient color ramp shader),
 paletted, multiband color (per-band contrast, RGB transparency), and hillshade
 renderers.
+
+## qgis3-vector-settings.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package). Two
+memory layers, `cities` and `countries`, with a relation between them. `cities`
+has an alias, a default value, editor widgets, constraints, split policies,
+read-only, label-on-top and reuse-last-value fields, a virtual field, a join, a
+data dependency, an action, attribute table and conditional styles, a tabbed
+drag-and-drop form with Python init code, a display expression, a map tip,
+custom properties, server URLs and keywords, layer metadata, temporal and
+elevation settings, and geometry options.

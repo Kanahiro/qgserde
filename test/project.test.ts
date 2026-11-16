@@ -532,6 +532,7 @@ for (const fixture of [
   "qgis3-custom-order",
   "qgis3-labeling",
   "qgis3-raster-styles",
+  "qgis3-vector-settings",
   "qgis3-raster",
   "qgis3-relations",
   "qgis3-view-settings",

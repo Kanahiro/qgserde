@@ -15,8 +15,9 @@ import {
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
-import { labeling } from "./labeling.ts";
+import { commonLayerEntries, vectorLayerEntries } from "./layer-settings.ts";
 import { rasterLayerSpec } from "./raster.ts";
+import { fieldRecords } from "./schema.ts";
 import { readSpec, type Spec, writeSpec } from "./spec.ts";
 import { readRenderer, writeRenderer } from "./symbology.ts";
 import type {
@@ -26,61 +27,105 @@ import type {
   QgsMapLayerBase,
   XmlElement,
 } from "./types.ts";
+import { readVariant, writeVariant } from "./variant.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
 
-/** Vector layer settings described declaratively; the rest is hand-written below. */
-export const vectorLayerSpec: Spec = {
+const commonLayerSpec: Spec = { tag: "maplayer", entries: commonLayerEntries };
+const vectorLayerSpec: Spec = {
   tag: "maplayer",
-  entries: [{ kind: "custom", field: "labeling", custom: labeling }],
+  entries: [...commonLayerEntries, ...vectorLayerEntries],
 };
+const rasterSpec: Spec = {
+  tag: "maplayer",
+  entries: [...commonLayerEntries, ...rasterLayerSpec.entries],
+};
+
+/** Declarative settings of a layer type; hand-written settings are handled below. */
+export function layerSpec(type: string): Spec {
+  return type === "vector"
+    ? vectorLayerSpec
+    : type === "raster"
+      ? rasterSpec
+      : commonLayerSpec;
+}
 
 export function readLayerId(element: XmlElement): string {
   return text(element, "id") ?? element.attributes.id ?? "";
 }
 
+function recordValue(
+  raw: string | undefined,
+  type: "string" | "number" | "boolean",
+): string | number | boolean | undefined {
+  if (raw === undefined) return undefined;
+  return type === "number"
+    ? number(raw)
+    : type === "boolean"
+      ? boolean(raw)
+      : raw;
+}
+
+/** Records keyed by field name; duplicates are ambiguous and rejected. */
+export function fieldRecordMap(
+  layer: XmlElement,
+  container: string,
+  tag: string,
+  key: string,
+): Map<string, XmlElement> {
+  const parent = findChild(layer, container);
+  const records = new Map<string, XmlElement>();
+  for (const record of parent ? findChildren(parent, tag) : []) {
+    const name = record.attributes[key];
+    if (name === undefined || records.has(name))
+      throw new QgsError(
+        "INVALID_PROJECT",
+        `${container} records require a unique field name`,
+      );
+    records.set(name, record);
+  }
+  return records;
+}
+
 function readFields(layer: XmlElement, codec: ExtensionCodec): QgsField[] {
   const configuration = findChild(layer, "fieldConfiguration");
-  const aliases = findChild(layer, "aliases");
-  const defaults = findChild(layer, "defaults");
   const elements = configuration ? findChildren(configuration, "field") : [];
-  for (const [container, tag] of [
-    [aliases, "alias"],
-    [defaults, "default"],
-  ] as const) {
-    const seen = new Set<string>();
-    for (const record of container ? findChildren(container, tag) : []) {
-      const name = record.attributes.field;
-      if (name === undefined || seen.has(name))
-        throw new QgsError(
-          "INVALID_PROJECT",
-          `${tag} records require a unique field name`,
-        );
-      seen.add(name);
-      if (!elements.some((element) => element.attributes.name === name))
-        elements.push(createElement("field", { name }));
-    }
-  }
+  const tables = fieldRecords.map((table) => ({
+    table,
+    records: fieldRecordMap(layer, table.container, table.tag, table.key),
+  }));
+  for (const { table, records } of tables)
+    if (table.defines)
+      for (const name of records.keys())
+        if (!elements.some((element) => element.attributes.name === name))
+          elements.push(createElement("field", { name }));
   return elements.map((element) => {
     const field: QgsField = {
       name: element.attributes.name ?? "",
     };
-    const editorWidget = findChild(element, "editWidget")?.attributes.type;
-    const alias =
-      aliases &&
-      findChildren(aliases, "alias").find(
-        (alias) => alias.attributes.field === field.name,
-      );
-    const defaultValue =
-      defaults &&
-      findChildren(defaults, "default").find(
-        (value) => value.attributes.field === field.name,
-      );
-    if (editorWidget !== undefined) field.editorWidgetType = editorWidget;
-    if (alias) field.alias = alias.attributes.name ?? "";
-    if (defaultValue)
-      field.defaultExpression = defaultValue.attributes.expression ?? "";
-    const apply = boolean(defaultValue?.attributes.applyOnUpdate);
-    if (apply !== undefined) field.applyDefaultOnUpdate = apply;
+    const editWidget = findChild(element, "editWidget");
+    if (editWidget?.attributes.type !== undefined)
+      field.editorWidgetType = editWidget.attributes.type;
+    const config = editWidget && findChild(editWidget, "config");
+    const option = config && findChild(config, "Option");
+    const widgetConfig = option && readVariant(option);
+    if (widgetConfig !== undefined && widgetConfig !== null)
+      field.editorWidgetConfig = widgetConfig;
+    if (element.attributes.configurationFlags !== undefined)
+      field.configurationFlags = element.attributes.configurationFlags;
+    const target = field as unknown as Record<string, unknown>;
+    for (const { table, records } of tables) {
+      const record = records.get(field.name);
+      if (!record) continue;
+      for (const [attribute, [property, type, fallback]] of Object.entries(
+        table.values,
+      )) {
+        const value = recordValue(
+          record.attributes[attribute] ?? fallback,
+          type,
+        );
+        if (value !== undefined) target[property] = value;
+      }
+    }
     return codec.remember(field, element);
   });
 }
@@ -104,48 +149,54 @@ function writeFields(
         codec.source(field) ?? createElement("field"),
       );
       putAttribute(element, "name", field.name);
-      if (field.editorWidgetType !== undefined)
-        putAttribute(
-          ensure(element, "editWidget"),
-          "type",
-          field.editorWidgetType,
-        );
-      else remove(element, "editWidget");
+      putAttribute(element, "configurationFlags", field.configurationFlags);
+      if (
+        field.editorWidgetType !== undefined ||
+        field.editorWidgetConfig !== undefined
+      ) {
+        const editWidget = ensure(element, "editWidget");
+        putAttribute(editWidget, "type", field.editorWidgetType);
+        const config = findChild(editWidget, "config");
+        const option = config && findChild(config, "Option");
+        if (field.editorWidgetConfig !== undefined)
+          writeVariant(
+            option ?? ensure(ensure(editWidget, "config"), "Option"),
+            field.editorWidgetConfig,
+          );
+        else if (option) writeVariant(option, null);
+      } else remove(element, "editWidget");
       return element;
     }),
   );
-  for (const [containerName, tag] of [
-    ["aliases", "alias"],
-    ["defaults", "default"],
-  ] as const) {
-    const container = findChild(layer, containerName);
-    const previous = container ? findChildren(container, tag) : [];
+  for (const table of fieldRecords) {
+    const container = findChild(layer, table.container);
+    const previous = container ? findChildren(container, table.tag) : [];
     const records = fields.flatMap((field) => {
-      if (tag === "alias" && field.alias === undefined) return [];
-      if (
-        tag === "default" &&
-        field.defaultExpression === undefined &&
-        field.applyDefaultOnUpdate === undefined
-      )
+      const source = field as unknown as Record<string, unknown>;
+      const entries = Object.entries(table.values);
+      if (entries.every(([, [property]]) => source[property] === undefined))
         return [];
       const originalName = codec.source(field)?.attributes.name ?? field.name;
       const index = previous.findIndex(
-        (record) => record.attributes.field === originalName,
+        (record) => record.attributes[table.key] === originalName,
       );
-      const element = structuredClone(previous[index] ?? createElement(tag));
-      putAttribute(element, "field", field.name);
-      if (tag === "alias") putAttribute(element, "name", field.alias);
-      else {
-        putAttribute(element, "expression", field.defaultExpression ?? "");
-        putAttribute(element, "applyOnUpdate", field.applyDefaultOnUpdate);
+      const element = structuredClone(
+        previous[index] ?? createElement(table.tag),
+      );
+      putAttribute(element, table.key, field.name);
+      for (const [attribute, [property, type, fallback]] of entries) {
+        const value = source[property] ?? fallback;
+        if (value !== undefined && typeof value !== type)
+          throw new QgsError("INVALID_EDIT", `${property} must be a ${type}`);
+        putAttribute(element, attribute, value as string | number | boolean);
       }
       return [{ element, index: index < 0 ? Infinity : index }];
     });
     records.sort((left, right) => left.index - right.index);
     if (container || records.length)
       replaceChildren(
-        container ?? ensure(layer, containerName),
-        [tag],
+        container ?? ensure(layer, table.container),
+        [table.tag],
         records.map((record) => record.element),
       );
   }
@@ -202,11 +253,18 @@ export function readLayer(
     }
     case "raster":
       return codec.remember(
-        { ...base, type, ...readSpec(rasterLayerSpec, element, codec) },
+        { ...base, type, ...readSpec(rasterSpec, element, codec) },
         element,
       );
     case "pointcloud":
-      return codec.remember({ ...base, type: "point-cloud" }, element);
+      return codec.remember(
+        {
+          ...base,
+          type: "point-cloud",
+          ...readSpec(commonLayerSpec, element, codec),
+        },
+        element,
+      );
     case "mesh":
     case "vector-tile":
     case "point-cloud":
@@ -214,13 +272,17 @@ export function readLayer(
     case "annotation":
     case "group":
     case "tiled-scene":
-      return codec.remember({ ...base, type }, element);
+      return codec.remember(
+        { ...base, type, ...readSpec(commonLayerSpec, element, codec) },
+        element,
+      );
     default:
       return codec.remember(
         {
           ...base,
           type: "unknown",
           xmlType: element.attributes.type ?? "",
+          ...readSpec(commonLayerSpec, element, codec),
         },
         element,
       );
@@ -340,12 +402,11 @@ export function writeLayer(
       ["renderer-v2"],
       layer.renderer ? [writeRenderer(layer.renderer, codec, target)] : [],
     );
-    writeSpec(vectorLayerSpec, layer as never, element, codec, target);
-  } else if (layer.type === "raster")
-    writeSpec(rasterLayerSpec, layer as never, element, codec, target);
+  }
+  writeSpec(layerSpec(layer.type), layer as never, element, codec, target);
   // QGIS 3.x rejects vector tile layer XML without a renderer, even with a valid URI.
   // styleUrl is connection metadata; it does not replace native renderer XML.
-  else if (layer.type === "vector-tile" && !findChild(element, "renderer"))
+  if (layer.type === "vector-tile" && !findChild(element, "renderer"))
     element.children.push(defaultTileRenderer());
   return element;
 }
