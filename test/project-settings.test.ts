@@ -26,11 +26,11 @@ test("reads typed project properties without the CRS-managed key", () => {
   });
   assert.equal(project.properties?.WMSServiceCapabilities, 1);
   assert.equal(
-    (project.properties?.PAL as Record<string, unknown>).DrawUnplaced,
+    (project.properties!.PAL as Record<string, unknown>).DrawUnplaced,
     false,
   );
   assert.equal(
-    (project.properties?.PAL as Record<string, unknown>).CandidatesLinePerCM,
+    (project.properties!.PAL as Record<string, unknown>).CandidatesLinePerCM,
     5,
   );
   assert.equal(project.properties?.SpatialRefSys, undefined);

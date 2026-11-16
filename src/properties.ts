@@ -237,13 +237,11 @@ export const projectProperties: Custom = {
   write(value, root) {
     const properties = findChild(root, "properties");
     if (!properties && value === undefined) return;
-    writeKey(
-      properties ??
-        (root.children.push(createElement("properties")),
-        findChild(root, "properties") as XmlElement),
-      (value ?? {}) as QgsProjectProperties,
-      [],
-      0,
-    );
+    let host = properties;
+    if (!host) {
+      host = createElement("properties");
+      root.children.push(host);
+    }
+    writeKey(host, (value ?? {}) as QgsProjectProperties, [], 0);
   },
 };
