@@ -83,3 +83,11 @@ data dependency, an action, attribute table and conditional styles, a tabbed
 drag-and-drop form with Python init code, a display expression, a map tip,
 custom properties, server URLs and keywords, layer metadata, temporal and
 elevation settings, and geometry options.
+
+## qgis3-project-settings.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package). Two
+memory layers and a mutually exclusive group with a custom property, project
+variables, WMS properties, ellipsoid and units, transaction mode and flags,
+snapping, a coordinate operation, a relation, a map theme, a bookmark, time
+settings, predefined scales, project metadata, display and style settings.

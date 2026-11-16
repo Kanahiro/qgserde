@@ -93,6 +93,45 @@ export interface QgsProject {
   layerTree?: QgsLayerTreeGroup;
   /** Drawing order as layer IDs. Removed project layers are excluded on serialization. */
   layerOrder?: string[];
+  /**
+   * Project property tree, such as `Variables`, `Measurement`, `Measure`, or
+   * `WMSServiceTitle`. `SpatialRefSys/ProjectionsEnabled` follows {@link QgsProject.crs}.
+   */
+  properties?: QgsProjectProperties;
+  /** Transaction mode, such as `Disabled`, `AutomaticGroups`, or `BufferedGroups`. */
+  transactionMode?: string;
+  /** Project flags joined with `|`, such as `EvaluateDefaultValuesOnProviderSide`. */
+  projectFlags?: string;
+  /** Relations between layers. */
+  relations?: QgsRelation[];
+  /** Polymorphic relations, each with attributes and field pairs. */
+  polymorphicRelations?: QgsRelation[];
+  /** Map themes (visibility presets). */
+  mapThemes?: QgsMapTheme[];
+  /** Spatial bookmarks. */
+  bookmarks?: QgsBookmark[];
+  /** Preferred coordinate operations between CRS pairs. */
+  transformContext?: QgsCoordinateOperation[];
+  /** Snapping settings. */
+  snapping?: QgsSnappingSettings;
+  /** Data-defined properties for QGIS Server. */
+  dataDefinedServerProperties?: QgsDataDefinedProperties;
+  /** Elevation shading (eye-dome lighting and hillshading) settings. */
+  elevationShading?: QgsAttributes;
+  /** Whether the project's predefined scales replace the global ones. */
+  useProjectScales?: boolean;
+  /** Predefined scale denominators, as stored. */
+  scales?: string[];
+  /** Default symbol and style database settings. */
+  styleSettings?: QgsProjectStyleSettings;
+  /** Temporal navigation settings. */
+  timeSettings?: QgsProjectTimeSettings;
+  /** Terrain settings. */
+  elevationProperties?: QgsProjectElevationProperties;
+  /** Coordinate and bearing display settings. */
+  displaySettings?: QgsProjectDisplaySettings;
+  /** GPS digitizing settings. */
+  gpsSettings?: QgsProjectGpsSettings;
   /** @internal Unmodeled values and ordering slots; never an original XML document. */
   readonly extensions?: QgsExtensions;
 }
@@ -144,8 +183,130 @@ export interface QgsReferencedRectangle extends QgsRectangle {
   crs?: QgsCrs;
 }
 
+/** Typed value in the project property tree. */
+export type QgsProjectPropertyValue = string | number | boolean | string[];
+
+/** Project property tree: nested keys holding typed values. */
+export interface QgsProjectProperties {
+  [key: string]: QgsProjectPropertyValue | QgsProjectProperties;
+}
+
+/** Legend nodes of one layer in a map theme. */
+export interface QgsMapThemeLegendNodes {
+  /** Layer ID. */
+  layerId?: string;
+  /** Legend node keys. */
+  nodes?: string[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Map theme: layer visibility, styles, and tree state. */
+export interface QgsMapTheme {
+  /** Theme name. */
+  name: string;
+  /** Other theme attributes, such as `has-expanded-info`. */
+  attributes?: QgsAttributes;
+  /** Visible layers, each with `id`, `visible`, `style`, and `expanded`. */
+  layers?: QgsAttributes[];
+  /** Checked legend nodes by layer. */
+  checkedLegendNodes?: QgsMapThemeLegendNodes[];
+  /** Expanded legend nodes by layer. */
+  expandedLegendNodes?: QgsMapThemeLegendNodes[];
+  /** Checked group names. */
+  checkedGroupNodes?: string[];
+  /** Expanded group names. */
+  expandedGroupNodes?: string[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Spatial bookmark. */
+export interface QgsBookmark {
+  /** Settings such as `id`, `name`, `group`, `extent` (WKT), and `rotation`. */
+  attributes?: QgsAttributes;
+  /** Extent CRS. */
+  crs?: QgsCrs;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Preferred coordinate operation between two CRS. */
+export interface QgsCoordinateOperation {
+  /** Settings such as `coordinateOp` (PROJ pipeline) and `allowFallback`. */
+  attributes?: QgsAttributes;
+  /** Source CRS. */
+  source?: QgsCrs;
+  /** Destination CRS. */
+  destination?: QgsCrs;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Snapping settings. */
+export interface QgsSnappingSettings {
+  /** Settings such as `enabled`, `mode`, `type`, `tolerance`, and `unit`. */
+  attributes?: QgsAttributes;
+  /** Per-layer settings, each with `id`, `enabled`, `type`, `tolerance`, and `units`. */
+  layers?: QgsAttributes[];
+}
+
+/** Default symbol and style database settings. */
+export interface QgsProjectStyleSettings {
+  /** Settings such as `DefaultSymbolOpacity` and `RandomizeDefaultSymbolColor`. */
+  attributes?: QgsAttributes;
+  /** Style database paths. */
+  databases?: string[];
+}
+
+/** Temporal navigation settings. */
+export interface QgsProjectTimeSettings {
+  /** Settings such as `timeStep`, `timeStepUnit`, and `frameRate`. */
+  attributes?: QgsAttributes;
+  /** Temporal range (`start`, `end`) in ISO 8601. */
+  range?: QgsAttributes;
+}
+
+/** Terrain settings. */
+export interface QgsProjectElevationProperties {
+  /** Other elevation settings. */
+  attributes?: QgsAttributes;
+  /** Terrain provider type, such as `flat`, `raster`, or `mesh`. */
+  terrainProviderType?: string;
+  /** Terrain provider settings, such as `offset`, `scale`, and `layer`. */
+  terrainProvider?: QgsAttributes;
+}
+
+/** Numeric format, such as a bearing or coordinate format. */
+export interface QgsNumericFormat {
+  /** Format ID, such as `basic`, `bearing`, or `geographiccoordinate`. */
+  id?: string;
+  /** Format settings. */
+  settings?: QgsVariant;
+}
+
+/** Coordinate and bearing display settings. */
+export interface QgsProjectDisplaySettings {
+  /** Settings such as `CoordinateType` and `CoordinateAxisOrder`. */
+  attributes?: QgsAttributes;
+  /** Bearing format. */
+  bearingFormat?: QgsNumericFormat;
+  /** Geographic coordinate format. */
+  geographicCoordinateFormat?: QgsNumericFormat;
+  /** CRS for custom coordinate display. */
+  customCrs?: QgsCrs;
+}
+
+/** GPS digitizing settings. */
+export interface QgsProjectGpsSettings {
+  /** Settings such as `destinationLayer` and `autoAddTrackVertices`. */
+  attributes?: QgsAttributes;
+  /** Timestamp fields by layer, each with attributes. */
+  timeStampFields?: QgsAttributes[];
+}
+
 /** Descriptive metadata. The title is stored in {@link QgsProject.title}. */
-export interface QgsProjectMetadata {
+export interface QgsProjectMetadata extends QgsMetadataBase {
   /** Project metadata identifier. */
   identifier?: string;
   /** Identifier of the parent resource. */
@@ -177,6 +338,10 @@ export interface QgsLayerTreeGroup {
   checked: QgsCheckState;
   /** Children in display order. A layer may be referenced more than once. */
   children: QgsLayerTreeNode[];
+  /** Other attributes, such as `mutually-exclusive` and `groupLayer`. */
+  attributes?: QgsAttributes;
+  /** Plugin and application properties stored with the node. */
+  customProperties?: QgsVariantMap;
   /** Custom drawing order, independent of the tree order. */
   customOrder?: {
     /** Whether custom drawing order is enabled. */
@@ -204,6 +369,10 @@ export interface QgsLayerTreeLayer {
   expanded: boolean;
   /** Layer reference check state. Parent group states also affect visibility. */
   checked: QgsCheckState;
+  /** Other attributes, such as `patch_size`, `legend_exp`, and `legend_split_behavior`. */
+  attributes?: QgsAttributes;
+  /** Plugin and application properties stored with the node. */
+  customProperties?: QgsVariantMap;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }

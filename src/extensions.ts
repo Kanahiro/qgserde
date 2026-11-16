@@ -1,6 +1,11 @@
 import { readCrs, readExtent, text } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import { layerSpec } from "./layer-codec.ts";
+import {
+  projectMetadataSpec,
+  projectSpec,
+  treeNodeSpec,
+} from "./project-settings.ts";
 import { crsStrings, fieldRecords, metadataTags } from "./schema.ts";
 import { captureSpec, restoreSpec } from "./spec.ts";
 import { captureRenderer, restoreRenderer } from "./symbology.ts";
@@ -406,6 +411,13 @@ export class ExtensionCodec {
       ] as const)
         this.attribute(element, attribute, { property: [property] });
     }
+    captureSpec(
+      treeNodeSpec(node.type === "group"),
+      node as never,
+      element,
+      this,
+      [],
+    );
     this.capture(node, element);
     this.slots.set(element, { kind: "slot", name: element.name });
   }
@@ -457,6 +469,16 @@ export class ExtensionCodec {
             ? ["rotation"]
             : ["legacyView", "rotation"],
       });
+    const metadataElement = findChild(root, "projectMetadata");
+    if (metadataElement)
+      captureSpec(
+        projectMetadataSpec,
+        project.metadata as never,
+        metadataElement,
+        this,
+        ["metadata"],
+      );
+    captureSpec(projectSpec, project as never, root, this, []);
     this.capture(project, root);
     Object.assign(project.extensions ?? {}, {
       ...(document.declaration
@@ -624,6 +646,13 @@ export class ExtensionCodec {
           "Cyclic or excessively deep layer tree",
         );
       active.add(group);
+      restoreSpec(
+        treeNodeSpec(group.type === "group"),
+        group as never,
+        this,
+        version,
+        0,
+      );
       this.restore(
         group,
         version,
@@ -634,6 +663,15 @@ export class ExtensionCodec {
       active.delete(group);
     };
     if (project.layerTree) restoreTree(project.layerTree);
+    if (project.metadata && typeof project.metadata === "object")
+      restoreSpec(
+        projectMetadataSpec,
+        project.metadata as never,
+        this,
+        version,
+        0,
+      );
+    restoreSpec(projectSpec, project as never, this, version, 0);
     const root =
       this.restore(project, version, "qgis") ?? createElement("qgis");
     const extensions = project.extensions;

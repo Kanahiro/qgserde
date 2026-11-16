@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
+import { createProjectSettingsProject } from "./project-settings.ts";
 import { createRasterProject, writeRasterData } from "./raster.ts";
 import { createSettingsProject } from "./settings.ts";
 import { createSymbologyProject } from "./symbology.ts";
@@ -80,6 +81,17 @@ export function writeQgisFixtures(directory: string, version: string): void {
   writeFileSync(
     join(directory, "settings-roundtrip.qgs"),
     serializeQgs(JSON.parse(JSON.stringify(parseQgs(settings))), { version }),
+  );
+
+  const projectSettings = serializeQgs(createProjectSettingsProject(), {
+    version,
+  });
+  writeFileSync(join(directory, "project-settings.qgs"), projectSettings);
+  writeFileSync(
+    join(directory, "project-settings-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(projectSettings))), {
+      version,
+    }),
   );
 
   writeRasterData(directory);

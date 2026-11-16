@@ -9,7 +9,10 @@ import type {
   QgsLayerTreeLayer,
   QgsMapLayer,
 } from "./types.ts";
+import { parseQgisVersion } from "./version.ts";
 import { findChild, findChildren, getText, readXml } from "./xml.ts";
+
+const target = parseQgisVersion("4.2");
 
 function group(): QgsLayerTreeGroup {
   return {
@@ -84,6 +87,7 @@ test("new references receive typed layer connection values without changing the 
     new Set(),
     identity,
     new ExtensionCodec(),
+    target,
   );
   assert.deepEqual(findChild(output, "layer-tree-layer")!.attributes, {
     id: "v",
@@ -99,7 +103,8 @@ test("new references receive typed layer connection values without changing the 
 test("unknown new references fail, while embedded references from source XML survive", () => {
   const tree = { ...group(), children: [reference("external")] };
   assert.throws(
-    () => writeTree(tree, [], new Set(), identity, new ExtensionCodec()),
+    () =>
+      writeTree(tree, [], new Set(), identity, new ExtensionCodec(), target),
     (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
   );
   const source = readXml(
@@ -108,7 +113,7 @@ test("unknown new references fail, while embedded references from source XML sur
   const codec = new ExtensionCodec();
   const parsed = readTree(source, codec);
   if (parsed.type !== "group") throw new Error("Expected group");
-  const output = writeTree(parsed, [], new Set(), identity, codec);
+  const output = writeTree(parsed, [], new Set(), identity, codec, target);
   assert.equal(
     findChild(output, "layer-tree-layer")!.attributes.source,
     "external.qgs",
@@ -137,6 +142,7 @@ test("removes deleted references, resolves renamed IDs and adds only new unrefer
     new Set(["old", "deleted", "hidden"]),
     (id) => (id === "old" ? "v" : id),
     new ExtensionCodec(),
+    target,
   );
   assert.deepEqual(
     findChildren(output, "layer-tree-layer").map((node) => node.attributes.id),
@@ -162,7 +168,7 @@ test("preserves provider-generated tree URIs until the typed layer source change
     codec,
   );
   const write = () =>
-    writeTree(tree, [parsedLayer], new Set(["v"]), identity, codec);
+    writeTree(tree, [parsedLayer], new Set(["v"]), identity, codec, target);
   assert.equal(
     findChild(write(), "layer-tree-layer")!.attributes.source,
     "Point?uid=provider-generated",
@@ -186,7 +192,14 @@ test("custom order keeps distinct duplicate payloads and unrelated siblings afte
   const tree = readTree(source, codec);
   if (tree.type !== "group") throw new Error("Expected group");
   tree.customOrder!.layerIds = ["other", "v", "v"];
-  const output = writeTree(tree, [layer], new Set(["v"]), identity, codec);
+  const output = writeTree(
+    tree,
+    [layer],
+    new Set(["v"]),
+    identity,
+    codec,
+    target,
+  );
   const order = findChild(output, "custom-order")!;
   assert.deepEqual(
     findChildren(order, "item").map((item) => item.attributes.plugin),
@@ -199,7 +212,7 @@ test("custom order keeps distinct duplicate payloads and unrelated siblings afte
   delete tree.customOrder;
   assert.equal(
     findChild(
-      writeTree(tree, [layer], new Set(["v"]), identity, codec),
+      writeTree(tree, [layer], new Set(["v"]), identity, codec, target),
       "custom-order",
     ),
     undefined,
@@ -210,7 +223,8 @@ test("rejects cyclic and excessively deep trees while allowing repeated acyclic 
   const cyclic = group();
   cyclic.children.push(cyclic);
   assert.throws(
-    () => writeTree(cyclic, [], new Set(), identity, new ExtensionCodec()),
+    () =>
+      writeTree(cyclic, [], new Set(), identity, new ExtensionCodec(), target),
     /Cyclic/u,
   );
   const deep = group();
@@ -221,7 +235,8 @@ test("rejects cyclic and excessively deep trees while allowing repeated acyclic 
     current = next;
   }
   assert.throws(
-    () => writeTree(deep, [], new Set(), identity, new ExtensionCodec()),
+    () =>
+      writeTree(deep, [], new Set(), identity, new ExtensionCodec(), target),
     /excessively deep/u,
   );
   const node = reference("v");
@@ -232,6 +247,7 @@ test("rejects cyclic and excessively deep trees while allowing repeated acyclic 
     new Set(),
     identity,
     new ExtensionCodec(),
+    target,
   );
   assert.equal(findChildren(output, "layer-tree-layer").length, 2);
 });

@@ -18,7 +18,7 @@ const attributes = (field: string, ...at: string[]): Entry => ({
 });
 
 /** `<customproperties>`: an <Option> map since QGIS 3.20, `<property>` elements before. */
-const customProperties: Custom = {
+export const customProperties: Custom = {
   read(element) {
     const container = findChild(element, "customproperties");
     if (!container) return undefined;

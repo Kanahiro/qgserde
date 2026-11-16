@@ -14,13 +14,14 @@ import {
 import { QgsError } from "./errors.ts";
 import { ExtensionCodec } from "./extensions.ts";
 import { readLayer, readLayerId, writeLayer } from "./layer-codec.ts";
+import { projectMetadataSpec, projectSpec } from "./project-settings.ts";
 import { metadataTags } from "./schema.ts";
+import { readSpec, writeSpec } from "./spec.ts";
 import { readTree, writeTree } from "./tree-codec.ts";
 import type {
   CreateProjectOptions,
   QgsLayerTreeGroup,
   QgsProject,
-  QgsProjectMetadata,
   SerializeOptions,
   XmlDocument,
   XmlElement,
@@ -179,9 +180,14 @@ export function parseQgs(xml: string): QgsProject {
     for (const [field, tag] of Object.entries(metadataTags)) {
       const value = text(metadata, tag);
       if (value !== undefined)
-        project.metadata[field as keyof QgsProjectMetadata] = value;
+        project.metadata[field as keyof typeof metadataTags] = value;
     }
+    Object.assign(
+      project.metadata,
+      readSpec(projectMetadataSpec, metadata, codec),
+    );
   }
+  Object.assign(project, readSpec(projectSpec, root, codec));
   codec.captureProject(project, document);
   return project;
 }
@@ -196,17 +202,29 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
       "The reconstructed document must have a <qgis> root",
     );
   putAttribute(root, "version", version);
+  const target = parseQgisVersion(version);
   if (typeof project.title !== "string")
     throw new QgsError("INVALID_EDIT", "Project title must be a string");
   putText(root, "title", project.title);
   putText(ensure(root, "projectMetadata"), "title", project.title);
   putAttribute(root, "projectname", project.title);
   const metadata = findChild(root, "projectMetadata");
+  if (project.metadata === null || typeof project.metadata !== "object")
+    throw new QgsError("INVALID_EDIT", "Project metadata must be an object");
   for (const [field, tag] of Object.entries(metadataTags)) {
-    const value = project.metadata[field as keyof QgsProjectMetadata];
+    const value = project.metadata[field as keyof typeof metadataTags];
     if (metadata || value !== undefined)
       putText(metadata ?? ensure(root, "projectMetadata"), tag, value);
   }
+  writeSpec(
+    projectMetadataSpec,
+    project.metadata as never,
+    ensure(root, "projectMetadata"),
+    codec,
+    target,
+  );
+  // Properties are written in the input's format before any QGIS 3 conversion.
+  writeSpec(projectSpec, project as never, root, codec, target);
   // QGIS ignores <projectCrs> unless this legacy property is enabled. Keep this
   // duplication inside the codec: assigning/removing project.crs controls both.
   writeCrs(root, "projectCrs", project.crs ?? project.disabledCrs);
@@ -261,6 +279,7 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
           project.layerTree ? oldIds : new Set(),
           resolve,
           codec,
+          target,
         ),
       ],
     );

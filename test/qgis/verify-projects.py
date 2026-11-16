@@ -7,7 +7,9 @@ from pathlib import Path
 from qgis.core import (
     Qgis,
     QgsApplication,
+    QgsCoordinateReferenceSystem,
     QgsDataSourceUri,
+    QgsExpressionContextUtils,
     QgsFieldConstraints,
     QgsLayerTreeGroup,
     QgsMapLayer,
@@ -268,6 +270,47 @@ def check_settings(project):
     assert cities.geometryOptions().geometryPrecision() == 0.01
 
 
+def check_project_settings(project):
+    assert project.title() == "Project settings"
+    scope = QgsExpressionContextUtils.projectScope(project)
+    assert scope.variable("city") == "Sapporo" and scope.variable("zoom") == "12"
+    assert project.readEntry("WMSServiceTitle", "/") == ("My service", True)
+    crs_list, ok = project.readListEntry("WMSCrsList", "/")
+    assert ok and crs_list == ["EPSG:3857", "EPSG:4326"], crs_list
+    assert project.ellipsoid() == "EPSG:7030"
+    assert project.distanceUnits() == Qgis.DistanceUnit.Kilometers
+    assert project.transactionMode() == Qgis.TransactionMode.AutomaticGroups
+    assert project.flags() & Qgis.ProjectFlag.EvaluateDefaultValuesOnProviderSide
+    relation = project.relationManager().relation("lines_points")
+    assert relation.isValid(), "invalid relation"
+    assert relation.fieldPairs() == {"pid": "id"}
+    themes = project.mapThemeCollection()
+    assert themes.mapThemes() == ["Only points"]
+    assert themes.mapThemeVisibleLayerIds("Only points") == ["points_layer_0001"]
+    bookmarks = project.bookmarkManager().bookmarks()
+    assert [b.name() for b in bookmarks] == ["Home"]
+    assert bookmarks[0].extent().crs().authid() == "EPSG:4326"
+    assert bookmarks[0].extent().xMaximum() == 3 and bookmarks[0].rotation() == 10
+    operation = project.transformContext().calculateCoordinateOperation(
+        QgsCoordinateReferenceSystem("EPSG:4326"),
+        QgsCoordinateReferenceSystem("EPSG:3857"),
+    )
+    assert operation == "+proj=pipeline +step +proj=noop", operation
+    snapping = project.snappingConfig()
+    assert snapping.enabled() and snapping.tolerance() == 20
+    assert project.viewSettings().useProjectScales()
+    assert sorted(project.viewSettings().mapScales()) == [1000, 5000]
+    assert project.timeSettings().timeStep() == 2
+    assert project.timeSettings().temporalRange().begin().date().year() == 2020
+    group = project.layerTreeRoot().findGroup("Group")
+    assert group.isMutuallyExclusive()
+    assert group.customProperty("plugin/flag") == "x"
+    metadata = project.metadata()
+    assert metadata.author() == "Me" and metadata.abstract() == "About"
+    assert metadata.keywords() == {"places": ["city"]}
+    assert metadata.contacts()[0].name == "Bob" and metadata.history() == ["v1"]
+
+
 def check_raster(project):
     layers = {layer.name(): layer for layer in project.mapLayers().values()}
     assert len(layers) == 5, sorted(layers)
@@ -344,6 +387,8 @@ def main():
             ("symbology-roundtrip.qgs", check_symbology),
             ("settings.qgs", check_settings),
             ("settings-roundtrip.qgs", check_settings),
+            ("project-settings.qgs", check_project_settings),
+            ("project-settings-roundtrip.qgs", check_project_settings),
             ("raster.qgs", check_raster),
             ("raster-roundtrip.qgs", check_raster),
             ("wms.qgs", check_wms),
@@ -360,7 +405,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 13 projects", flush=True)
+    print("QGIS verified 15 projects", flush=True)
 
 
 if __name__ == "__main__":

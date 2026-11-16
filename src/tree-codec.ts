@@ -9,7 +9,10 @@ import {
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
 import { readLayerId } from "./layer-codec.ts";
+import { treeNodeSpec } from "./project-settings.ts";
+import { readSpec, writeSpec } from "./spec.ts";
 import type {
+  QgisVersion,
   QgsCheckState,
   QgsLayerTreeGroup,
   QgsLayerTreeNode,
@@ -55,6 +58,7 @@ export function readTree(
     ] as const)
       if (element.attributes[attribute] !== undefined)
         node[property] = element.attributes[attribute];
+    Object.assign(node, readSpec(treeNodeSpec(false), element, codec));
     return codec.remember(node, element);
   }
   const group: QgsLayerTreeGroup = {
@@ -75,6 +79,7 @@ export function readTree(
       enabled: boolean(order.attributes.enabled) ?? false,
       layerIds: findChildren(order, "item").map(getText),
     };
+  Object.assign(group, readSpec(treeNodeSpec(true), element, codec));
   return codec.remember(group, element);
 }
 
@@ -85,6 +90,7 @@ export function writeTree(
   originalIds: Set<string>,
   resolve: (id: string) => string,
   codec: ExtensionCodec,
+  target: QgisVersion,
 ): XmlElement {
   const layerMap = new Map(layers.map((layer) => [layer.id, layer]));
   const referenced = new Set<string>();
@@ -110,6 +116,13 @@ export function writeTree(
     if (!state)
       throw new QgsError("INVALID_EDIT", "Invalid layer-tree check state");
     putAttribute(element, "checked", state);
+    writeSpec(
+      treeNodeSpec(node.type === "group"),
+      node as never,
+      element,
+      codec,
+      target,
+    );
     if (node.type === "layer") {
       const id = resolve(node.layerId);
       const layer = layerMap.get(id);

@@ -70,7 +70,7 @@ numbers; flags are booleans.
 
 | Type                                      | Settings                                                                               |
 | ----------------------------------------- | -------------------------------------------------------------------------------------- |
-| `QgsProject`                              | Title, layers, CRS, home path, default view, layer tree, and drawing order.            |
+| `QgsProject`                              | Title, layers, CRS, view, layer tree, properties, relations, themes, and bookmarks.    |
 | `QgsProjectMetadata`                      | Identifier, language, author, abstract, creation date, and other descriptive metadata. |
 | `QgsCrs`                                  | Authority ID, WKT, PROJ definition, and QGIS CRS metadata.                             |
 | `QgsRectangle` / `QgsReferencedRectangle` | Numeric bounds and an optional extent CRS.                                             |
@@ -81,7 +81,7 @@ numbers; flags are booleans.
 | `QgsRasterLayer`                          | Renderer, contrast, shader, palette, transparency, filters, resampling, and no-data.   |
 | `QgsField`                                | Alias, editor widget and its settings, default value, constraints, and form behavior.  |
 | `QgsMapLayerBase`                         | Flags, custom properties, blend mode, map tip, legend, time, elevation, and metadata.  |
-| `QgsLayerTreeGroup` / `QgsLayerTreeLayer` | Nested groups, layer references, check states, and custom drawing order.               |
+| `QgsLayerTreeGroup` / `QgsLayerTreeLayer` | Groups, layer references, check states, drawing order, and node custom properties.     |
 
 ### Layers and fields
 
@@ -94,7 +94,7 @@ in extension data. An unrecognized type becomes `QgsUnknownLayer`, with its
 original type name in `xmlType`.
 
 Editor-widget identifiers and symbol layer classes remain strings because QGIS
-plugins can extend them. Relations and layouts are held in extension data. Field settings affect the
+plugins can extend them. Layouts are held in extension data. Field settings affect the
 project; they do not change the data source schema or feature values.
 
 ### Symbology
@@ -270,6 +270,24 @@ them as `<Key>`. A QGIS 3 target rewrites QGIS 4 properties as element names.
 If both forms of a key are present, the `name` form is used. A key that is
 not a valid XML name cannot be written for QGIS 3 and causes `INVALID_EDIT`.
 QGIS 4 targets keep the format of the input.
+
+### Project settings
+
+`project.properties` is the QGIS project property tree: nested keys holding
+strings, numbers, booleans, and string lists, such as `Variables`,
+`Measurement`, `Measure/Ellipsoid`, and the `WMS*` keys used by QGIS Server.
+Stored value types are kept when the kind of value is unchanged. New keys use
+the form of the tree they are added to, and QGIS 3 targets convert QGIS 4
+named entries as before. `SpatialRefSys/ProjectionsEnabled` is not part of the
+model; it follows `project.crs`.
+
+The project also models its transaction mode and flags, relations and
+polymorphic relations, map themes, bookmarks, the coordinate transform
+context, snapping, server data-defined properties, elevation shading,
+predefined scales, style, time, terrain, display, and GPS settings, and
+project metadata keywords, contacts, links, history, and dates. Layer-tree
+nodes model their other attributes, such as `mutually-exclusive`, and custom
+properties.
 
 ## Preserve data and order
 

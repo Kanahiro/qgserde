@@ -94,7 +94,7 @@ export type Entry =
       /** Read the item's leaf child elements instead of its attributes. */
       texts?: true;
     }
-  /** CRS stored as `<tag><spatialrefsys>` under `at`. */
+  /** CRS stored as `<tag><spatialrefsys>` under `at`; an empty tag means `at` itself. */
   | { kind: "crs"; field: string; tag: string; at?: At }
   /** Rectangle stored as `<tag>` under `at`, with coordinates as attributes or child text. */
   | { kind: "extent"; field: string; tag: string; at?: At }
@@ -170,6 +170,16 @@ function copies(element: XmlElement, at: At): XmlElement[] {
   const parent = locate(element, at.slice(0, -1));
   const name = at.at(-1);
   return parent && name ? findChildren(parent, name) : [];
+}
+
+/** CRS helpers take a parent and a container name; `<spatialrefsys>` may sit directly in `at`. */
+function crsHost(parent: XmlElement, tag: string): [XmlElement, string] {
+  return tag
+    ? [parent, tag]
+    : [
+        { type: "element", name: "", attributes: {}, children: [parent] },
+        parent.name,
+      ];
 }
 
 function nodeKind(specs: Record<string, Spec>, tag: string) {
@@ -297,7 +307,7 @@ export function readSpec(
     if (!target) continue;
     switch (entry.kind) {
       case "crs": {
-        const crs = readCrs(target, entry.tag);
+        const crs = readCrs(...crsHost(target, entry.tag));
         if (crs) model[entry.field] = crs;
         break;
       }
@@ -429,7 +439,7 @@ export function captureSpec(
     const value = getPath(model, fieldPath(entry.field));
     switch (entry.kind) {
       case "crs":
-        codec.bindCrs(target, entry.tag, at);
+        codec.bindCrs(...crsHost(target, entry.tag), at);
         break;
       case "extent":
         codec.bindExtent(target, entry.tag, at);
@@ -656,8 +666,7 @@ export function writeSpec(
     switch (entry.kind) {
       case "crs":
         writeCrs(
-          existing ?? ensurePath(element, entry.at),
-          entry.tag,
+          ...crsHost(existing ?? ensurePath(element, entry.at), entry.tag),
           value as never,
         );
         break;
