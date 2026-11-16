@@ -77,7 +77,7 @@ test("edits other layer types and keeps the edits through JSON", () => {
   )!;
   text.attributes!.text = "Bye";
   text.format!.style!.fontSize = "20";
-  project.mainAnnotationItems = [
+  project.mainAnnotationLayer!.items = [
     {
       attributes: { type: "marker", x: "1", y: "2", zIndex: "0" },
       markerSymbol: {
@@ -101,5 +101,9 @@ test("edits other layer types and keeps the edits through JSON", () => {
   )!;
   assert.equal(text2.attributes?.text, "Bye");
   assert.equal(text2.format?.style?.fontSize, "20");
-  assert.equal(reparsed.mainAnnotationItems?.[0]?.attributes?.type, "marker");
+  assert.equal(
+    reparsed.mainAnnotationLayer?.items?.[0]?.attributes?.type,
+    "marker",
+  );
+  assert.ok(reparsed.mainAnnotationLayer?.id?.startsWith("Annotations_"));
 });

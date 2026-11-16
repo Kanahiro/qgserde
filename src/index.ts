@@ -63,6 +63,7 @@ export type {
   QgsLayoutObject,
   QgsLayoutTableColumn,
   QgsLegendNode,
+  QgsMainAnnotationLayer,
   QgsMapLayer,
   QgsMapLayerBase,
   QgsMapTheme,

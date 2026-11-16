@@ -236,37 +236,6 @@ export const commonLayerEntries: Entry[] = [
   { kind: "texts", field: "flags", at: ["flags"] },
   {
     kind: "object",
-    field: "styles",
-    at: ["map-layer-style-manager"],
-    spec: {
-      tag: "map-layer-style-manager",
-      entries: [
-        {
-          kind: "attribute",
-          field: "current",
-          attribute: "current",
-          type: "string",
-        },
-        {
-          kind: "owners",
-          field: "variants",
-          spec: {
-            tag: "map-layer-style",
-            entries: [
-              {
-                kind: "attribute",
-                field: "name",
-                attribute: "name",
-                type: "string",
-              },
-            ],
-          },
-        },
-      ],
-    },
-  },
-  {
-    kind: "object",
     field: "renderer3d",
     at: ["renderer-3d"],
     spec: {
@@ -678,6 +647,12 @@ export const vectorLayerEntries: Entry[] = [
   },
   attributes("selection", "selection"),
   attributes("selectionColor", "selection", "selectionColor"),
+  {
+    kind: "symbol",
+    field: "selectionSymbol",
+    name: "",
+    at: ["selection", "selectionSymbol"],
+  },
   { kind: "custom", field: "diagram", custom: diagram },
   {
     kind: "object",
@@ -711,3 +686,47 @@ export const vectorLayerEntries: Entry[] = [
 ];
 
 export { relation as relationSpec };
+
+/**
+ * Named style variants. Each variant's style document (`<qgis>`) is read with
+ * the settings of the layer type, except hand-written ones such as fields.
+ */
+export function styleVariants(entries: readonly Entry[]): Entry {
+  return {
+    kind: "object",
+    field: "styles",
+    at: ["map-layer-style-manager"],
+    spec: {
+      tag: "map-layer-style-manager",
+      entries: [
+        {
+          kind: "attribute",
+          field: "current",
+          attribute: "current",
+          type: "string",
+        },
+        {
+          kind: "owners",
+          field: "variants",
+          spec: {
+            tag: "map-layer-style",
+            entries: [
+              {
+                kind: "attribute",
+                field: "name",
+                attribute: "name",
+                type: "string",
+              },
+              {
+                kind: "object",
+                field: "style",
+                at: ["qgis"],
+                spec: { tag: "qgis", entries },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  };
+}

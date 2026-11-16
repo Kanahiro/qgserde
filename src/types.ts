@@ -102,8 +102,8 @@ export interface QgsProject {
   layouts?: QgsLayout[];
   /** Map canvas annotations (text, SVG, HTML, and form annotations). */
   annotations?: QgsCanvasAnnotation[];
-  /** Items of the project's main annotation layer, drawn above all layers. */
-  mainAnnotationItems?: QgsAnnotationItem[];
+  /** The project's main annotation layer, drawn above all layers. */
+  mainAnnotationLayer?: QgsMainAnnotationLayer;
   /** Transaction mode, such as `Disabled`, `AutomaticGroups`, or `BufferedGroups`. */
   transactionMode?: string;
   /** Project flags joined with `|`, such as `EvaluateDefaultValuesOnProviderSide`. */
@@ -386,6 +386,13 @@ export interface QgsLayout {
   readonly extensions?: QgsExtensions;
 }
 
+/** The project's main annotation layer: common layer settings and its items. */
+export interface QgsMainAnnotationLayer
+  extends Partial<Omit<QgsMapLayerBase, "extensions">> {
+  /** Annotation items. */
+  items?: QgsAnnotationItem[];
+}
+
 /** Map canvas annotation. */
 export interface QgsCanvasAnnotation {
   /** Annotation kind. */
@@ -635,7 +642,7 @@ export interface QgsMapLayerBase {
   attributes?: QgsAttributes;
   /** Layer extent in WGS 84, as stored by QGIS. */
   wgs84Extent?: QgsRectangle;
-  /** Named style variants. Their contents are kept but not modeled. */
+  /** Named style variants. */
   styles?: QgsLayerStyles;
   /** 3D renderer type and settings; nested 3D symbols stay in extension data. */
   renderer3d?: QgsRenderer3d;
@@ -675,6 +682,12 @@ export interface QgsLayerStyles {
 export interface QgsLayerStyleVariant {
   /** Style name. */
   name?: string;
+  /**
+   * Settings stored in the variant, with the same names as on its layer, such
+   * as `renderer`, `labeling`, or `opacity`-related settings. Field settings
+   * of a variant stay in extension data.
+   */
+  style?: Record<string, unknown>;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -849,6 +862,8 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   selection?: QgsAttributes;
   /** Layer-specific selection color: `spec` (such as `rgb`) and components from 0 to 1, or `invalid`. */
   selectionColor?: QgsAttributes;
+  /** Symbol for selected features, when the selection uses a custom symbol. */
+  selectionSymbol?: QgsSymbol;
   /** Diagram renderer. */
   diagram?: QgsDiagramRenderer;
   /** Diagram placement settings. */

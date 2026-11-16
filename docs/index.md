@@ -97,7 +97,7 @@ Vector tile layers model their basic renderer and labeling styles; mesh layers
 their renderer settings (scalar shaders, mesh frames, averaging); annotation
 layers their items with symbols and text formats; group layers their child
 layer IDs; point cloud and tiled scene layers their renderers. The project's
-main annotation layer items are `project.mainAnnotationItems`.
+main annotation layer, with its items, is `project.mainAnnotationLayer`.
 
 Editor-widget identifiers and symbol layer classes remain strings because QGIS
 plugins can extend them. Field settings affect the
@@ -222,9 +222,13 @@ expressions, the attribute `form` (including drag-and-drop `items` with
 `container`, `field`, and other `kind`s), relation editor `widgets`, geometry
 options, and relations kept with the layer.
 
-Every layer type models its named style variants (`styles`: names and the
-current style; each variant's stored style document is kept but not modeled),
-3D renderer type and settings, other `<maplayer>` attributes, `flags`,
+Every layer type models its named style variants (`styles`): the current
+style name and each variant's stored settings in `style`, with the same names
+as on the layer, such as `renderer` and `labeling`. QGIS stores the current
+variant empty because the layer itself holds it, and does not re-apply
+`current` on load. Field settings inside variants stay in extension data.
+Layers also model their 3D renderer type and settings, other `<maplayer>`
+attributes, `flags`,
 `customProperties`, `blendMode`, map tip, legend settings, `temporal` and
 `elevation` settings, `metadata`, and `server` publishing settings. Custom
 properties are written as `<property>` elements for QGIS before 3.20, which

@@ -1,9 +1,10 @@
 import {
+  commonLayerEntries,
   customProperties,
   metadataBase,
   relationSpec,
 } from "./layer-settings.ts";
-import { annotationItemSpec } from "./layer-types.ts";
+import { annotationEntries } from "./layer-types.ts";
 import { layoutSpec } from "./layouts.ts";
 import { projectProperties } from "./properties.ts";
 import type { Entry, Spec } from "./spec.ts";
@@ -40,7 +41,7 @@ const annotationItem: Spec = {
   entries: [
     { kind: "attributes", field: "attributes" },
     { kind: "crs", field: "crs", tag: "" },
-    { kind: "symbol", field: "markerSymbol", name: "" },
+    { kind: "symbol", field: "markerSymbol", name: "marker symbol" },
     { kind: "symbol", field: "fillSymbol", name: "", at: ["fillSymbol"] },
   ],
 };
@@ -75,10 +76,25 @@ export const projectSpec: Spec = {
       },
     },
     {
-      kind: "owners",
-      field: "mainAnnotationItems",
-      at: ["main-annotation-layer", "items"],
-      spec: annotationItemSpec,
+      kind: "object",
+      field: "mainAnnotationLayer",
+      at: ["main-annotation-layer"],
+      spec: {
+        tag: "main-annotation-layer",
+        entries: [
+          { kind: "text", field: "id", at: ["id"], type: "string" },
+          { kind: "text", field: "name", at: ["layername"], type: "string" },
+          { kind: "crs", field: "crs", tag: "srs" },
+          {
+            kind: "text",
+            field: "opacity",
+            at: ["layerOpacity"],
+            type: "number",
+          },
+          ...annotationEntries,
+          ...commonLayerEntries,
+        ],
+      },
     },
     {
       kind: "attribute",

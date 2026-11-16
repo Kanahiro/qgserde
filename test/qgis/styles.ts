@@ -14,7 +14,10 @@ export function editStylesFixture(): QgsProject {
   const blue = layer.styles?.variants?.find((item) => item.name === "blue");
   if (!blue || !layer.styles) throw new Error("Missing style variant");
   blue.name = "navy";
-  layer.styles.current = "navy";
+  const renderer = blue.style?.renderer as
+    | { symbol?: { layers: { properties: Record<string, string> }[] } }
+    | undefined;
+  renderer!.symbol!.layers[0]!.properties.color = "0,0,128,255";
   const note = project.annotations?.[0];
   if (!note?.item?.attributes) throw new Error("Missing annotation");
   note.item.attributes.mapPosX = "5";

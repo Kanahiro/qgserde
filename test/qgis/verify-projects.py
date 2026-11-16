@@ -435,7 +435,9 @@ def check_styles(project):
     layer = list(project.mapLayers().values())[0]
     manager = layer.styleManager()
     assert sorted(manager.styles()) == ["default", "navy", "red"], manager.styles()
-    assert manager.currentStyle() == "navy"
+    assert manager.currentStyle() == "red"
+    assert manager.setCurrentStyle("navy")
+    assert layer.renderer().symbol().color().name() == "#000080"
     annotations = project.annotationManager().annotations()
     assert len(annotations) == 1
     assert annotations[0].mapPosition().x() == 5

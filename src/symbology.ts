@@ -266,7 +266,7 @@ const effect: Entry = {
 const layerExtras: Spec = { tag: "layer", entries: [effect] };
 
 /** Embedded `<renderer-v2>` of wrapper renderers such as point clusters. */
-const nestedRenderer: Custom = {
+export const nestedRenderer: Custom = {
   read(element, codec) {
     const child = findChild(element, "renderer-v2");
     return child && readRenderer(child, codec);

@@ -15,7 +15,11 @@ import {
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
-import { commonLayerEntries, vectorLayerEntries } from "./layer-settings.ts";
+import {
+  commonLayerEntries,
+  styleVariants,
+  vectorLayerEntries,
+} from "./layer-settings.ts";
 import {
   annotationEntries,
   groupEntries,
@@ -26,8 +30,8 @@ import {
 } from "./layer-types.ts";
 import { rasterLayerSpec } from "./raster.ts";
 import { fieldRecords } from "./schema.ts";
-import { readSpec, type Spec, writeSpec } from "./spec.ts";
-import { readRenderer, writeRenderer } from "./symbology.ts";
+import { type Entry, readSpec, type Spec, writeSpec } from "./spec.ts";
+import { nestedRenderer, readRenderer, writeRenderer } from "./symbology.ts";
 import type {
   QgisVersion,
   QgsField,
@@ -38,16 +42,21 @@ import type {
 import { readVariant, writeVariant } from "./variant.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
 
-const commonLayerSpec: Spec = { tag: "maplayer", entries: commonLayerEntries };
-const vectorLayerSpec: Spec = {
+// Style variants hold the same settings as their layer, plus the renderer
+// and opacity that the layer itself reads by hand.
+const withVariants = (entries: Entry[], extra: Entry[] = []): Spec => ({
   tag: "maplayer",
-  entries: [...commonLayerEntries, ...vectorLayerEntries],
-};
-const rasterSpec: Spec = {
-  tag: "maplayer",
-  entries: [...commonLayerEntries, ...rasterLayerSpec.entries],
-};
-
+  entries: [...entries, styleVariants([...entries, ...extra])],
+});
+const commonLayerSpec = withVariants(commonLayerEntries);
+const vectorLayerSpec = withVariants(
+  [...commonLayerEntries, ...vectorLayerEntries],
+  [{ kind: "custom", field: "renderer", custom: nestedRenderer }],
+);
+const rasterSpec = withVariants([
+  ...commonLayerEntries,
+  ...rasterLayerSpec.entries,
+]);
 const typeSpecs: Record<string, Spec> = Object.fromEntries(
   Object.entries({
     "vector-tile": vectorTileEntries,
@@ -58,7 +67,7 @@ const typeSpecs: Record<string, Spec> = Object.fromEntries(
     "tiled-scene": tiledSceneEntries,
   }).map(([type, entries]) => [
     type,
-    { tag: "maplayer", entries: [...commonLayerEntries, ...entries] },
+    withVariants([...commonLayerEntries, ...entries]),
   ]),
 );
 
