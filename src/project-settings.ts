@@ -35,12 +35,45 @@ const numericFormat = (field: string, tag: string): Entry => ({
   },
 });
 
+const annotationItem: Spec = {
+  tag: "AnnotationItem",
+  entries: [
+    { kind: "attributes", field: "attributes" },
+    { kind: "crs", field: "crs", tag: "" },
+    { kind: "symbol", field: "markerSymbol", name: "" },
+    { kind: "symbol", field: "fillSymbol", name: "", at: ["fillSymbol"] },
+  ],
+};
+const canvasAnnotation = (tag: string): Spec => ({
+  tag,
+  entries: [
+    { kind: "attributes", field: "attributes" },
+    {
+      kind: "object",
+      field: "item",
+      at: ["AnnotationItem"],
+      spec: annotationItem,
+    },
+  ],
+});
+
 /** Project-level settings described declaratively. */
 export const projectSpec: Spec = {
   tag: "qgis",
   entries: [
     { kind: "custom", field: "properties", custom: projectProperties },
     { kind: "owners", field: "layouts", at: ["Layouts"], spec: layoutSpec },
+    {
+      kind: "nodes",
+      field: "annotations",
+      at: ["Annotations"],
+      specs: {
+        text: canvasAnnotation("TextAnnotationItem"),
+        svg: canvasAnnotation("SVGAnnotationItem"),
+        html: canvasAnnotation("HtmlAnnotationItem"),
+        form: canvasAnnotation("FormAnnotationItem"),
+      },
+    },
     {
       kind: "owners",
       field: "mainAnnotationItems",

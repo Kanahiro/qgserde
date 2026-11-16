@@ -254,7 +254,7 @@ const effectEntries: Entry[] = [
   },
   { kind: "properties", field: "properties" },
 ];
-const effectSpec: Spec = { tag: "effect", entries: effectEntries };
+export const effectSpec: Spec = { tag: "effect", entries: effectEntries };
 effectEntries.push({ kind: "owners", field: "effects", spec: effectSpec });
 const effect: Entry = {
   kind: "object",

@@ -234,6 +234,49 @@ export const commonLayerEntries: Entry[] = [
     ],
   },
   { kind: "texts", field: "flags", at: ["flags"] },
+  {
+    kind: "object",
+    field: "styles",
+    at: ["map-layer-style-manager"],
+    spec: {
+      tag: "map-layer-style-manager",
+      entries: [
+        {
+          kind: "attribute",
+          field: "current",
+          attribute: "current",
+          type: "string",
+        },
+        {
+          kind: "owners",
+          field: "variants",
+          spec: {
+            tag: "map-layer-style",
+            entries: [
+              {
+                kind: "attribute",
+                field: "name",
+                attribute: "name",
+                type: "string",
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+  {
+    kind: "object",
+    field: "renderer3d",
+    at: ["renderer-3d"],
+    spec: {
+      tag: "renderer-3d",
+      entries: [
+        { kind: "attribute", field: "type", attribute: "type", type: "string" },
+        { kind: "attributes", field: "attributes", exclude: ["type"] },
+      ],
+    },
+  },
   { kind: "extent", field: "wgs84Extent", tag: "wgs84extent" },
   { kind: "custom", field: "customProperties", custom: customProperties },
   text("blendMode", "blendMode", "number"),

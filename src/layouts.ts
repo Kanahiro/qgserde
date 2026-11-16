@@ -60,6 +60,21 @@ const mapOverview: Spec = {
   entries: [rest(), symbolIn("symbol"), layoutObject],
 };
 
+const treeEntries: Entry[] = [
+  rest(),
+  { kind: "custom", field: "customProperties", custom: customProperties },
+];
+const legendGroup: Spec = {
+  tag: "layer-tree-group",
+  entries: [...treeEntries],
+};
+const legendLayer: Spec = { tag: "layer-tree-layer", entries: treeEntries };
+(legendGroup.entries as Entry[]).push({
+  kind: "nodes",
+  field: "children",
+  specs: { group: legendGroup, layer: legendLayer },
+});
+
 /** `<LayoutItem>`; QGIS reads the parts its item type uses. */
 export const layoutItemSpec: Spec = {
   tag: "LayoutItem",
@@ -98,6 +113,12 @@ export const layoutItemSpec: Spec = {
     symbolIn("subdivisionLineSymbol", "subdivisionLineSymbol"),
     symbolIn("fillSymbol1", "fillSymbol1"),
     symbolIn("fillSymbol2", "fillSymbol2"),
+    {
+      kind: "object",
+      field: "legendTree",
+      at: ["layer-tree-group"],
+      spec: legendGroup,
+    },
     attributes("strokeColor", "strokeColor"),
     attributes("fillColor", "fillColor"),
     attributes("fillColor2", "fillColor2"),

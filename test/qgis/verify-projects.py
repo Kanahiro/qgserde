@@ -182,6 +182,11 @@ def check_symbology(project):
     text = settings.format()
     assert text.size() == 11 and text.color().name() == "#c80000", text.size()
     assert text.buffer().enabled() and text.buffer().size() == 2
+    buffer_effect = text.buffer().paintEffect()
+    assert [e.type() for e in buffer_effect.effectList()] == [
+        "dropShadow",
+        "drawSource",
+    ]
     assert text.background().enabled()
     marker = text.background().markerSymbol().symbolLayer(0)
     assert marker.shape() == Qgis.MarkerShape.Star
@@ -426,6 +431,17 @@ def check_archive(project):
     assert layers[0].crs().authid() == "EPSG:4326"
 
 
+def check_styles(project):
+    layer = list(project.mapLayers().values())[0]
+    manager = layer.styleManager()
+    assert sorted(manager.styles()) == ["default", "navy", "red"], manager.styles()
+    assert manager.currentStyle() == "navy"
+    annotations = project.annotationManager().annotations()
+    assert len(annotations) == 1
+    assert annotations[0].mapPosition().x() == 5
+    assert "Note" in annotations[0].document().toPlainText()
+
+
 def check_raster(project):
     layers = {layer.name(): layer for layer in project.mapLayers().values()}
     assert len(layers) == 5, sorted(layers)
@@ -511,6 +527,7 @@ def main():
             ("layouts-roundtrip.qgs", check_layouts),
             ("archive.qgz", check_archive),
             ("archive-new.qgz", check_archive),
+            ("styles-edited.qgs", check_styles),
             ("raster.qgs", check_raster),
             ("raster-roundtrip.qgs", check_raster),
             ("wms.qgs", check_wms),
@@ -527,7 +544,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 22 projects", flush=True)
+    print("QGIS verified 23 projects", flush=True)
 
 
 if __name__ == "__main__":

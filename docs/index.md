@@ -222,7 +222,9 @@ expressions, the attribute `form` (including drag-and-drop `items` with
 `container`, `field`, and other `kind`s), relation editor `widgets`, geometry
 options, and relations kept with the layer.
 
-Every layer type models its other `<maplayer>` attributes, `flags`,
+Every layer type models its named style variants (`styles`: names and the
+current style; each variant's stored style document is kept but not modeled),
+3D renderer type and settings, other `<maplayer>` attributes, `flags`,
 `customProperties`, `blendMode`, map tip, legend settings, `temporal` and
 `elevation` settings, `metadata`, and `server` publishing settings. Custom
 properties are written as `<property>` elements for QGIS before 3.20, which
@@ -297,7 +299,8 @@ model; it follows `project.crs`.
 The project also models its transaction mode and flags, relations and
 polymorphic relations, map themes, bookmarks, the coordinate transform
 context, snapping, server data-defined properties, elevation shading,
-predefined scales, style, time, terrain, display, and GPS settings, and
+predefined scales, style, time, terrain, display, and GPS settings, map canvas
+annotations, and
 project metadata keywords, contacts, links, history, and dates. Layer-tree
 nodes model their other attributes, such as `mutually-exclusive`, and custom
 properties.

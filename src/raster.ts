@@ -103,6 +103,11 @@ export const rasterLayerSpec: Spec = {
   tag: "maplayer",
   entries: [
     {
+      kind: "dataDefined",
+      field: "pipeDataDefinedProperties",
+      tag: "pipe-data-defined-properties",
+    },
+    {
       kind: "object",
       field: "renderer",
       at: ["pipe", "rasterrenderer"],

@@ -17,6 +17,7 @@ import { createLayoutsProject } from "./layouts.ts";
 import { createProjectSettingsProject } from "./project-settings.ts";
 import { createRasterProject, writeRasterData } from "./raster.ts";
 import { createSettingsProject } from "./settings.ts";
+import { editStylesFixture } from "./styles.ts";
 import { createSymbologyProject } from "./symbology.ts";
 import { createTileGallery } from "./tile-gallery.ts";
 
@@ -150,6 +151,11 @@ export async function writeQgisFixtures(
       },
       { version },
     ),
+  );
+
+  writeFileSync(
+    join(directory, "styles-edited.qgs"),
+    serializeQgs(editStylesFixture(), { version }),
   );
 
   writeRasterData(directory);

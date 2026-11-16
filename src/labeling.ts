@@ -1,4 +1,12 @@
 import { type Entry, type Spec, union } from "./spec.ts";
+import { effectSpec } from "./symbology.ts";
+
+const effectIn = (field: string, wrapper: string): Entry => ({
+  kind: "object",
+  field,
+  at: [wrapper, "effect"],
+  spec: effectSpec,
+});
 
 const rule = (
   field: string,
@@ -30,7 +38,9 @@ export const textFormatSpec: Spec = {
       item: "tab",
     },
     { kind: "attributes", field: "buffer", at: ["text-buffer"] },
+    effectIn("bufferEffect", "text-buffer"),
     { kind: "attributes", field: "mask", at: ["text-mask"] },
+    effectIn("maskEffect", "text-mask"),
     {
       kind: "object",
       field: "background",
@@ -44,6 +54,7 @@ export const textFormatSpec: Spec = {
         ],
       },
     },
+    effectIn("backgroundEffect", "background"),
     { kind: "attributes", field: "shadow", at: ["shadow"] },
     {
       kind: "dataDefined",

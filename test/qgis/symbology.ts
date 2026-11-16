@@ -32,6 +32,11 @@ export function createSymbologyProject(): QgsProject {
           format: {
             style: { fontSize: "11", textColor: "200,0,0,255" },
             buffer: { bufferDraw: "1", bufferSize: "2" },
+            bufferEffect: {
+              type: "effectStack",
+              enabled: true,
+              effects: [{ type: "dropShadow" }, { type: "drawSource" }],
+            },
             background: {
               attributes: { shapeDraw: "1", shapeType: "5" },
               markerSymbol: {

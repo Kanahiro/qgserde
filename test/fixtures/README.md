@@ -120,3 +120,9 @@ and a custom property.
 Saved as a `.qgz` with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04
 package): a project with one memory layer and the style database QGIS adds to
 archives.
+
+## qgis3-styles.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package): a
+memory layer with two named style variants and a text annotation on the map
+canvas.

@@ -100,6 +100,8 @@ export interface QgsProject {
   properties?: QgsProjectProperties;
   /** Print layouts. */
   layouts?: QgsLayout[];
+  /** Map canvas annotations (text, SVG, HTML, and form annotations). */
+  annotations?: QgsCanvasAnnotation[];
   /** Items of the project's main annotation layer, drawn above all layers. */
   mainAnnotationItems?: QgsAnnotationItem[];
   /** Transaction mode, such as `Disabled`, `AutomaticGroups`, or `BufferedGroups`. */
@@ -280,6 +282,8 @@ export interface QgsLayoutItem {
   nodes?: QgsAttributes[];
   /** Legend text styles. */
   legendStyles?: QgsLayoutLegendStyle[];
+  /** Customized legend tree; QGIS uses the project tree when absent. */
+  legendTree?: Omit<QgsLegendNode, "kind" | "extensions">;
   /** Scale bar line symbol. */
   lineSymbol?: QgsSymbol;
   /** Scale bar division line symbol. */
@@ -302,6 +306,20 @@ export interface QgsLayoutItem {
   atlasClipping?: QgsAttributes;
   /** Layers clipped to the atlas feature. */
   atlasClippingLayers?: string[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Node of a layout legend tree. */
+export interface QgsLegendNode {
+  /** Node kind. */
+  kind: "group" | "layer";
+  /** Settings such as `name`, `id`, `checked`, and `legend_exp`. */
+  attributes?: QgsAttributes;
+  /** Custom properties, such as legend node overrides. */
+  customProperties?: QgsVariantMap;
+  /** Children of a group. */
+  children?: QgsLegendNode[];
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -366,6 +384,30 @@ export interface QgsLayout {
   customProperties?: QgsVariantMap;
   /** @internal */
   readonly extensions?: QgsExtensions;
+}
+
+/** Map canvas annotation. */
+export interface QgsCanvasAnnotation {
+  /** Annotation kind. */
+  kind: "text" | "svg" | "html" | "form";
+  /** Content settings, such as `document` (text), `file` (SVG), or `htmlfile`. */
+  attributes?: QgsAttributes;
+  /** Placement and frame. */
+  item?: QgsCanvasAnnotationItem;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Placement and frame of a map canvas annotation (`<AnnotationItem>`). */
+export interface QgsCanvasAnnotationItem {
+  /** Settings such as `mapPosX`, `mapPosY`, `visible`, and `frameWidthMM`. */
+  attributes?: QgsAttributes;
+  /** CRS of the map position. */
+  crs?: QgsCrs;
+  /** Marker symbol at the anchor point. */
+  markerSymbol?: QgsSymbol;
+  /** Frame fill symbol. */
+  fillSymbol?: QgsSymbol;
 }
 
 /** Typed value in the project property tree. */
@@ -593,6 +635,10 @@ export interface QgsMapLayerBase {
   attributes?: QgsAttributes;
   /** Layer extent in WGS 84, as stored by QGIS. */
   wgs84Extent?: QgsRectangle;
+  /** Named style variants. Their contents are kept but not modeled. */
+  styles?: QgsLayerStyles;
+  /** 3D renderer type and settings; nested 3D symbols stay in extension data. */
+  renderer3d?: QgsRenderer3d;
   /** Layer flags (`<flags>`): `Identifiable`, `Removable`, `Searchable`, and `Private`, as `1` or `0`. */
   flags?: QgsAttributes;
   /** Plugin and application properties stored with the layer. */
@@ -615,6 +661,30 @@ export interface QgsMapLayerBase {
   server?: QgsLayerServerProperties;
   /** @internal Unmodeled values and ordering slots. */
   readonly extensions?: QgsExtensions;
+}
+
+/** Named style variants of a layer (`<map-layer-style-manager>`). */
+export interface QgsLayerStyles {
+  /** Name of the current style. The layer's own settings are that style; QGIS does not re-apply it on load. */
+  current?: string;
+  /** Style variants; each keeps its stored style document. */
+  variants?: QgsLayerStyleVariant[];
+}
+
+/** Style variant of a layer. */
+export interface QgsLayerStyleVariant {
+  /** Style name. */
+  name?: string;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** 3D renderer of a layer. */
+export interface QgsRenderer3d {
+  /** Renderer type, such as `vector`, `rulebased`, `mesh`, or `pointcloud`. */
+  type?: string;
+  /** Other settings. */
+  attributes?: QgsAttributes;
 }
 
 /** Layer time settings. */
@@ -986,6 +1056,8 @@ export interface QgsRasterLayer extends QgsMapLayerBase {
   providerResampling?: QgsAttributes;
   /** User no-data values per band. */
   noData?: QgsRasterNoData[];
+  /** Data-defined properties of the raster pipe. */
+  pipeDataDefinedProperties?: QgsDataDefinedProperties;
 }
 
 /** Mesh layer. */
@@ -1697,10 +1769,16 @@ export interface QgsTextFormat {
   tabPositions?: QgsAttributes[];
   /** Text buffer (halo), such as `bufferDraw`, `bufferSize`, and `bufferColor`. */
   buffer?: QgsAttributes;
+  /** Paint effect of the buffer. */
+  bufferEffect?: QgsPaintEffect;
   /** Selective masking settings, such as `maskEnabled` and `maskSize`. */
   mask?: QgsAttributes;
+  /** Paint effect of the mask. */
+  maskEffect?: QgsPaintEffect;
   /** Background shape. */
   background?: QgsTextBackground;
+  /** Paint effect of the background shape. */
+  backgroundEffect?: QgsPaintEffect;
   /** Drop shadow, such as `shadowDraw` and `shadowOffsetDist`. */
   shadow?: QgsAttributes;
   /** Text-format data-defined properties. */
