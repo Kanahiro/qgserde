@@ -64,6 +64,8 @@ Use `parseQgs(xml)` to load an existing project, then edit its properties.
 | `parseQgs(xml)`                      | Read QGS XML into a `QgsProject`.                                     |
 | `createProject(options?)`            | Create an empty project with an optional title.                       |
 | `serializeQgs(project, { version })` | Write a model for a QGIS 3 or 4 version.                              |
+| `serializeJson(project)`             | Store a model as JSON tagged with the qgserde version.                |
+| `parseJson(json)`                    | Restore a model stored by `serializeJson`.                            |
 | `parseQgisVersion(value)`            | Split a QGIS version into numeric parts and an optional release name. |
 | `QgsError`                           | Identify failures by their `code`.                                    |
 
@@ -90,8 +92,11 @@ When a CRS contains only an authority ID, serialization adds a missing
 `srsid` lookup marker so QGIS can resolve it, including for CRS read from XML.
 Existing IDs, WKT and PROJ definitions are preserved as modeled values. User-defined (`USER:`) IDs require a definition and are not completed.
 
-Models can be saved with `JSON.stringify` and restored with `JSON.parse`.
-Keep `extensions` when doing so; removing it loses unknown data and order.
+Models can be stored with `serializeJson` and restored with `parseJson`. The
+JSON records the qgserde version that wrote it; `parseJson` rejects JSON from an
+incompatible version (a different major, or a different minor before 1.0) with
+`INVALID_VERSION`, because the internal `extensions` format may change between
+them. Keep `extensions`; removing it loses unknown data and order.
 Serialization leaves the model unchanged, so it can be written repeatedly for
 different target versions.
 

@@ -3,12 +3,15 @@
  *
  * - `INVALID_XML`: Malformed or unsupported XML, internal DTD subsets, or excessive depth.
  * - `INVALID_PROJECT`: Invalid root, required attributes, or modeled values.
- * - `INVALID_VERSION`: Invalid version syntax, a missing target, or an unsupported target major version.
+ * - `INVALID_JSON`: Malformed JSON or a missing qgserde JSON envelope.
+ * - `INVALID_VERSION`: Invalid version syntax, a missing target, an unsupported target major version,
+ *   or JSON written by an incompatible qgserde version.
  * - `INVALID_EDIT`: Duplicate IDs, cycles, edits that would lose data, or other invalid model data.
  */
 export type QgsErrorCode =
   | "INVALID_XML"
   | "INVALID_PROJECT"
+  | "INVALID_JSON"
   | "INVALID_VERSION"
   | "INVALID_EDIT";
 

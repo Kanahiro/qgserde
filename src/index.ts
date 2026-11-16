@@ -1,5 +1,6 @@
 export type { QgsErrorCode } from "./errors.ts";
 export { QgsError } from "./errors.ts";
+export { parseJson, serializeJson } from "./json.ts";
 export { createProject, parseQgs, serializeQgs } from "./project.ts";
 export type {
   CreateProjectOptions,

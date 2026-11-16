@@ -3,8 +3,10 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   createProject,
+  parseJson,
   parseQgs,
   QgsError,
+  serializeJson,
   serializeQgs,
 } from "../src/index.ts";
 import { findChild, getText, readXml, writeXml } from "../src/xml.ts";
@@ -372,7 +374,7 @@ for (const fixture of ["qgis3", "qgis4"]) {
     );
     assert.deepEqual(
       canonicalDocument(
-        serializeQgs(JSON.parse(JSON.stringify(project)), { version }),
+        serializeQgs(parseJson(serializeJson(project)), { version }),
       ),
       canonicalDocument(xml),
     );
