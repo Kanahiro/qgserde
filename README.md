@@ -90,7 +90,7 @@ erase unknown nested data or collapse distinct view settings fail with
 
 When a CRS contains only an authority ID, serialization adds a missing
 `srsid` lookup marker so QGIS can resolve it, including for CRS read from XML.
-Existing IDs, WKT and PROJ definitions are preserved as modeled values. User-defined (`USER:`) IDs require a definition and are not completed.
+Existing IDs, WKT and PROJ definitions are preserved as modeled values. User-defined (`USER:`) IDs are not completed; serializing one without WKT or PROJ causes `INVALID_EDIT`.
 
 Models can be stored with `serializeJson` and restored with `parseJson`. The
 JSON records the qgserde version that wrote it; `parseJson` rejects JSON from an

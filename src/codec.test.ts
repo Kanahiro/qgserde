@@ -212,8 +212,8 @@ test("authority lookup markers preserve explicit IDs and standalone definitions"
   for (const [definition, marker] of [
     [{ authId: "EPSG:4326" }, 1],
     [{ authId: "EPSG:4326", srsId: 3452 }, 3452],
-    [{ authId: "USER:100001" }, undefined],
-    [{ authId: "user:100001" }, undefined],
+    [{ authId: "USER:100001", wkt: "custom definition" }, undefined],
+    [{ authId: "user:100001", proj4: "+proj=longlat" }, undefined],
     [{ authId: "EPSG:4326", wkt: "custom definition" }, undefined],
     [{ authId: "EPSG:4326", proj4: "+proj=longlat" }, undefined],
   ] as const) {
@@ -221,6 +221,14 @@ test("authority lookup markers preserve explicit IDs and standalone definitions"
     writeCrs(fresh, "srs", definition);
     assert.equal(readCrs(fresh, "srs")!.srsId, marker);
   }
+});
+
+test("user CRS without a definition is rejected", () => {
+  for (const authId of ["USER:100001", "user:100001"])
+    assert.throws(() => writeCrs(createElement("root"), "srs", { authId }), {
+      name: "QgsError",
+      code: "INVALID_EDIT",
+    });
 });
 
 test("removing a CRS retains unmodeled empty containers and removes active definitions", () => {
