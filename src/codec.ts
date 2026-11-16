@@ -175,6 +175,13 @@ export function writeCrs(
       remove(parent, name);
     return;
   }
+  const user = crs.authId !== undefined && /^USER:/iu.test(crs.authId);
+  // QGIS cannot resolve a user CRS from another profile without its definition.
+  if (user && !crs.wkt && !crs.proj4)
+    throw new QgsError(
+      "INVALID_EDIT",
+      `User CRS ${crs.authId} requires a WKT or PROJ definition`,
+    );
   const srs = ensure(ensure(parent, name), "spatialrefsys");
   for (const [field, tag] of Object.entries(crsStrings))
     putText(srs, tag, crs[field as keyof typeof crsStrings]);
@@ -183,8 +190,7 @@ export function writeCrs(
   // For authority-only input, 1 is a lookup marker, not a database-ID claim.
   // Never guess an authority's QGIS database ID or require callers to know it.
   // Apply this to parsed CRS too: preserving authid alone leaves it invalid in QGIS.
-  const authorityOnly =
-    crs.authId && !/^USER:/iu.test(crs.authId) && !crs.wkt && !crs.proj4;
+  const authorityOnly = crs.authId && !user && !crs.wkt && !crs.proj4;
   putNumber(srs, "srsid", crs.srsId ?? (authorityOnly ? 1 : undefined));
   putNumber(srs, "srid", crs.srid);
   if (crs.geographic === undefined) remove(srs, "geographicflag");

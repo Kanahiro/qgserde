@@ -126,8 +126,7 @@ No geographic data or extent coordinates are reprojected.
 
 If a CRS read from XML contains only an authority ID, serialization adds
 the missing `srsid` lookup marker required by QGIS. Existing IDs, WKT and PROJ
-definitions are preserved as modeled values. User-defined
-(`USER:`) IDs require a definition and are not completed.
+definitions are preserved as modeled values. User-defined (`USER:`) IDs are not completed; serializing one without WKT or PROJ causes `INVALID_EDIT`.
 
 `project.extent` can carry its own CRS in `extent.crs`. An extent without one
 uses the project CRS. Rotation is clockwise, in degrees.
