@@ -4,7 +4,10 @@ import { QgsError } from "./errors.ts";
 import { ExtensionCodec } from "./extensions.ts";
 import { readLayer, readLayerId, writeLayer } from "./layer-codec.ts";
 import type { QgsMapLayer, QgsVectorLayer } from "./types.ts";
+import { parseQgisVersion } from "./version.ts";
 import { createElement, findChild, findChildren, readXml } from "./xml.ts";
+
+const target = parseQgisVersion("4.2");
 
 const vector: QgsVectorLayer = {
   type: "vector",
@@ -102,6 +105,7 @@ test("decodes vector field settings and renderer scalars", () => {
   assert.deepEqual(layer.renderer, {
     type: "categorizedSymbol",
     attribute: "a",
+    categories: [],
     symbolLevels: true,
     forceRaster: false,
     referenceScale: 1000,
@@ -128,7 +132,7 @@ test("writes plain vector fields and renderers without mutating the model", () =
     },
   };
   const before = structuredClone(layer);
-  const element = writeLayer(layer, new ExtensionCodec());
+  const element = writeLayer(layer, new ExtensionCodec(), target);
   assert.deepEqual(findChild(element, "renderer-v2")!.attributes, {
     type: "singleSymbol",
     symbollevels: "0",
@@ -155,7 +159,7 @@ test("removes vector renderers, fields and common scalars while preserving unrel
   delete layer.minScale;
   delete layer.providerEncoding;
   const before = structuredClone(source);
-  const output = writeLayer(layer, codec);
+  const output = writeLayer(layer, codec, target);
   assert.equal(findChild(output, "renderer-v2"), undefined);
   assert.equal(findChild(output, "layerOpacity"), undefined);
   assert.equal(output.attributes.minScale, undefined);
@@ -194,7 +198,7 @@ test("raster renderer removal retains other pipe stages", () => {
     blueBand: 3,
   });
   delete layer.renderer;
-  const pipe = findChild(writeLayer(layer, codec), "pipe")!;
+  const pipe = findChild(writeLayer(layer, codec, target), "pipe")!;
   assert.deepEqual(pipe.children, [
     createElement("brightnesscontrast", { value: "keep" }),
   ]);
@@ -203,7 +207,7 @@ test("raster renderer removal retains other pipe stages", () => {
 test("rejects blank layer IDs and duplicate fields including inferred legacy fields", () => {
   for (const id of ["", " \t\n"])
     assert.throws(
-      () => writeLayer({ ...vector, id }, new ExtensionCodec()),
+      () => writeLayer({ ...vector, id }, new ExtensionCodec(), target),
       (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
     );
   assert.throws(
@@ -211,6 +215,7 @@ test("rejects blank layer IDs and duplicate fields including inferred legacy fie
       writeLayer(
         { ...vector, fields: [{ name: "a" }, { name: "a" }] },
         new ExtensionCodec(),
+        target,
       ),
     /Duplicate field/u,
   );
@@ -221,14 +226,14 @@ test("rejects blank layer IDs and duplicate fields including inferred legacy fie
   const layer = readLayer(source, codec);
   if (layer.type !== "vector") throw new Error("Expected vector");
   layer.fields.push({ name: "external" });
-  assert.throws(() => writeLayer(layer, codec), /Duplicate field/u);
+  assert.throws(() => writeLayer(layer, codec, target), /Duplicate field/u);
 });
 
 test("new and renamed layer IDs must survive QGIS loading", () => {
   for (const type of ["vector", "raster", "vector-tile"] as const) {
     for (const id of ["states", "1234567890"])
       assert.throws(
-        () => writeLayer({ ...vector, type, id }, new ExtensionCodec()),
+        () => writeLayer({ ...vector, type, id }, new ExtensionCodec(), target),
         (error) =>
           error instanceof QgsError &&
           error.code === "INVALID_EDIT" &&
@@ -239,6 +244,7 @@ test("new and renamed layer IDs must survive QGIS loading", () => {
         writeLayer(
           { ...vector, type, id: "12345678901" },
           new ExtensionCodec(),
+          target,
         ),
       ),
       "12345678901",
@@ -250,7 +256,7 @@ test("new and renamed layer IDs must survive QGIS loading", () => {
   ).root;
   const layer = readLayer(source, codec);
   layer.id = "states";
-  assert.throws(() => writeLayer(layer, codec), /at least 11/u);
+  assert.throws(() => writeLayer(layer, codec, target), /at least 11/u);
   assert.equal(readLayerId(source), "states_wms_layer");
 });
 
@@ -262,7 +268,7 @@ test("fresh vector tiles get complete native styles while existing renderers sta
     provider: "xyzvectortiles",
     source: "type=xyz&url=https://example.com/{z}/{x}/{y}.pbf",
   };
-  const element = writeLayer(layer, new ExtensionCodec());
+  const element = writeLayer(layer, new ExtensionCodec(), target);
   const renderer = findChild(element, "renderer")!;
   assert.equal(renderer.attributes.type, "basic");
   const styles = findChildren(findChild(renderer, "styles")!, "style");
@@ -292,7 +298,7 @@ test("fresh vector tiles get complete native styles while existing renderers sta
   const codec = new ExtensionCodec();
   const parsed = readLayer(source, codec);
   assert.deepEqual(
-    findChild(writeLayer(parsed, codec), "renderer"),
+    findChild(writeLayer(parsed, codec, target), "renderer"),
     findChild(source, "renderer"),
   );
 });

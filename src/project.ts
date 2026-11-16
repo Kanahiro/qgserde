@@ -241,7 +241,9 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
     replaceChildren(
       oldContainer ?? ensure(root, "projectlayers"),
       ["maplayer"],
-      project.layers.map((layer) => writeLayer(layer, codec)),
+      project.layers.map((layer) =>
+        writeLayer(layer, codec, parseQgisVersion(version)),
+      ),
     );
   const addedLayers = project.layers.some((layer) => {
     const source = codec.source(layer);

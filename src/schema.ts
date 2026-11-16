@@ -18,14 +18,6 @@ export const crsStrings = {
   ellipsoidAcronym: "ellipsoidacronym",
 } as const;
 
-export const vectorAttributes = {
-  type: "type",
-  attribute: "attr",
-  symbolLevels: "symbollevels",
-  forceRaster: "forceraster",
-  referenceScale: "referencescale",
-} as const;
-
 export const rasterAttributes = {
   opacity: "opacity",
   alphaBand: "alphaBand",

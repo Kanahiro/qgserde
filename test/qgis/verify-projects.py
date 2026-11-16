@@ -10,6 +10,8 @@ from qgis.core import (
     QgsDataSourceUri,
     QgsLayerTreeGroup,
     QgsProject,
+    QgsSymbol,
+    QgsSymbolLayer,
 )
 
 
@@ -109,6 +111,65 @@ def check_wms(project):
     assert references[0].parent().name() == "公開 WMS"
 
 
+def prop(cls, name):
+    """Scoped property enums replaced Property<Name> constants in later QGIS 3 releases."""
+    legacy = getattr(cls, f"Property{name}", None)
+    return legacy if legacy is not None else getattr(cls.Property, name)
+
+
+def check_symbology(project):
+    assert project.title() == "Symbology"
+    layers = {layer.name(): layer for layer in project.mapLayers().values()}
+    assert len(layers) == 5, sorted(layers)
+    for layer in layers.values():
+        assert layer.isValid(), layer.name()
+        assert layer.renderer() is not None, ("missing renderer", layer.name())
+
+    categorized = layers["categories"].renderer()
+    assert categorized.type() == "categorizedSymbol", categorized.type()
+    assert categorized.classAttribute() == "kind"
+    categories = categorized.categories()
+    assert [category.value() for category in categories] == ["park", 7], [
+        category.value() for category in categories
+    ]
+    assert [category.renderState() for category in categories] == [True, False]
+    assert categories[0].symbol().color().name() == "#00a000"
+    second = categories[1].symbol()
+    assert second.opacity() == 0.5, second.opacity()
+    opacity = second.dataDefinedProperties().property(prop(QgsSymbol, "Opacity"))
+    assert opacity.expressionString() == "50" and not opacity.isActive()
+    assert categorized.sourceSymbol().color().name() == "#c8c8c8"
+    ramp = categorized.sourceColorRamp()
+    assert ramp.type() == "gradient" and ramp.color2().name() == "#0000ff"
+
+    graduated = layers["graduated"].renderer()
+    assert graduated.type() == "graduatedSymbol", graduated.type()
+    ranges = graduated.ranges()
+    assert [(r.lowerValue(), r.upperValue()) for r in ranges] == [(0, 10), (10, 20)]
+    marker = ranges[1].symbol().symbolLayer(0)
+    assert marker.size() == 4, marker.size()
+    size = marker.dataDefinedProperties().property(prop(QgsSymbolLayer, "Size"))
+    assert size.isActive() and size.field() == "value"
+
+    root = layers["rules"].renderer().rootRule()
+    assert len(root.children()) == 1
+    major = root.children()[0]
+    assert major.filterExpression() == "\"class\" = 'major'"
+    assert major.ruleKey() == "{major}" and major.minimumScale() == 100000
+    assert major.symbol().symbolLayerCount() == 2
+    assert major.symbol().symbolLayer(0).width() == 1.2
+    sub = major.symbol().symbolLayer(1).subSymbol()
+    assert sub and sub.symbolLayer(0).size() == 3, "missing marker line subsymbol"
+    nested = major.children()
+    assert len(nested) == 1 and nested[0].isElse() and not nested[0].active()
+
+    single = layers["single"].renderer()
+    assert single.type() == "singleSymbol" and single.usingSymbolLevels()
+    assert not single.symbol().symbolLayer(0).enabled()
+    assert single.symbol().color().name() == "#010203"
+    assert layers["nothing"].renderer().type() == "nullSymbol"
+
+
 def main():
     directory = Path(sys.argv[1]).resolve()
     os.chdir(directory)
@@ -124,6 +185,8 @@ def main():
             ("edited.qgs", check_edited),
             ("gallery.qgs", check_gallery),
             ("gallery-roundtrip.qgs", check_gallery),
+            ("symbology.qgs", check_symbology),
+            ("symbology-roundtrip.qgs", check_symbology),
             ("wms.qgs", check_wms),
             ("wms-roundtrip.qgs", check_wms),
         ]:
@@ -138,7 +201,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 7 projects", flush=True)
+    print("QGIS verified 9 projects", flush=True)
 
 
 if __name__ == "__main__":

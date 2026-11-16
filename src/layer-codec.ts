@@ -15,13 +15,14 @@ import {
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
-import { rasterAttributes, vectorAttributes } from "./schema.ts";
+import { rasterAttributes } from "./schema.ts";
+import { readRenderer, writeRenderer } from "./symbology.ts";
 import type {
+  QgisVersion,
   QgsField,
   QgsMapLayer,
   QgsMapLayerBase,
   QgsRasterRenderer,
-  QgsVectorRenderer,
   XmlElement,
 } from "./types.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
@@ -143,37 +144,6 @@ function writeFields(
   }
 }
 
-function readVectorRenderer(layer: XmlElement): QgsVectorRenderer | undefined {
-  const element = findChild(layer, "renderer-v2");
-  if (!element) return undefined;
-  const renderer: QgsVectorRenderer = { type: element.attributes.type ?? "" };
-  if (element.attributes.attr !== undefined)
-    renderer.attribute = element.attributes.attr;
-  const levels = boolean(element.attributes.symbollevels);
-  const force = boolean(element.attributes.forceraster);
-  const scale = number(element.attributes.referencescale);
-  if (levels !== undefined) renderer.symbolLevels = levels;
-  if (force !== undefined) renderer.forceRaster = force;
-  if (scale !== undefined) renderer.referenceScale = scale;
-  return renderer;
-}
-
-function writeVectorRenderer(
-  layer: XmlElement,
-  renderer: QgsVectorRenderer | undefined,
-): void {
-  if (!renderer) {
-    remove(layer, "renderer-v2");
-    return;
-  }
-  const element = ensure(layer, "renderer-v2");
-  for (const [field, attribute] of Object.entries(vectorAttributes))
-    putAttribute(
-      element,
-      attribute,
-      renderer[field as keyof typeof vectorAttributes],
-    );
-}
 function readRasterRenderer(layer: XmlElement): QgsRasterRenderer | undefined {
   const pipe = findChild(layer, "pipe");
   const element = pipe && findChild(pipe, "rasterrenderer");
@@ -247,7 +217,8 @@ export function readLayer(
         layer.wkbType = element.attributes.wkbType;
       const readOnly = boolean(element.attributes.readOnly);
       const labelsEnabled = boolean(element.attributes.labelsEnabled);
-      const renderer = readVectorRenderer(element);
+      const rendererElement = findChild(element, "renderer-v2");
+      const renderer = rendererElement && readRenderer(rendererElement, codec);
       if (readOnly !== undefined) layer.readOnly = readOnly;
       if (labelsEnabled !== undefined) layer.labelsEnabled = labelsEnabled;
       if (renderer) layer.renderer = renderer;
@@ -338,6 +309,7 @@ function defaultTileRenderer(): XmlElement {
 export function writeLayer(
   layer: QgsMapLayer,
   codec: ExtensionCodec,
+  target: QgisVersion,
 ): XmlElement {
   if (typeof layer.id !== "string" || !layer.id.trim())
     throw new QgsError("INVALID_EDIT", "A layer ID must not be empty");
@@ -389,7 +361,11 @@ export function writeLayer(
     putAttribute(element, "readOnly", layer.readOnly);
     putAttribute(element, "labelsEnabled", layer.labelsEnabled);
     writeFields(element, layer.fields, codec);
-    writeVectorRenderer(element, layer.renderer);
+    replaceChildren(
+      element,
+      ["renderer-v2"],
+      layer.renderer ? [writeRenderer(layer.renderer, codec, target)] : [],
+    );
   } else if (layer.type === "raster")
     writeRasterRenderer(element, layer.renderer);
   // QGIS 3.x rejects vector tile layer XML without a renderer, even with a valid URI.

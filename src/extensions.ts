@@ -1,11 +1,7 @@
 import { readCrs, readExtent, text } from "./codec.ts";
 import { QgsError } from "./errors.ts";
-import {
-  crsStrings,
-  metadataTags,
-  rasterAttributes,
-  vectorAttributes,
-} from "./schema.ts";
+import { crsStrings, metadataTags, rasterAttributes } from "./schema.ts";
+import { captureRenderer, restoreRenderer } from "./symbology.ts";
 import type {
   QgsField,
   QgsLayerTreeNode,
@@ -82,6 +78,30 @@ export class ExtensionCodec {
 
   source(owner: object): XmlElement | undefined {
     return this.sources.get(owner);
+  }
+
+  /** Bind an attribute of a nested owner's element to a property path of that owner. */
+  bindAttribute(
+    element: XmlElement | undefined,
+    name: string,
+    path: string[],
+    format?: "boolean",
+  ): void {
+    this.attribute(element, name, {
+      property: path,
+      ...(format ? { format } : {}),
+    });
+  }
+
+  /** Capture a nested owner. Its children must already be captured. */
+  own(owner: object, element: XmlElement): void {
+    this.capture(owner, element);
+    this.slots.set(element, { kind: "slot", name: element.name });
+  }
+
+  /** Restore a nested owner's element so its writer can start from it. */
+  restoreOwner(owner: object, version: string, name: string): void {
+    this.restore(owner, version, name);
   }
 
   private bind(element: XmlElement): Binding {
@@ -300,9 +320,7 @@ export class ExtensionCodec {
               });
           }
       }
-      const renderer = findChild(element, "renderer-v2");
-      for (const [field, attribute] of Object.entries(vectorAttributes))
-        this.attribute(renderer, attribute, { property: ["renderer", field] });
+      if (layer.renderer) captureRenderer(layer.renderer, this);
     } else if (layer.type === "raster") {
       const pipe = findChild(element, "pipe");
       const renderer = pipe && findChild(pipe, "rasterrenderer");
@@ -552,8 +570,10 @@ export class ExtensionCodec {
 
   restoreProject(project: QgsProject, version: string): XmlDocument {
     for (const layer of project.layers) {
-      if (layer.type === "vector")
+      if (layer.type === "vector") {
         for (const field of layer.fields) this.restore(field, version, "field");
+        if (layer.renderer) restoreRenderer(layer.renderer, this, version);
+      }
       this.restore(layer, version, "maplayer");
     }
     const active = new Set<QgsLayerTreeNode>();

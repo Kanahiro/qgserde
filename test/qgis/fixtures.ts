@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
+import { createSymbologyProject } from "./symbology.ts";
 import { createTileGallery } from "./tile-gallery.ts";
 
 export function writeQgisFixtures(directory: string, version: string): void {
@@ -63,6 +64,13 @@ export function writeQgisFixtures(directory: string, version: string): void {
     serializeQgs(parseQgs(gallery.replaceAll("<srsid>1</srsid>", "")), {
       version,
     }),
+  );
+
+  const symbology = serializeQgs(createSymbologyProject(), { version });
+  writeFileSync(join(directory, "symbology.qgs"), symbology);
+  writeFileSync(
+    join(directory, "symbology-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(symbology))), { version }),
   );
 
   // A real WMS (not XYZ) exercises GetCapabilities without an external service.

@@ -56,6 +56,17 @@ function canonicalDocument(xml: string) {
         for (const text of child.children)
           if (text.type === "text") text.value = String(Number(text.value));
   };
+  // Graduated range bounds are written as the shortest spelling of the double.
+  const visit = (element: XmlElement) => {
+    for (const child of findChildren(element)) {
+      if (child.name === "range")
+        for (const key of ["lower", "upper"])
+          if (child.attributes[key] !== undefined)
+            child.attributes[key] = String(Number(child.attributes[key]));
+      visit(child);
+    }
+  };
+  visit(document.root);
   const canvas = findChild(document.root, "mapcanvas");
   extentText(canvas && findChild(canvas, "extent"));
   const settings = findChild(document.root, "ProjectViewSettings");

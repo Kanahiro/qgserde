@@ -253,7 +253,7 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   labelsEnabled?: boolean;
   /** Field display and input settings. Edits do not change the data source schema. */
   fields: QgsField[];
-  /** Common vector renderer settings. */
+  /** Renderer and symbols. */
   renderer?: QgsVectorRenderer;
 }
 
@@ -353,19 +353,286 @@ export interface QgsField {
   readonly extensions?: QgsExtensions;
 }
 
-/** Common vector renderer settings. Symbol and classification details stay in extension data. */
-export interface QgsVectorRenderer {
-  /** QGIS renderer identifier, such as `singleSymbol` or `categorizedSymbol`. */
+/**
+ * QGIS variant value stored as `<Option>` XML.
+ *
+ * Strings, booleans, numbers, lists, and maps map to the corresponding QGIS
+ * types. An unchanged kind of value keeps its stored QGIS type, such as
+ * `double` for an integral number or `color` for a string. `null` is an
+ * invalid (unset) variant; values QGIS cannot represent as plain data, such as
+ * CRS variants, are also read as `null` and kept as stored while they remain `null`.
+ */
+export type QgsVariant =
+  | null
+  | boolean
+  | number
+  | string
+  | QgsVariant[]
+  | QgsVariantMap;
+
+/** String-keyed QGIS variant map. */
+export interface QgsVariantMap {
+  [key: string]: QgsVariant;
+}
+
+/**
+ * Data-defined property, with the keys QGIS stores for it.
+ *
+ * `type` is 0 (invalid), 1 (static value in `val`), 2 (field name in `field`),
+ * or 3 (expression in `expression`).
+ */
+export interface QgsDataDefinedProperty {
+  /** Whether the property overrides the static setting. */
+  active: boolean;
+  /** QGIS property type: 0 invalid, 1 static, 2 field, 3 expression. */
+  type: number;
+  /** Expression for an expression-based property. */
+  expression?: string;
+  /** Field name for a field-based property. */
+  field?: string;
+  /** Value for a static property. */
+  val?: QgsVariant;
+  /** Optional value transformer, such as a size or color scale. */
+  transformer?: QgsVariant;
+  /** Other keys written by QGIS. */
+  [key: string]: QgsVariant;
+}
+
+/** Data-defined properties by QGIS property name, such as `fillColor` or `size`. */
+export type QgsDataDefinedProperties = Record<string, QgsDataDefinedProperty>;
+
+/** QGIS symbol geometry type. */
+export type QgsSymbolType = "marker" | "line" | "fill";
+
+/** Marker, line, or fill symbol composed of symbol layers drawn bottom to top. */
+export interface QgsSymbol {
+  /** Symbol type, which must match the geometry the symbol draws. */
+  type: QgsSymbolType;
+  /** Symbol layers, bottom first. QGIS requires at least one. */
+  layers: QgsSymbolLayer[];
+  /** Symbol opacity: 0 is transparent and 1 is opaque. */
+  opacity?: number;
+  /** Whether features are clipped to the map extent before rendering. */
+  clipToExtent?: boolean;
+  /** Whether polygon rings are forced to follow the right-hand rule. */
+  forceRightHandRule?: boolean;
+  /** Extent buffer used when clipping features. */
+  extentBuffer?: number;
+  /** Render unit of {@link QgsSymbol.extentBuffer}, such as `MM` or `MapUnit`. */
+  extentBufferUnit?: string;
+  /** Whether the symbol is animated. */
+  animated?: boolean;
+  /** Animation frame rate in frames per second. */
+  frameRate?: number;
+  /** Whether renderers should enable symbol levels for this symbol. */
+  rendererShouldUseSymbolLevels?: boolean;
+  /** Symbol-level data-defined properties, such as `alpha` (opacity). */
+  dataDefinedProperties?: QgsDataDefinedProperties;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/**
+ * Symbol layer settings. QGIS stores layer-specific settings as a property map
+ * whose keys depend on {@link QgsSymbolLayer.class}.
+ *
+ * @example
+ * ```ts
+ * const fill: QgsSymbolLayer = {
+ *   class: "SimpleFill",
+ *   properties: { color: "255,0,0,255", outline_width: "0.5" },
+ * };
+ * ```
+ */
+export interface QgsSymbolLayer {
+  /** Symbol layer class, such as `SimpleMarker`, `SimpleLine`, or `SimpleFill`. */
+  class: string;
+  /** Class-specific settings. Colors are strings such as `255,0,0,255`. */
+  properties: QgsVariantMap;
+  /** Whether the layer is drawn. */
+  enabled?: boolean;
+  /** Whether the layer's color is locked against symbol color changes. */
+  locked?: boolean;
+  /** Rendering pass used with symbol levels. */
+  pass?: number;
+  /** Symbol layer ID, used by selective masking. */
+  id?: string;
+  /** QGIS user flags, as stored. */
+  userFlags?: string;
+  /** Layer-level data-defined properties, such as `fillColor`. */
+  dataDefinedProperties?: QgsDataDefinedProperties;
+  /** Nested symbol, such as the marker drawn along a marker line. */
+  subSymbol?: QgsSymbol;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Color ramp used to assign colors to new categories or classes. */
+export interface QgsColorRamp {
+  /** Ramp type, such as `gradient`, `random`, `colorbrewer`, `cpt-city`, or `preset`. */
   type: string;
-  /** Attribute name or expression used by the renderer. Interpretation depends on its type. */
-  attribute?: string;
+  /** Type-specific settings, such as `color1` and `color2` for gradients. */
+  properties: QgsVariantMap;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Settings shared by all vector renderers. */
+export interface QgsFeatureRendererBase {
   /** Whether symbol levels are enabled. */
   symbolLevels?: boolean;
   /** Whether to force rasterization during rendering. */
   forceRaster?: boolean;
-  /** Renderer reference-scale denominator. QGIS determines how disabled values are interpreted. */
+  /** Renderer reference-scale denominator; `-1` disables it. */
   referenceScale?: number;
+  /** Whether feature rendering order is enabled. */
+  orderByEnabled?: boolean;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
+
+/** Draws every feature with one symbol. */
+export interface QgsSingleSymbolRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "singleSymbol";
+  /** Symbol for every feature. Without one, QGIS uses a default renderer. */
+  symbol?: QgsSymbol;
+}
+
+/** Category value. A list matches any of its values; `null` is the fallback category. */
+export type QgsCategoryValue =
+  | string
+  | number
+  | boolean
+  | null
+  | (string | number | boolean | null)[];
+
+/** Category of a {@link QgsCategorizedRenderer}. */
+export interface QgsRendererCategory {
+  /** Matched attribute value. Stored numeric and string types are kept when unchanged. */
+  value: QgsCategoryValue;
+  /** Category symbol. QGIS discards categories without one. */
+  symbol?: QgsSymbol;
+  /** Legend label. */
+  label: string;
+  /** Whether matching features are drawn. */
+  render: boolean;
+  /** Category identifier used by the legend. */
+  uuid?: string;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Draws features by matching an attribute or expression to categories. */
+export interface QgsCategorizedRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "categorizedSymbol";
+  /** Field name or expression. */
+  attribute: string;
+  /** Categories in legend order. */
+  categories: QgsRendererCategory[];
+  /** Template symbol for new categories. */
+  sourceSymbol?: QgsSymbol;
+  /** Color ramp for new categories. */
+  colorRamp?: QgsColorRamp;
+}
+
+/** Value range of a {@link QgsGraduatedRenderer}. */
+export interface QgsRendererRange {
+  /** Lower bound. */
+  lower: number;
+  /** Upper bound. */
+  upper: number;
+  /** Range symbol. QGIS discards ranges without one. */
+  symbol?: QgsSymbol;
+  /** Legend label. */
+  label: string;
+  /** Whether matching features are drawn. */
+  render: boolean;
+  /** Range identifier used by the legend. */
+  uuid?: string;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Draws features by classifying a numeric attribute or expression into ranges. */
+export interface QgsGraduatedRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "graduatedSymbol";
+  /** Field name or expression. */
+  attribute: string;
+  /** Ranges in legend order. */
+  ranges: QgsRendererRange[];
+  /** `GraduatedColor` or `GraduatedSize`. */
+  graduatedMethod?: string;
+  /** Template symbol for new ranges. */
+  sourceSymbol?: QgsSymbol;
+  /** Color ramp for new ranges. */
+  colorRamp?: QgsColorRamp;
+}
+
+/** Rule of a {@link QgsRuleBasedRenderer}. */
+export interface QgsRendererRule {
+  /** Child rules, evaluated for features matching this rule. */
+  children: QgsRendererRule[];
+  /** Symbol drawn for matching features. */
+  symbol?: QgsSymbol;
+  /** Filter expression, or `ELSE`. An empty or missing filter matches all features. */
+  filter?: string;
+  /** Legend label. */
+  label?: string;
+  /** Rule description. */
+  description?: string;
+  /** Smallest scale denominator (most zoomed in) at which the rule applies; 0 disables it. */
+  minScaleDenominator?: number;
+  /** Largest scale denominator (most zoomed out) at which the rule applies; 0 disables it. */
+  maxScaleDenominator?: number;
+  /** Whether the rule is enabled. Defaults to `true`. */
+  active?: boolean;
+  /** Rule identifier used by the legend and map themes. */
+  key?: string;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Draws features with nested filter rules. */
+export interface QgsRuleBasedRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "RuleRenderer";
+  /** Root rule. Top-level rules are its children. */
+  rootRule: QgsRendererRule;
+}
+
+/** Draws no features. */
+export interface QgsNullSymbolRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "nullSymbol";
+}
+
+/** Renderer whose type-specific settings are not modeled. They stay in extension data. */
+export interface QgsUnknownVectorRenderer extends QgsFeatureRendererBase {
+  /** Discriminant for a renderer without type-specific modeling. */
+  type: "unknown";
+  /** QGIS renderer name, such as `heatmapRenderer`. */
+  xmlType: string;
+}
+
+/**
+ * Vector renderer union discriminated by `type`.
+ *
+ * @example
+ * ```ts
+ * if (layer.type === "vector" && layer.renderer?.type === "categorizedSymbol")
+ *   for (const category of layer.renderer.categories) category.render = true;
+ * ```
+ */
+export type QgsVectorRenderer =
+  | QgsSingleSymbolRenderer
+  | QgsCategorizedRenderer
+  | QgsGraduatedRenderer
+  | QgsRuleBasedRenderer
+  | QgsNullSymbolRenderer
+  | QgsUnknownVectorRenderer;
 
 /** Common raster renderer settings. Color mapping and other details stay in extension data. */
 export interface QgsRasterRenderer {

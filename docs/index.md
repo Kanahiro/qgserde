@@ -74,7 +74,9 @@ numbers; flags are booleans.
 | `QgsProjectMetadata`                      | Identifier, language, author, abstract, creation date, and other descriptive metadata. |
 | `QgsCrs`                                  | Authority ID, WKT, PROJ definition, and QGIS CRS metadata.                             |
 | `QgsRectangle` / `QgsReferencedRectangle` | Numeric bounds and an optional extent CRS.                                             |
-| `QgsVectorLayer`                          | Common layer settings, geometry, labels, fields, and renderer settings.                |
+| `QgsVectorLayer`                          | Common layer settings, geometry, labels, fields, and renderer.                         |
+| `QgsVectorRenderer`                       | Single-symbol, categorized, graduated, rule-based, and null renderers.                 |
+| `QgsSymbol` / `QgsSymbolLayer`            | Symbol layers, their properties, data-defined properties, and sub-symbols.             |
 | `QgsRasterLayer`                          | Common layer settings, renderer opacity, and band selection.                           |
 | `QgsField`                                | Name, editor widget, alias, default expression, and apply-on-update flag.              |
 | `QgsLayerTreeGroup` / `QgsLayerTreeLayer` | Nested groups, layer references, check states, and custom drawing order.               |
@@ -89,10 +91,64 @@ and `QgsTiledSceneLayer`) with common settings only; type-specific settings stay
 in extension data. An unrecognized type becomes `QgsUnknownLayer`, with its
 original type name in `xmlType`.
 
-Renderer and editor-widget identifiers remain strings because QGIS plugins can
-extend them. Detailed symbols, classification rules, label expressions,
-relations, and layouts are held in extension data. Field settings affect the
+Editor-widget identifiers and symbol layer classes remain strings because QGIS
+plugins can extend them. Label expressions, relations, and layouts are held in
+extension data. Field settings affect the
 project; they do not change the data source schema or feature values.
+
+### Symbology
+
+Check `renderer.type` to narrow `QgsVectorRenderer`. The discriminants are the
+QGIS renderer names: `singleSymbol`, `categorizedSymbol`, `graduatedSymbol`,
+`RuleRenderer`, and `nullSymbol`. Other renderers, such as heatmaps and point
+clusters, are `unknown`, with the QGIS name in `xmlType`; their type-specific
+settings stay in extension data.
+
+```ts
+if (layer.type === "vector" && layer.renderer?.type === "categorizedSymbol") {
+  layer.renderer.categories.push({
+    value: "park",
+    label: "Park",
+    render: true,
+    symbol: {
+      type: "fill",
+      layers: [{ class: "SimpleFill", properties: { color: "0,160,0,255" } }],
+    },
+  });
+}
+```
+
+Symbols are nested in the class or rule that uses them. The codec numbers
+stored symbols and their references on every write, in the order QGIS uses.
+QGIS gives each stored symbol to one class; a class without a symbol, or whose
+symbol is already taken, is read without one and discarded by QGIS.
+
+`QgsSymbolLayer.properties` holds class-specific settings with the keys QGIS
+uses, such as `color` for `SimpleFill` or `line_width` for `SimpleLine`.
+Colors are strings such as `"255,0,0,255"`. QGIS before 3.18 reads properties
+only as `<prop>` elements; later versions read an `<Option>` map. The codec writes
+the form the target reads and drops the redundant copy that QGIS 3.18 to 3.3x
+also wrote. Nested property values cannot be written for targets before 3.18.
+
+Data-defined properties are keyed by the QGIS property name, such as `size` or
+`fillColor` for symbol layers and `alpha` for symbols. Each records `active`
+and a `type`: 1 for a static `val`, 2 for a `field`, or 3 for an `expression`.
+
+Property maps, data-defined properties, and other `<Option>` values use
+`QgsVariant`: strings, numbers, booleans, `null`, arrays, and plain objects. An
+unchanged kind of value keeps its stored QGIS type, such as `double` or `color`.
+Values QGIS cannot express as plain data, such as CRS variants, read as `null`
+and are kept as stored while they stay `null`. Category values keep their
+stored type when QGIS would read the same value back; integers beyond the safe
+JavaScript range stay strings.
+
+Assign a new renderer object to change the renderer type. A renderer whose
+`type` is changed in place keeps unmodeled data for the old type, which the new
+type ignores.
+
+Rule scale limits are denominators: `minScaleDenominator` is the most zoomed-in
+scale and `maxScaleDenominator` the most zoomed-out one, as in QGIS's
+`scalemindenom` and `scalemaxdenom`.
 
 Adding a layer to `project.layers` adds a tree reference and an entry in any
 existing drawing-order list when serialized. Removing a layer removes its tree
@@ -203,8 +259,8 @@ major versions other than 3 or 4, cause `INVALID_VERSION`.
 
 The same model can be written for different versions, including after JSON
 storage. Known properties are encoded for the requested target. Unmodeled
-plugin settings, renderer details, and other features are preserved without
-version conversion. Choosing a version does not guarantee that the target QGIS
+plugin settings, labeling, and other features are preserved without version
+conversion. Choosing a version does not guarantee that the target QGIS
 installation supports every feature in the project.
 
 `parseQgisVersion` parses version syntax into `major`, `minor`, `patch`, and an

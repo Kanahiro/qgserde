@@ -110,15 +110,17 @@ Each version can only be published once.
 
 ## QGIS integration tests
 
-CI opens seven projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
+CI opens nine projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
 images: a new project, a conversion from an older format, an edited fixture,
 a tile project with nested groups and repeated references, its round trip,
-and a WMS project with a repaired short layer ID and its round trip.
+a project with every modeled vector renderer and its round trip, and a WMS
+project with a repaired short layer ID and its round trip.
 The conversion and gallery/WMS round trips also exercise incomplete input
 containing authority IDs without CRS lookup markers.
 Checks cover title, CRS, extent, rotation, layer and provider validity,
-vector-tile symbols and zoom ranges, tree references, and the initial visible
-layer.
+vector-tile symbols and zoom ranges, vector renderers, categories, ranges,
+rules, symbol layers, sub-symbols, data-defined properties, tree references,
+and the initial visible layer.
 
 Run the same checks locally:
 
