@@ -1,7 +1,9 @@
+import { NAME_RE } from "xmlchars/xml/1.0/ed5.js";
 import {
   boolean,
   ensure,
   putAttribute,
+  putElementText,
   putText,
   readCrs,
   remove,
@@ -22,6 +24,7 @@ import type {
   SerializeOptions,
   XmlDocument,
   XmlElement,
+  XmlNode,
 } from "./types.ts";
 import { normalizeVersion, parseQgisVersion } from "./version.ts";
 import { readView, writeView } from "./view-codec.ts";
@@ -29,14 +32,80 @@ import {
   createElement,
   findChild,
   findChildren,
+  getText,
   readXml,
   writeXml,
 } from "./xml.ts";
 
+// QGIS 4 writes a property key as <properties name="Key">, QGIS 3 as <Key>.
+// QGIS 4.0-4.2 read both and QGIS 3 reads only <Key>. Read and update both;
+// the named form wins because later QGIS versions ignore <Key> next to it.
+function propertyEntries(parent: XmlElement, key: string): XmlElement[] {
+  return findChildren(parent).filter((child) =>
+    isNamedProperty(child) ? child.attributes.name === key : child.name === key,
+  );
+}
+
+function isNamedProperty(element: XmlElement): boolean {
+  return element.name === "properties" && element.attributes.name !== undefined;
+}
+
 function projectionsEnabled(document: XmlDocument): boolean {
   const properties = findChild(document.root, "properties");
-  const spatial = properties && findChild(properties, "SpatialRefSys");
-  return (spatial && boolean(text(spatial, "ProjectionsEnabled"))) ?? false;
+  const values = (
+    properties ? propertyEntries(properties, "SpatialRefSys") : []
+  )
+    .flatMap((spatial) => propertyEntries(spatial, "ProjectionsEnabled"))
+    .sort((a, b) => Number(isNamedProperty(b)) - Number(isNamedProperty(a)));
+  return (values[0] && boolean(getText(values[0]))) ?? false;
+}
+
+// QGIS 3 reads property keys only from element names, so a QGIS 4 tree must be
+// rewritten. When both forms of a key exist, the named one wins, as on read.
+function writeLegacyProperties(parent: XmlElement): void {
+  const named = new Set(
+    findChildren(parent)
+      .filter(isNamedProperty)
+      .map((child) => child.attributes.name),
+  );
+  parent.children = parent.children.flatMap((child): XmlNode[] => {
+    if (child.type !== "element") return [child];
+    if (!isNamedProperty(child)) {
+      if (named.has(child.name)) return [];
+      writeLegacyProperties(child);
+      return [child];
+    }
+    const { name, ...attributes } = child.attributes;
+    if (!name || !NAME_RE.test(name))
+      throw new QgsError(
+        "INVALID_EDIT",
+        `Project property key ${JSON.stringify(name)} cannot be written for QGIS 3`,
+      );
+    const element = createElement(name, attributes, child.children);
+    writeLegacyProperties(element);
+    return [element];
+  });
+}
+
+function writeProjectionsEnabled(root: XmlElement, enabled: boolean): void {
+  const properties = ensure(root, "properties");
+  const entry = (parent: XmlElement, key: string) => {
+    const element = isNamedProperty(parent)
+      ? createElement("properties", { name: key })
+      : createElement(key);
+    parent.children.push(element);
+    return element;
+  };
+  const spatials = propertyEntries(properties, "SpatialRefSys");
+  if (!spatials.length) spatials.push(entry(properties, "SpatialRefSys"));
+  for (const spatial of spatials) {
+    const values = propertyEntries(spatial, "ProjectionsEnabled");
+    if (!values.length) values.push(entry(spatial, "ProjectionsEnabled"));
+    for (const value of values) {
+      putElementText(value, enabled ? "1" : "0");
+      putAttribute(value, "type", "int");
+    }
+  }
 }
 
 function readTitle(document: XmlDocument): string {
@@ -141,9 +210,12 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
   // QGIS ignores <projectCrs> unless this legacy property is enabled. Keep this
   // duplication inside the codec: assigning/removing project.crs controls both.
   writeCrs(root, "projectCrs", project.crs ?? project.disabledCrs);
-  const spatial = ensure(ensure(root, "properties"), "SpatialRefSys");
-  putText(spatial, "ProjectionsEnabled", project.crs ? "1" : "0");
-  putAttribute(ensure(spatial, "ProjectionsEnabled"), "type", "int");
+  const properties = findChild(root, "properties");
+  if (properties && parseQgisVersion(version).major === 3) {
+    delete properties.attributes.name;
+    writeLegacyProperties(properties);
+  }
+  writeProjectionsEnabled(root, project.crs !== undefined);
   writeCrs(root, "verticalCrs", project.verticalCrs);
   if (project.homePath !== undefined)
     putAttribute(ensure(root, "homePath"), "path", project.homePath);
@@ -233,7 +305,8 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
  * @param options - Required output version.
  * @returns XML string. An XML declaration, when present, specifies UTF-8 encoding.
  * @throws {@link QgsError} `INVALID_VERSION` for an invalid target, or `INVALID_EDIT`
- * for duplicate IDs, cycles, non-finite numbers, edits that would lose data, or other invalid model data.
+ * for duplicate IDs, cycles, non-finite numbers, edits that would lose data, project
+ * property keys that QGIS 3 cannot store, or other invalid model data.
  * @example
  * ```ts
  * const project = createProject({ title: "Regional map" });

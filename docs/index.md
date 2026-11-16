@@ -142,6 +142,12 @@ represent both settings causes `INVALID_EDIT`.
 Editing `project.title` updates the root title, metadata title, and
 `projectname` attribute together.
 
+QGIS 4 stores project properties as `<properties name="Key">`; QGIS 3 stores
+them as `<Key>`. A QGIS 3 target rewrites QGIS 4 properties as element names.
+If both forms of a key are present, the `name` form is used. A key that is
+not a valid XML name cannot be written for QGIS 3 and causes `INVALID_EDIT`.
+QGIS 4 targets keep the format of the input.
+
 ## Preserve data and order
 
 The model separates known properties from unknown values, attributes,
