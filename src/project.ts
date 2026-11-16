@@ -2,6 +2,7 @@ import {
   boolean,
   ensure,
   putAttribute,
+  putElementText,
   putText,
   readCrs,
   remove,
@@ -29,14 +30,53 @@ import {
   createElement,
   findChild,
   findChildren,
+  getText,
   readXml,
   writeXml,
 } from "./xml.ts";
 
+// QGIS 4 writes a property key as <properties name="Key">, QGIS 3 as <Key>.
+// QGIS 4.0-4.2 read both and QGIS 3 reads only <Key>. Read and update both;
+// the named form wins because later QGIS versions ignore <Key> next to it.
+function propertyEntries(parent: XmlElement, key: string): XmlElement[] {
+  return findChildren(parent).filter((child) =>
+    isNamedProperty(child) ? child.attributes.name === key : child.name === key,
+  );
+}
+
+function isNamedProperty(element: XmlElement): boolean {
+  return element.name === "properties" && element.attributes.name !== undefined;
+}
+
 function projectionsEnabled(document: XmlDocument): boolean {
   const properties = findChild(document.root, "properties");
-  const spatial = properties && findChild(properties, "SpatialRefSys");
-  return (spatial && boolean(text(spatial, "ProjectionsEnabled"))) ?? false;
+  const values = (
+    properties ? propertyEntries(properties, "SpatialRefSys") : []
+  )
+    .flatMap((spatial) => propertyEntries(spatial, "ProjectionsEnabled"))
+    .sort((a, b) => Number(isNamedProperty(b)) - Number(isNamedProperty(a)));
+  return (values[0] && boolean(getText(values[0]))) ?? false;
+}
+
+function writeProjectionsEnabled(root: XmlElement, enabled: boolean): void {
+  const properties = ensure(root, "properties");
+  const entry = (parent: XmlElement, key: string) => {
+    const element = isNamedProperty(parent)
+      ? createElement("properties", { name: key })
+      : createElement(key);
+    parent.children.push(element);
+    return element;
+  };
+  const spatials = propertyEntries(properties, "SpatialRefSys");
+  if (!spatials.length) spatials.push(entry(properties, "SpatialRefSys"));
+  for (const spatial of spatials) {
+    const values = propertyEntries(spatial, "ProjectionsEnabled");
+    if (!values.length) values.push(entry(spatial, "ProjectionsEnabled"));
+    for (const value of values) {
+      putElementText(value, enabled ? "1" : "0");
+      putAttribute(value, "type", "int");
+    }
+  }
 }
 
 function readTitle(document: XmlDocument): string {
@@ -141,9 +181,7 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
   // QGIS ignores <projectCrs> unless this legacy property is enabled. Keep this
   // duplication inside the codec: assigning/removing project.crs controls both.
   writeCrs(root, "projectCrs", project.crs ?? project.disabledCrs);
-  const spatial = ensure(ensure(root, "properties"), "SpatialRefSys");
-  putText(spatial, "ProjectionsEnabled", project.crs ? "1" : "0");
-  putAttribute(ensure(spatial, "ProjectionsEnabled"), "type", "int");
+  writeProjectionsEnabled(root, project.crs !== undefined);
   writeCrs(root, "verticalCrs", project.verticalCrs);
   if (project.homePath !== undefined)
     putAttribute(ensure(root, "homePath"), "path", project.homePath);

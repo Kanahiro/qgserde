@@ -10,7 +10,13 @@ import {
   serializeQgs,
 } from "../src/index.ts";
 import type { XmlElement } from "../src/types.ts";
-import { findChild, getText, readXml, writeXml } from "../src/xml.ts";
+import {
+  findChild,
+  findChildren,
+  getText,
+  readXml,
+  writeXml,
+} from "../src/xml.ts";
 
 // Only modeled numeric spellings may normalize; unknown strings such as "0001" stay exact.
 function canonicalDocument(xml: string) {
@@ -22,8 +28,21 @@ function canonicalDocument(xml: string) {
       expanded: tree.attributes.expanded ?? "1",
       name: tree.attributes.name ?? "",
     });
+  // A missing ProjectionsEnabled means disabled; the codec writes it in the
+  // property format the project already uses.
   const properties = findChild(document.root, "properties");
-  if (properties && !findChild(properties, "SpatialRefSys"))
+  if (properties?.attributes.name !== undefined) {
+    if (
+      !findChildren(properties, "properties").some(
+        (child) => child.attributes.name === "SpatialRefSys",
+      )
+    )
+      properties.children.push(
+        readXml(
+          '<properties name="SpatialRefSys"><properties name="ProjectionsEnabled" type="int">0</properties></properties>',
+        ).root,
+      );
+  } else if (properties && !findChild(properties, "SpatialRefSys"))
     properties.children.push(
       readXml(
         '<SpatialRefSys><ProjectionsEnabled type="int">0</ProjectionsEnabled></SpatialRefSys>',
@@ -375,6 +394,59 @@ test("active and disabled project CRS both pass through the CRS writer", () => {
     assert.equal((output.crs ?? output.disabledCrs)?.srsId, 1);
     assert.equal(output.crs !== undefined, enabled === "1");
   }
+});
+
+// QGIS 4 writes <properties name="Key">, QGIS 3 writes <Key>. Releases after
+// QGIS 4.2 ignore <Key> when a named sibling exists, so writes must use the
+// project's own format and keep every copy in sync.
+test("reads and writes ProjectionsEnabled in both QGIS property formats", () => {
+  const crs =
+    "<projectCrs><spatialrefsys><authid>EPSG:4326</authid></spatialrefsys></projectCrs>";
+  const enabled = (xml: string) => {
+    const properties = findChild(readXml(xml).root, "properties")!;
+    return findChildren(properties).flatMap((spatial) =>
+      findChildren(spatial)
+        .filter(
+          (value) =>
+            value.attributes.name === "ProjectionsEnabled" ||
+            value.name === "ProjectionsEnabled",
+        )
+        .map((value) => `${spatial.name}/${value.name}=${getText(value)}`),
+    );
+  };
+
+  const named = `<qgis version="4.1.0">${crs}<properties name="properties"><properties name="SpatialRefSys"><properties name="ProjectCrs" type="QString">EPSG:4326</properties><properties name="ProjectionsEnabled" type="int">1</properties></properties></properties></qgis>`;
+  const project = parseQgs(named);
+  assert.equal(project.crs?.authId, "EPSG:4326");
+  project.disabledCrs = project.crs!;
+  delete project.crs;
+  const disabled = serializeQgs(project, { version: "4.1" });
+  assert.deepEqual(enabled(disabled), ["properties/properties=0"]);
+  assert.equal(parseQgs(disabled).crs, undefined);
+  // Sibling keys stay in place.
+  assert.match(disabled, /<properties name="ProjectCrs" type="QString">/);
+
+  // A named tree without the key gets a named entry, never a legacy element.
+  const missing = parseQgs(
+    `<qgis version="4.1.0">${crs}<properties name="properties"><properties name="Paths"><properties name="Absolute" type="bool">false</properties></properties></properties></qgis>`,
+  );
+  assert.equal(missing.crs, undefined);
+  missing.crs = missing.disabledCrs!;
+  delete missing.disabledCrs;
+  const added = serializeQgs(missing, { version: "4.1" });
+  assert.deepEqual(enabled(added), ["properties/properties=1"]);
+  assert.equal(findChild(readXml(added).root, "SpatialRefSys"), undefined);
+  assert.equal(parseQgs(added).crs?.authId, "EPSG:4326");
+
+  // Files carrying both formats prefer the named entry and update both.
+  const mixed = parseQgs(
+    `<qgis version="4.3.0">${crs}<properties name="properties"><properties name="SpatialRefSys"><properties name="ProjectionsEnabled" type="int">1</properties></properties><SpatialRefSys><ProjectionsEnabled type="int">0</ProjectionsEnabled></SpatialRefSys></properties></qgis>`,
+  );
+  assert.equal(mixed.crs?.authId, "EPSG:4326");
+  assert.deepEqual(enabled(serializeQgs(mixed, { version: "4.3" })), [
+    "properties/properties=1",
+    "SpatialRefSys/ProjectionsEnabled=1",
+  ]);
 });
 
 for (const fixture of [
