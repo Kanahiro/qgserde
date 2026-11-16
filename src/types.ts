@@ -249,8 +249,10 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   wkbType?: string;
   /** Whether the layer is read-only in QGIS. */
   readOnly?: boolean;
-  /** Whether labels are enabled. Label expressions and other details stay in extension data. */
+  /** Whether labels are drawn. */
   labelsEnabled?: boolean;
+  /** Label settings. */
+  labeling?: QgsVectorLabeling;
   /** Field display and input settings. Edits do not change the data source schema. */
   fields: QgsField[];
   /** Renderer and symbols. */
@@ -633,6 +635,132 @@ export type QgsVectorRenderer =
   | QgsRuleBasedRenderer
   | QgsNullSymbolRenderer
   | QgsUnknownVectorRenderer;
+
+/**
+ * XML attributes of a QGIS settings element, by attribute name, as stored.
+ *
+ * QGIS reads these with its own defaults, so absent keys use QGIS defaults.
+ * Booleans are usually `1`/`0`, colors `r,g,b,a`, and units names such as `MM`.
+ */
+export type QgsAttributes = Record<string, string>;
+
+/** Text background shape (`<background>`). */
+export interface QgsTextBackground {
+  /** Shape settings, such as `shapeDraw`, `shapeType`, and `shapeFillColor`. */
+  attributes: QgsAttributes;
+  /** Marker symbol for marker-type shapes. */
+  markerSymbol?: QgsSymbol;
+  /** Fill symbol for the shape. */
+  fillSymbol?: QgsSymbol;
+}
+
+/** Text format shared by labels, annotations, and layout items (`<text-style>`). */
+export interface QgsTextFormat {
+  /** Font and color settings, such as `fontFamily`, `fontSize`, `fontSizeUnit`, and `textColor`. */
+  style: QgsAttributes;
+  /** Font families in priority order. */
+  families?: string[];
+  /** Tab stops, each with attributes such as `position`. */
+  tabPositions?: QgsAttributes[];
+  /** Text buffer (halo), such as `bufferDraw`, `bufferSize`, and `bufferColor`. */
+  buffer?: QgsAttributes;
+  /** Selective masking settings, such as `maskEnabled` and `maskSize`. */
+  mask?: QgsAttributes;
+  /** Background shape. */
+  background?: QgsTextBackground;
+  /** Drop shadow, such as `shadowDraw` and `shadowOffsetDist`. */
+  shadow?: QgsAttributes;
+  /** Text-format data-defined properties. */
+  dataDefinedProperties?: QgsDataDefinedProperties;
+}
+
+/** Label callout. */
+export interface QgsCallout {
+  /** Callout type, such as `simple`, `manhattan`, `curved`, or `balloon`. */
+  type: string;
+  /** Type-specific settings, such as `enabled` and `lineSymbol`. */
+  properties?: QgsVariant;
+}
+
+/** Settings for labeling features (QGIS `QgsPalLayerSettings`). */
+export interface QgsLabelSettings {
+  /** Field name, or an expression when {@link QgsLabelSettings.isExpression} is `true`. */
+  fieldName: string;
+  /** Whether {@link QgsLabelSettings.fieldName} is an expression. */
+  isExpression?: boolean;
+  /** Text format. */
+  format: QgsTextFormat;
+  /** Text substitutions, each with `match`, `replace`, `caseSensitive`, and `wholeWord`. */
+  substitutions?: QgsAttributes[];
+  /** Wrapping and number formatting (`<text-format>`), such as `wrapChar` and `multilineAlign`. */
+  formatting?: QgsAttributes;
+  /** Placement (`<placement>`), such as `placement`, `dist`, and `priority`. */
+  placement?: QgsAttributes;
+  /** Rendering (`<rendering>`), such as `scaleVisibility`, `obstacle`, and `zIndex`. */
+  rendering?: QgsAttributes;
+  /** Label data-defined properties, such as `Size` or `Color`. */
+  dataDefinedProperties?: QgsDataDefinedProperties;
+  /** Callout drawn between the label and its feature. */
+  callout?: QgsCallout;
+}
+
+/** Rule of a {@link QgsRuleBasedLabeling}. */
+export interface QgsLabelRule {
+  /** Child rules. */
+  children: QgsLabelRule[];
+  /** Label settings for matching features. */
+  settings?: QgsLabelSettings;
+  /** Filter expression, or `ELSE`. */
+  filter?: string;
+  /** Rule description. */
+  description?: string;
+  /** Smallest scale denominator (most zoomed in) at which the rule applies; 0 disables it. */
+  minScaleDenominator?: number;
+  /** Largest scale denominator (most zoomed out) at which the rule applies; 0 disables it. */
+  maxScaleDenominator?: number;
+  /** Whether the rule is enabled. Defaults to `true`. */
+  active?: boolean;
+  /** Rule identifier. */
+  key?: string;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Labels every feature with one set of settings. */
+export interface QgsSimpleLabeling {
+  /** Discriminant, matching the QGIS labeling type. */
+  type: "simple";
+  /** Label settings. */
+  settings: QgsLabelSettings;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Labels features with nested filter rules. */
+export interface QgsRuleBasedLabeling {
+  /** Discriminant, matching the QGIS labeling type. */
+  type: "rule-based";
+  /** Root rule. Top-level rules are its children. */
+  rootRule: QgsLabelRule;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Labeling whose settings are not modeled. They stay in extension data. */
+export interface QgsUnknownLabeling {
+  /** Discriminant for labeling without type-specific modeling. */
+  type: "unknown";
+  /** QGIS labeling type. */
+  xmlType: string;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Vector labeling discriminated by `type`. Enable it with {@link QgsVectorLayer.labelsEnabled}. */
+export type QgsVectorLabeling =
+  | QgsSimpleLabeling
+  | QgsRuleBasedLabeling
+  | QgsUnknownLabeling;
 
 /** Common raster renderer settings. Color mapping and other details stay in extension data. */
 export interface QgsRasterRenderer {

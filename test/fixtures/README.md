@@ -55,3 +55,11 @@ layer = QgsVectorLayer(
 project.addMapLayer(layer)
 project.write("qgis4.qgs")
 ```
+
+## qgis3-labeling.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package). It
+contains two memory layers: `simple` with simple labeling (text buffer, marker
+background shape, simple callout, and a data-defined size) and `rules` with
+nested rule-based labeling, including an expression label and a disabled
+`ELSE` rule.

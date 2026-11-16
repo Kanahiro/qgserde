@@ -76,6 +76,7 @@ numbers; flags are booleans.
 | `QgsRectangle` / `QgsReferencedRectangle` | Numeric bounds and an optional extent CRS.                                             |
 | `QgsVectorLayer`                          | Common layer settings, geometry, labels, fields, and renderer.                         |
 | `QgsVectorRenderer`                       | Single-symbol, categorized, graduated, rule-based, and null renderers.                 |
+| `QgsVectorLabeling`                       | Simple and rule-based labeling, label settings, text formats, and callouts.            |
 | `QgsSymbol` / `QgsSymbolLayer`            | Symbol layers, their properties, data-defined properties, and sub-symbols.             |
 | `QgsRasterLayer`                          | Common layer settings, renderer opacity, and band selection.                           |
 | `QgsField`                                | Name, editor widget, alias, default expression, and apply-on-update flag.              |
@@ -92,8 +93,7 @@ in extension data. An unrecognized type becomes `QgsUnknownLayer`, with its
 original type name in `xmlType`.
 
 Editor-widget identifiers and symbol layer classes remain strings because QGIS
-plugins can extend them. Label expressions, relations, and layouts are held in
-extension data. Field settings affect the
+plugins can extend them. Relations and layouts are held in extension data. Field settings affect the
 project; they do not change the data source schema or feature values.
 
 ### Symbology
@@ -149,6 +149,37 @@ type ignores.
 Rule scale limits are denominators: `minScaleDenominator` is the most zoomed-in
 scale and `maxScaleDenominator` the most zoomed-out one, as in QGIS's
 `scalemindenom` and `scalemaxdenom`.
+
+### Labeling
+
+`layer.labelsEnabled` switches labels on; `layer.labeling` holds the settings.
+Check `labeling.type` to narrow it: `simple` has one `settings` object, and
+`rule-based` has a `rootRule` with nested `children`, like rule-based renderers.
+
+```ts
+if (layer.type === "vector") {
+  layer.labelsEnabled = true;
+  layer.labeling = {
+    type: "simple",
+    settings: {
+      fieldName: "name",
+      format: {
+        style: { fontSize: "10", textColor: "0,0,0,255" },
+        buffer: { bufferDraw: "1", bufferSize: "1" },
+      },
+      placement: { placement: "1" },
+    },
+  };
+}
+```
+
+QGIS label settings have well over a hundred options. Groups that QGIS stores
+as element attributes are modeled as `QgsAttributes` maps named after the
+QGIS attributes, such as `fontSize` in `format.style` or `dist` in `placement`.
+Values are strings as stored by QGIS, and absent keys take QGIS defaults.
+Font families, tab positions, substitutions, background symbols, callouts, and
+data-defined properties have their own structure. Effects and other unmodeled
+children stay with the element that contains them.
 
 Adding a layer to `project.layers` adds a tree reference and an entry in any
 existing drawing-order list when serialized. Removing a layer removes its tree
@@ -259,7 +290,7 @@ major versions other than 3 or 4, cause `INVALID_VERSION`.
 
 The same model can be written for different versions, including after JSON
 storage. Known properties are encoded for the requested target. Unmodeled
-plugin settings, labeling, and other features are preserved without version
+plugin settings and other unmodeled features are preserved without version
 conversion. Choosing a version does not guarantee that the target QGIS
 installation supports every feature in the project.
 

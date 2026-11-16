@@ -530,6 +530,7 @@ test("QGIS 3 output rewrites QGIS 4 property keys as element names", () => {
 for (const fixture of [
   "qgis3",
   "qgis3-custom-order",
+  "qgis3-labeling",
   "qgis3-raster",
   "qgis3-relations",
   "qgis3-view-settings",

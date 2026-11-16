@@ -15,7 +15,9 @@ import {
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
+import { labeling } from "./labeling.ts";
 import { rasterAttributes } from "./schema.ts";
+import { readSpec, type Spec, writeSpec } from "./spec.ts";
 import { readRenderer, writeRenderer } from "./symbology.ts";
 import type {
   QgisVersion,
@@ -26,6 +28,12 @@ import type {
   XmlElement,
 } from "./types.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
+
+/** Vector layer settings described declaratively; the rest is hand-written below. */
+export const vectorLayerSpec: Spec = {
+  tag: "maplayer",
+  entries: [{ kind: "custom", field: "labeling", custom: labeling }],
+};
 
 export function readLayerId(element: XmlElement): string {
   return text(element, "id") ?? element.attributes.id ?? "";
@@ -222,6 +230,7 @@ export function readLayer(
       if (readOnly !== undefined) layer.readOnly = readOnly;
       if (labelsEnabled !== undefined) layer.labelsEnabled = labelsEnabled;
       if (renderer) layer.renderer = renderer;
+      Object.assign(layer, readSpec(vectorLayerSpec, element, codec));
       return codec.remember(layer, element);
     }
     case "raster": {
@@ -366,6 +375,7 @@ export function writeLayer(
       ["renderer-v2"],
       layer.renderer ? [writeRenderer(layer.renderer, codec, target)] : [],
     );
+    writeSpec(vectorLayerSpec, layer as never, element, codec, target);
   } else if (layer.type === "raster")
     writeRasterRenderer(element, layer.renderer);
   // QGIS 3.x rejects vector tile layer XML without a renderer, even with a valid URI.

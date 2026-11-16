@@ -179,9 +179,10 @@ export function bindDataDefined(
   codec: ExtensionCodec,
   parent: XmlElement,
   tag = DATA_DEFINED,
+  path = ["dataDefinedProperties"],
 ): void {
   const entry = dataDefinedEntry(parent, tag);
-  if (entry) bindVariant(binder(codec), entry, ["dataDefinedProperties"]);
+  if (entry) bindVariant(binder(codec), entry, path);
 }
 
 /** Missing and empty property collections are equivalent; QGIS stores both as an empty map. */
@@ -271,7 +272,11 @@ function readSymbolLayer(
   return codec.remember(layer, element);
 }
 
-function captureSymbol(symbol: QgsSymbol, codec: ExtensionCodec): void {
+export function captureSymbol(
+  symbol: QgsSymbol,
+  codec: ExtensionCodec,
+  slot?: Record<string, string>,
+): void {
   const element = codec.source(symbol);
   if (!element) return;
   for (const layer of symbol.layers) {
@@ -287,10 +292,10 @@ function captureSymbol(symbol: QgsSymbol, codec: ExtensionCodec): void {
   codec.bindAttribute(element, "type", ["type"]);
   bindAttributes(codec, element, symbolAttributes);
   bindDataDefined(codec, element);
-  codec.own(symbol, element);
+  codec.own(symbol, element, slot);
 }
 
-function restoreSymbol(
+export function restoreSymbol(
   symbol: QgsSymbol,
   codec: ExtensionCodec,
   version: string,

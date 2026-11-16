@@ -1,6 +1,8 @@
 import { readCrs, readExtent, text } from "./codec.ts";
 import { QgsError } from "./errors.ts";
+import { vectorLayerSpec } from "./layer-codec.ts";
 import { crsStrings, metadataTags, rasterAttributes } from "./schema.ts";
+import { captureSpec, restoreSpec } from "./spec.ts";
 import { captureRenderer, restoreRenderer } from "./symbology.ts";
 import type {
   QgsField,
@@ -42,7 +44,12 @@ type Content =
   | { kind: "comment"; value: string }
   | { kind: "instruction"; target: string; body: string }
   | { kind: "doctype"; value: string }
-  | { kind: "slot"; name: string; identity?: string };
+  | {
+      kind: "slot";
+      name: string;
+      identity?: string;
+      attributes?: Record<string, string>;
+    };
 
 /** Sparse extension values and placement instructions, rather than a source XML snapshot. */
 export interface QgsExtensions {
@@ -93,10 +100,26 @@ export class ExtensionCodec {
     });
   }
 
-  /** Capture a nested owner. Its children must already be captured. */
-  own(owner: object, element: XmlElement): void {
+  /** Bind the text of a scalar child element to a property path of its owner. */
+  bindText(parent: XmlElement | undefined, name: string, path: string[]): void {
+    this.value(parent, name, { property: path });
+  }
+
+  /**
+   * Capture a nested owner. Its children must already be captured. Slot
+   * attributes identify the placeholder among siblings with the same name.
+   */
+  own(
+    owner: object,
+    element: XmlElement,
+    attributes?: Record<string, string>,
+  ): void {
     this.capture(owner, element);
-    this.slots.set(element, { kind: "slot", name: element.name });
+    this.slots.set(element, {
+      kind: "slot",
+      name: element.name,
+      ...(attributes ? { attributes } : {}),
+    });
   }
 
   /** Restore a nested owner's element so its writer can start from it. */
@@ -321,6 +344,7 @@ export class ExtensionCodec {
           }
       }
       if (layer.renderer) captureRenderer(layer.renderer, this);
+      captureSpec(vectorLayerSpec, layer as never, element, this, []);
     } else if (layer.type === "raster") {
       const pipe = findChild(element, "pipe");
       const renderer = pipe && findChild(pipe, "rasterrenderer");
@@ -516,11 +540,13 @@ export class ExtensionCodec {
         case "slot":
           return createElement(
             content.name,
-            content.identity === undefined
-              ? {}
-              : content.name === "field"
-                ? { name: content.identity }
-                : { id: content.identity },
+            content.attributes
+              ? { ...content.attributes }
+              : content.identity === undefined
+                ? {}
+                : content.name === "field"
+                  ? { name: content.identity }
+                  : { id: content.identity },
           );
         case "comment":
           return { type: "comment", value: content.value };
@@ -573,6 +599,7 @@ export class ExtensionCodec {
       if (layer.type === "vector") {
         for (const field of layer.fields) this.restore(field, version, "field");
         if (layer.renderer) restoreRenderer(layer.renderer, this, version);
+        restoreSpec(vectorLayerSpec, layer as never, this, version, 0);
       }
       this.restore(layer, version, "maplayer");
     }

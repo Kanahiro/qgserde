@@ -9,6 +9,7 @@ from qgis.core import (
     QgsApplication,
     QgsDataSourceUri,
     QgsLayerTreeGroup,
+    QgsPalLayerSettings,
     QgsProject,
     QgsSymbol,
     QgsSymbolLayer,
@@ -111,10 +112,12 @@ def check_wms(project):
     assert references[0].parent().name() == "公開 WMS"
 
 
-def prop(cls, name):
-    """Scoped property enums replaced Property<Name> constants in later QGIS 3 releases."""
-    legacy = getattr(cls, f"Property{name}", None)
-    return legacy if legacy is not None else getattr(cls.Property, name)
+def prop(cls, name, scope="Property"):
+    """Scoped enums replaced <Scope><Name> constants in later QGIS 3 releases."""
+    legacy = getattr(cls, f"{scope}{name}", None)
+    if legacy is None:
+        legacy = getattr(cls, name, None)
+    return legacy if legacy is not None else getattr(getattr(cls, scope), name)
 
 
 def check_symbology(project):
@@ -141,6 +144,28 @@ def check_symbology(project):
     assert categorized.sourceSymbol().color().name() == "#c8c8c8"
     ramp = categorized.sourceColorRamp()
     assert ramp.type() == "gradient" and ramp.color2().name() == "#0000ff"
+
+    labeling = layers["categories"].labeling()
+    assert layers["categories"].labelsEnabled()
+    settings = labeling.settings()
+    assert settings.fieldName == "upper(kind)" and settings.isExpression
+    text = settings.format()
+    assert text.size() == 11 and text.color().name() == "#c80000", text.size()
+    assert text.buffer().enabled() and text.buffer().size() == 2
+    assert text.background().enabled()
+    marker = text.background().markerSymbol().symbolLayer(0)
+    assert marker.shape() == Qgis.MarkerShape.Star
+    assert settings.dist == 3
+    assert settings.callout() and settings.callout().enabled()
+    size = settings.dataDefinedProperties().property(prop(QgsPalLayerSettings, "Size"))
+    assert size.isActive() and size.expressionString() == "12"
+    rules = layers["rules"].labeling().rootRule().children()
+    assert [rule.filterExpression() for rule in rules] == [
+        "\"class\" = 'major'",
+        "ELSE",
+    ]
+    assert rules[0].minimumScale() == 25000 and rules[0].settings().fieldName == "class"
+    assert not rules[1].active() and rules[1].settings() is None
 
     graduated = layers["graduated"].renderer()
     assert graduated.type() == "graduatedSymbol", graduated.type()

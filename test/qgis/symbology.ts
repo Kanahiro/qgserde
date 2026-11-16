@@ -23,6 +23,32 @@ export function createSymbologyProject(): QgsProject {
       id: "categories_layer_001",
       name: "categories",
       source: "Polygon?crs=EPSG:4326&field=kind:string",
+      labelsEnabled: true,
+      labeling: {
+        type: "simple",
+        settings: {
+          fieldName: "upper(kind)",
+          isExpression: true,
+          format: {
+            style: { fontSize: "11", textColor: "200,0,0,255" },
+            buffer: { bufferDraw: "1", bufferSize: "2" },
+            background: {
+              attributes: { shapeDraw: "1", shapeType: "5" },
+              markerSymbol: {
+                type: "marker",
+                layers: [
+                  { class: "SimpleMarker", properties: { name: "star" } },
+                ],
+              },
+            },
+          },
+          placement: { placement: "1", dist: "3" },
+          dataDefinedProperties: {
+            Size: { active: true, type: 3, expression: "12" },
+          },
+          callout: { type: "simple", properties: { enabled: "1" } },
+        },
+      },
       renderer: {
         type: "categorizedSymbol",
         attribute: "kind",
@@ -89,6 +115,20 @@ export function createSymbologyProject(): QgsProject {
       id: "rules_layer_00001",
       name: "rules",
       source: "LineString?crs=EPSG:4326&field=class:string",
+      labeling: {
+        type: "rule-based",
+        rootRule: {
+          children: [
+            {
+              filter: "\"class\" = 'major'",
+              maxScaleDenominator: 25000,
+              settings: { fieldName: "class", format: { style: {} } },
+              children: [],
+            },
+            { filter: "ELSE", active: false, children: [] },
+          ],
+        },
+      },
       renderer: {
         type: "RuleRenderer",
         rootRule: {
