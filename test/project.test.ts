@@ -9,6 +9,7 @@ import {
   serializeJson,
   serializeQgs,
 } from "../src/index.ts";
+import type { XmlElement } from "../src/types.ts";
 import { findChild, getText, readXml, writeXml } from "../src/xml.ts";
 
 // Only modeled numeric spellings may normalize; unknown strings such as "0001" stay exact.
@@ -28,6 +29,21 @@ function canonicalDocument(xml: string) {
         '<SpatialRefSys><ProjectionsEnabled type="int">0</ProjectionsEnabled></SpatialRefSys>',
       ).root,
     );
+  // QGIS writes up to 20 significant digits; the codec writes the shortest
+  // spelling of the same double.
+  const extentText = (extent: XmlElement | undefined) => {
+    for (const child of extent?.children ?? [])
+      if (child.type === "element")
+        for (const text of child.children)
+          if (text.type === "text") text.value = String(Number(text.value));
+  };
+  const canvas = findChild(document.root, "mapcanvas");
+  extentText(canvas && findChild(canvas, "extent"));
+  const settings = findChild(document.root, "ProjectViewSettings");
+  const view = settings && findChild(settings, "DefaultViewExtent");
+  for (const key of ["xmin", "ymin", "xmax", "ymax"])
+    if (view?.attributes[key] !== undefined)
+      view.attributes[key] = String(Number(view.attributes[key]));
   const layers = findChild(document.root, "projectlayers");
   if (layers)
     for (const layer of layers.children) {
@@ -35,6 +51,7 @@ function canonicalDocument(xml: string) {
       for (const key of ["minScale", "maxScale"])
         if (layer.attributes[key] !== undefined)
           layer.attributes[key] = String(Number(layer.attributes[key]));
+      extentText(findChild(layer, "extent"));
     }
   return document;
 }
@@ -360,7 +377,15 @@ test("active and disabled project CRS both pass through the CRS writer", () => {
   }
 });
 
-for (const fixture of ["qgis3", "qgis4"]) {
+for (const fixture of [
+  "qgis3",
+  "qgis3-custom-order",
+  "qgis3-raster",
+  "qgis3-relations",
+  "qgis3-view-settings",
+  "qgis4",
+  "qgis4-translation",
+]) {
   test(`preserves semantic values, structure and order in an unmodified typed ${fixture} model, including after JSON storage`, () => {
     const xml = readFileSync(
       new URL(`./fixtures/${fixture}.qgs`, import.meta.url),
