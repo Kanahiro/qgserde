@@ -244,12 +244,12 @@ test("rules can move between root and child positions", () => {
 
 test("unknown renderers keep their nested renderers and symbols", () => {
   const xml = wrap(
-    `<renderer-v2 type="pointCluster" tolerance="3"><renderer-v2 type="singleSymbol"><symbols><symbol type="marker" name="0"><layer class="SimpleMarker"/></symbol></symbols></renderer-v2><symbol type="marker" name="centerSymbol"><layer class="FontMarker"/></symbol></renderer-v2>`,
+    `<renderer-v2 type="futureCluster" tolerance="3"><renderer-v2 type="singleSymbol"><symbols><symbol type="marker" name="0"><layer class="SimpleMarker"/></symbol></symbols></renderer-v2><symbol type="marker" name="centerSymbol"><layer class="FontMarker"/></symbol></renderer-v2>`,
   );
   const project = parseQgs(xml);
   const cluster = renderer(project);
   assert.equal(cluster.type, "unknown");
-  assert.equal(cluster.type === "unknown" && cluster.xmlType, "pointCluster");
+  assert.equal(cluster.type === "unknown" && cluster.xmlType, "futureCluster");
   cluster.forceRaster = true;
   const element = rendererElement(serializeQgs(project, { version: "4.2" }));
   assert.equal(element.attributes.forceraster, "1");
@@ -308,4 +308,84 @@ test("invalid symbology fails explicitly", () => {
       ),
     (error) => error instanceof QgsError && error.code === "INVALID_PROJECT",
   );
+});
+
+test("reads and edits wrapper renderers, paint effects, and order-by", () => {
+  const project = parseQgs(
+    readFileSync(
+      new URL("./fixtures/qgis3-renderers.qgs", import.meta.url),
+      "utf8",
+    ),
+  );
+  const byName = (name: string) => {
+    const layer = project.layers.find((item) => item.name === name);
+    if (layer?.type !== "vector" || !layer.renderer)
+      throw new Error(`Expected renderer on ${name}`);
+    return layer.renderer;
+  };
+  const cluster = byName("cluster");
+  if (cluster.type !== "pointCluster") throw new Error("cluster");
+  assert.equal(cluster.attributes?.tolerance, "5");
+  assert.equal(cluster.renderer?.type, "singleSymbol");
+  assert.equal(cluster.clusterSymbol?.type, "marker");
+  const displacement = byName("displacement");
+  if (displacement.type !== "pointDisplacement") throw new Error("disp");
+  assert.equal(displacement.renderer?.type, "categorizedSymbol");
+  assert.match(displacement.labelFont?.description ?? "", /,12,/u);
+  const heatmap = byName("heatmap");
+  if (heatmap.type !== "heatmapRenderer") throw new Error("heatmap");
+  assert.equal(heatmap.attributes?.radius, "15");
+  assert.equal(heatmap.colorRamp?.type, "gradient");
+  assert.equal(byName("inverted").type, "invertedPolygonRenderer");
+  assert.equal(byName("merged").type, "mergedFeatureRenderer");
+  const twofive = byName("twofive");
+  if (twofive.type !== "25dRenderer") throw new Error("25d");
+  assert.equal(twofive.symbol?.layers[1]?.class, "GeometryGenerator");
+  const ordered = byName("ordered");
+  if (ordered.type !== "singleSymbol") throw new Error("single");
+  assert.deepEqual(ordered.orderBy, [
+    { asc: "0", nullsFirst: "1", expression: '"v"' },
+  ]);
+  assert.deepEqual(
+    ordered.effect?.effects?.map((item) => item.type),
+    ["dropShadow", "drawSource"],
+  );
+  assert.equal(
+    ordered.symbol?.layers[0]?.effect?.effects?.[0]?.type,
+    "outerGlow",
+  );
+
+  // Edit nested renderers and effect stacks.
+  if (cluster.renderer?.type !== "singleSymbol") throw new Error("inner");
+  cluster.renderer.symbol!.layers[0]!.properties.color = "1,2,3,255";
+  cluster.attributes!.tolerance = "8";
+  ordered.effect!.effects!.reverse();
+  delete ordered.symbol!.layers[0]!.effect;
+  ordered.orderBy = [{ expression: '"v" * 2', asc: "1", nullsFirst: "0" }];
+  const output = serializeQgs(project, { version: "3.34" });
+  const reparsed = parseQgs(output);
+  const again = (name: string) => {
+    const layer = reparsed.layers.find((item) => item.name === name);
+    if (layer?.type !== "vector" || !layer.renderer) throw new Error(name);
+    return layer.renderer;
+  };
+  const cluster2 = again("cluster");
+  if (
+    cluster2.type !== "pointCluster" ||
+    cluster2.renderer?.type !== "singleSymbol"
+  )
+    throw new Error("cluster");
+  assert.equal(
+    cluster2.renderer.symbol?.layers[0]?.properties.color,
+    "1,2,3,255",
+  );
+  assert.equal(cluster2.attributes?.tolerance, "8");
+  const ordered2 = again("ordered");
+  if (ordered2.type !== "singleSymbol") throw new Error("single");
+  assert.deepEqual(
+    ordered2.effect?.effects?.map((item) => item.type),
+    ["drawSource", "dropShadow"],
+  );
+  assert.equal(ordered2.symbol?.layers[0]?.effect, undefined);
+  assert.equal(ordered2.orderBy?.[0]?.expression, '"v" * 2');
 });

@@ -129,10 +129,33 @@ def prop(cls, name, scope="Property"):
 def check_symbology(project):
     assert project.title() == "Symbology"
     layers = {layer.name(): layer for layer in project.mapLayers().values()}
-    assert len(layers) == 5, sorted(layers)
+    assert len(layers) == 9, sorted(layers)
     for layer in layers.values():
         assert layer.isValid(), layer.name()
         assert layer.renderer() is not None, ("missing renderer", layer.name())
+
+    heatmap = layers["heatmap"].renderer()
+    assert heatmap.type() == "heatmapRenderer" and heatmap.radius() == 15
+    assert heatmap.weightExpression() == '"v"'
+    assert heatmap.colorRamp().color2().name() == "#ff0000"
+    cluster = layers["cluster"].renderer()
+    assert cluster.type() == "pointCluster" and cluster.tolerance() == 5
+    assert cluster.embeddedRenderer().type() == "singleSymbol"
+    assert cluster.embeddedRenderer().symbol().color().name() == "#00ff00"
+    assert cluster.clusterSymbol().color().name() == "#0000ff"
+    inverted = layers["inverted"].renderer()
+    assert inverted.type() == "invertedPolygonRenderer"
+    assert inverted.preprocessingEnabled()
+    assert inverted.embeddedRenderer().type() == "singleSymbol"
+    effects = layers["effects"].renderer()
+    assert effects.orderByEnabled()
+    clause = effects.orderBy().list()[0]
+    assert clause.expression().expression() == '"v"' and not clause.ascending()
+    stack = effects.paintEffect()
+    assert [e.type() for e in stack.effectList()] == ["dropShadow", "drawSource"]
+    assert stack.effect(0).blurLevel() == 3
+    layer_stack = effects.symbol().symbolLayer(0).paintEffect()
+    assert [e.type() for e in layer_stack.effectList()] == ["outerGlow", "drawSource"]
 
     categorized = layers["categories"].renderer()
     assert categorized.type() == "categorizedSymbol", categorized.type()

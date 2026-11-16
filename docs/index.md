@@ -101,9 +101,14 @@ project; they do not change the data source schema or feature values.
 
 Check `renderer.type` to narrow `QgsVectorRenderer`. The discriminants are the
 QGIS renderer names: `singleSymbol`, `categorizedSymbol`, `graduatedSymbol`,
-`RuleRenderer`, and `nullSymbol`. Other renderers, such as heatmaps and point
-clusters, are `unknown`, with the QGIS name in `xmlType`; their type-specific
-settings stay in extension data.
+`RuleRenderer`, `nullSymbol`, `heatmapRenderer`, `pointDisplacement`,
+`pointCluster`, `invertedPolygonRenderer`, `mergedFeatureRenderer`, and
+`25dRenderer`. Wrapper renderers hold the renderer they wrap in `renderer`.
+Other renderers, such as plugin renderers, are `unknown`, with the QGIS name in
+`xmlType`; their type-specific settings stay in extension data. Every renderer
+can have a paint `effect`, an `orderBy` list, and data-defined properties;
+symbol layers can have their own `effect`. Effect stacks list their effects in
+`effects`.
 
 ```ts
 if (layer.type === "vector" && layer.renderer?.type === "categorizedSymbol") {

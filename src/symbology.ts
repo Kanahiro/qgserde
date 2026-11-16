@@ -8,6 +8,16 @@ import {
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
+import { colorRampSpec } from "./raster.ts";
+import {
+  type Custom,
+  captureSpec,
+  type Entry,
+  readSpec,
+  restoreSpec,
+  type Spec,
+  writeSpec,
+} from "./spec.ts";
 import type {
   QgisVersion,
   QgsCategoryValue,
@@ -232,6 +242,160 @@ function depthGuard(depth: number, code: "INVALID_PROJECT" | "INVALID_EDIT") {
     throw new QgsError(code, "Cyclic or excessively deep symbology");
 }
 
+// ---- spec-described extras
+
+const effectEntries: Entry[] = [
+  { kind: "attribute", field: "type", attribute: "type", type: "string" },
+  {
+    kind: "attribute",
+    field: "enabled",
+    attribute: "enabled",
+    type: "boolean",
+  },
+  { kind: "properties", field: "properties" },
+];
+const effectSpec: Spec = { tag: "effect", entries: effectEntries };
+effectEntries.push({ kind: "owners", field: "effects", spec: effectSpec });
+const effect: Entry = {
+  kind: "object",
+  field: "effect",
+  at: ["effect"],
+  spec: effectSpec,
+};
+
+const layerExtras: Spec = { tag: "layer", entries: [effect] };
+
+/** Embedded `<renderer-v2>` of wrapper renderers such as point clusters. */
+const nestedRenderer: Custom = {
+  read(element, codec) {
+    const child = findChild(element, "renderer-v2");
+    return child && readRenderer(child, codec);
+  },
+  capture(value, _element, codec) {
+    if (value) captureRenderer(value as QgsVectorRenderer, codec);
+  },
+  restore(value, codec, version) {
+    if (value) restoreRenderer(value as QgsVectorRenderer, codec, version);
+  },
+  write(value, element, codec, target) {
+    replaceChildren(
+      element,
+      ["renderer-v2"],
+      value ? [writeRenderer(value as QgsVectorRenderer, codec, target)] : [],
+    );
+  },
+};
+
+const commonRenderer: Entry[] = [
+  effect,
+  {
+    kind: "records",
+    field: "orderBy",
+    at: ["orderby"],
+    item: "orderByClause",
+    text: "expression",
+  },
+  {
+    kind: "dataDefined",
+    field: "dataDefinedProperties",
+    tag: "data-defined-properties",
+  },
+];
+const rendererAttributeEntry: Entry = {
+  kind: "attributes",
+  field: "attributes",
+  exclude: [
+    "type",
+    "symbollevels",
+    "forceraster",
+    "referencescale",
+    "enableorderby",
+  ],
+};
+const embedded: Entry = {
+  kind: "custom",
+  field: "renderer",
+  custom: nestedRenderer,
+};
+
+const rendererExtrasByType: Record<string, Entry[]> = {
+  graduatedSymbol: [
+    {
+      kind: "object",
+      field: "classificationMethod",
+      at: ["classificationMethod"],
+      spec: {
+        tag: "classificationMethod",
+        entries: [
+          { kind: "attribute", field: "id", attribute: "id", type: "string" },
+          { kind: "attributes", field: "symmetricMode", at: ["symmetricMode"] },
+          { kind: "attributes", field: "labelFormat", at: ["labelFormat"] },
+          {
+            kind: "variant",
+            field: "parameters",
+            at: ["parameters", "Option"],
+          },
+        ],
+      },
+    },
+  ],
+  heatmapRenderer: [
+    rendererAttributeEntry,
+    {
+      kind: "object",
+      field: "colorRamp",
+      at: ["colorramp"],
+      spec: colorRampSpec,
+    },
+  ],
+  pointDisplacement: [
+    rendererAttributeEntry,
+    { kind: "attributes", field: "labelFont", at: ["labelFontProperties"] },
+    embedded,
+    { kind: "symbol", field: "centerSymbol", name: "centerSymbol" },
+  ],
+  pointCluster: [
+    rendererAttributeEntry,
+    embedded,
+    { kind: "symbol", field: "clusterSymbol", name: "centerSymbol" },
+  ],
+  invertedPolygonRenderer: [rendererAttributeEntry, embedded],
+  mergedFeatureRenderer: [rendererAttributeEntry, embedded],
+  "25dRenderer": [
+    rendererAttributeEntry,
+    { kind: "symbol", field: "symbol", name: "symbol" },
+  ],
+};
+
+const rendererSpecs = new Map<string, Spec>();
+function rendererExtras(renderer: QgsVectorRenderer): Spec {
+  const type = renderer.type;
+  let spec = rendererSpecs.get(type);
+  if (!spec) {
+    spec = {
+      tag: "renderer-v2",
+      entries: [
+        ...commonRenderer,
+        ...(Object.hasOwn(rendererExtrasByType, type)
+          ? (rendererExtrasByType[type] ?? [])
+          : []),
+      ],
+    };
+    rendererSpecs.set(type, spec);
+  }
+  return spec;
+}
+
+/** Wrapper and other renderers modeled only through their spec entries. */
+const specRenderers = new Set([
+  "heatmapRenderer",
+  "pointDisplacement",
+  "pointCluster",
+  "invertedPolygonRenderer",
+  "mergedFeatureRenderer",
+  "25dRenderer",
+]);
+
 // ---- symbols
 
 export function readSymbol(
@@ -269,6 +433,7 @@ function readSymbolLayer(
   if (dataDefined) layer.dataDefinedProperties = dataDefined;
   const sub = findChild(element, "symbol");
   if (sub) layer.subSymbol = readSymbol(sub, codec, depth + 1);
+  Object.assign(layer, readSpec(layerExtras, element, codec));
   return codec.remember(layer, element);
 }
 
@@ -287,6 +452,7 @@ export function captureSymbol(
     bindAttributes(codec, layerElement, symbolLayerAttributes);
     bindProperties(binder(codec), layerElement, ["properties"]);
     bindDataDefined(codec, layerElement);
+    captureSpec(layerExtras, layer as never, layerElement, codec, []);
     codec.own(layer, layerElement);
   }
   codec.bindAttribute(element, "type", ["type"]);
@@ -306,7 +472,10 @@ export function restoreSymbol(
     for (const layer of symbol.layers) {
       if (layer?.subSymbol)
         restoreSymbol(layer.subSymbol, codec, version, depth + 1);
-      if (layer) codec.restoreOwner(layer, version, "layer");
+      if (layer) {
+        restoreSpec(layerExtras, layer as never, codec, version, 0);
+        codec.restoreOwner(layer, version, "layer");
+      }
     }
   codec.restoreOwner(symbol, version, "symbol");
 }
@@ -370,6 +539,7 @@ function writeSymbolLayer(
   writeAttributes(element, layer, symbolLayerAttributes);
   writeProperties(element, layer.properties, target);
   writeDataDefined(element, layer.dataDefinedProperties);
+  writeSpec(layerExtras, layer as never, element, codec, target);
   if (layer.subSymbol)
     replaceChildren(
       element,
@@ -636,9 +806,12 @@ export function readRenderer(
       renderer = { type };
       break;
     default:
-      renderer = { type: "unknown", xmlType: type };
+      renderer = specRenderers.has(type)
+        ? ({ type } as QgsVectorRenderer)
+        : { type: "unknown", xmlType: type };
   }
   readAttributes(renderer, element, rendererAttributes);
+  Object.assign(renderer, readSpec(rendererExtras(renderer), element, codec));
   return codec.remember(renderer, element);
 }
 
@@ -731,6 +904,7 @@ export function captureRenderer(
   if (renderer.type === "graduatedSymbol")
     codec.bindAttribute(element, "graduatedMethod", ["graduatedMethod"]);
   bindAttributes(codec, element, rendererAttributes);
+  captureSpec(rendererExtras(renderer), renderer as never, element, codec, []);
   codec.own(renderer, element);
 }
 
@@ -764,6 +938,7 @@ export function restoreRenderer(
       const name = rule.extensions?.layout?.name;
       codec.restoreOwner(rule, version, name === "rules" ? "rules" : "rule");
     });
+  restoreSpec(rendererExtras(renderer), renderer as never, codec, version, 0);
   codec.restoreOwner(renderer, version, "renderer-v2");
 }
 
@@ -930,10 +1105,18 @@ export function writeRenderer(
     case "unknown":
       break;
     default:
-      throw new QgsError(
-        "INVALID_EDIT",
-        `Unknown renderer type: ${String((renderer as { type: unknown }).type)}`,
-      );
+      if (!specRenderers.has(renderer.type))
+        throw new QgsError(
+          "INVALID_EDIT",
+          `Unknown renderer type: ${String((renderer as { type: unknown }).type)}`,
+        );
   }
+  writeSpec(
+    rendererExtras(renderer),
+    renderer as never,
+    element,
+    codec,
+    target,
+  );
   return element;
 }

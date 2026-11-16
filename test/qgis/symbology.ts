@@ -204,6 +204,99 @@ export function createSymbologyProject(): QgsProject {
     {
       ...base,
       type: "vector",
+      id: "heatmap_layer_001",
+      name: "heatmap",
+      source: "Point?crs=EPSG:4326&field=v:double",
+      renderer: {
+        type: "heatmapRenderer",
+        attributes: { radius: "15", weight_expression: '"v"', quality: "3" },
+        colorRamp: {
+          type: "gradient",
+          properties: { color1: "0,0,0,255", color2: "255,0,0,255" },
+        },
+      },
+    },
+    {
+      ...base,
+      type: "vector",
+      id: "cluster_layer_001",
+      name: "cluster",
+      source: "Point?crs=EPSG:4326",
+      renderer: {
+        type: "pointCluster",
+        attributes: { tolerance: "5", toleranceUnit: "MM" },
+        renderer: {
+          type: "singleSymbol",
+          symbol: {
+            type: "marker",
+            layers: [
+              { class: "SimpleMarker", properties: { color: "0,255,0,255" } },
+            ],
+          },
+        },
+        clusterSymbol: {
+          type: "marker",
+          layers: [
+            {
+              class: "SimpleMarker",
+              properties: { color: "0,0,255,255", size: "6" },
+            },
+          ],
+        },
+      },
+    },
+    {
+      ...base,
+      type: "vector",
+      id: "inverted_layer_01",
+      name: "inverted",
+      source: "Polygon?crs=EPSG:4326",
+      renderer: {
+        type: "invertedPolygonRenderer",
+        attributes: { preprocessing: "1" },
+        renderer: { type: "singleSymbol", symbol: fill("0,0,0,128") },
+      },
+    },
+    {
+      ...base,
+      type: "vector",
+      id: "effects_layer_001",
+      name: "effects",
+      source: "Point?crs=EPSG:4326&field=v:double",
+      renderer: {
+        type: "singleSymbol",
+        orderByEnabled: true,
+        orderBy: [{ expression: '"v"', asc: "0", nullsFirst: "1" }],
+        effect: {
+          type: "effectStack",
+          enabled: true,
+          effects: [
+            {
+              type: "dropShadow",
+              properties: { blur_level: "3", blur_unit: "MM" },
+            },
+            { type: "drawSource" },
+          ],
+        },
+        symbol: {
+          type: "marker",
+          layers: [
+            {
+              class: "SimpleMarker",
+              properties: {},
+              effect: {
+                type: "effectStack",
+                enabled: true,
+                effects: [{ type: "outerGlow" }, { type: "drawSource" }],
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      ...base,
+      type: "vector",
       id: "nothing_layer_001",
       name: "nothing",
       source: "Point?crs=EPSG:4326",

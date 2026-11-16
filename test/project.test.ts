@@ -533,6 +533,7 @@ for (const fixture of [
   "qgis3-labeling",
   "qgis3-project-settings",
   "qgis3-raster-styles",
+  "qgis3-renderers",
   "qgis3-vector-settings",
   "qgis3-raster",
   "qgis3-relations",

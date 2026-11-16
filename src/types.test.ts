@@ -90,6 +90,17 @@ export function checkPublicTypes(
         void name;
         break;
       }
+      case "pointCluster":
+      case "pointDisplacement":
+      case "invertedPolygonRenderer":
+      case "mergedFeatureRenderer": {
+        const inner: QgsMapLayer["type"] | string | undefined =
+          renderer.renderer?.type;
+        void inner;
+        break;
+      }
+      case "heatmapRenderer":
+      case "25dRenderer":
       case "nullSymbol":
       case undefined:
         break;

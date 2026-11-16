@@ -984,6 +984,8 @@ export interface QgsSymbolLayer {
   dataDefinedProperties?: QgsDataDefinedProperties;
   /** Nested symbol, such as the marker drawn along a marker line. */
   subSymbol?: QgsSymbol;
+  /** Paint effect applied to this symbol layer. */
+  effect?: QgsPaintEffect;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -998,8 +1000,28 @@ export interface QgsColorRamp {
   readonly extensions?: QgsExtensions;
 }
 
+/** Paint effect, such as a drop shadow or an effect stack. */
+export interface QgsPaintEffect {
+  /** Effect type, such as `effectStack`, `dropShadow`, `outerGlow`, `blur`, or `drawSource`. */
+  type: string;
+  /** Whether the effect is enabled. */
+  enabled?: boolean;
+  /** Type-specific settings, such as `blur_level` or `color`. */
+  properties?: QgsVariantMap;
+  /** Effects of an `effectStack`, applied in order. */
+  effects?: QgsPaintEffect[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
 /** Settings shared by all vector renderers. */
 export interface QgsFeatureRendererBase {
+  /** Paint effect applied to the whole layer. */
+  effect?: QgsPaintEffect;
+  /** Feature rendering order, each clause with `expression`, `asc`, and `nullsFirst`. */
+  orderBy?: QgsAttributes[];
+  /** Renderer data-defined properties. */
+  dataDefinedProperties?: QgsDataDefinedProperties;
   /** Whether symbol levels are enabled. */
   symbolLevels?: boolean;
   /** Whether to force rasterization during rendering. */
@@ -1090,6 +1112,86 @@ export interface QgsGraduatedRenderer extends QgsFeatureRendererBase {
   sourceSymbol?: QgsSymbol;
   /** Color ramp for new ranges. */
   colorRamp?: QgsColorRamp;
+  /** Classification method and its label format. */
+  classificationMethod?: QgsClassificationMethod;
+}
+
+/** Classification method of a graduated renderer. */
+export interface QgsClassificationMethod {
+  /** Method ID, such as `EqualInterval`, `Quantile`, `Jenks`, `StdDev`, or `Pretty`. */
+  id?: string;
+  /** Symmetric classification settings (`enabled`, `symmetrypoint`, `astride`). */
+  symmetricMode?: QgsAttributes;
+  /** Range label format (`format`, `labelprecision`, `trimtrailingzeroes`). */
+  labelFormat?: QgsAttributes;
+  /** Method parameters. */
+  parameters?: QgsVariant;
+}
+
+/** Heatmap of point density. */
+export interface QgsHeatmapRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "heatmapRenderer";
+  /** Settings such as `radius`, `radius_unit`, `weight_expression`, `max_value`, and `quality`. */
+  attributes?: QgsAttributes;
+  /** Color ramp from low to high density. */
+  colorRamp?: QgsColorRamp;
+}
+
+/** Points at the same location displaced around a center. */
+export interface QgsPointDisplacementRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "pointDisplacement";
+  /** Settings such as `tolerance`, `placement`, `circleColor`, and `labelAttributeName`. */
+  attributes?: QgsAttributes;
+  /** Label font settings. */
+  labelFont?: QgsAttributes;
+  /** Renderer for the displaced points. */
+  renderer?: QgsVectorRenderer;
+  /** Symbol drawn at the center of each group. */
+  centerSymbol?: QgsSymbol;
+}
+
+/** Nearby points drawn as one cluster symbol. */
+export interface QgsPointClusterRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "pointCluster";
+  /** Settings such as `tolerance` and `toleranceUnit`. */
+  attributes?: QgsAttributes;
+  /** Renderer for single points. */
+  renderer?: QgsVectorRenderer;
+  /** Symbol drawn for each cluster. */
+  clusterSymbol?: QgsSymbol;
+}
+
+/** Fills the area outside polygons. */
+export interface QgsInvertedPolygonRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "invertedPolygonRenderer";
+  /** Settings such as `preprocessing`. */
+  attributes?: QgsAttributes;
+  /** Renderer for the inverted polygons. */
+  renderer?: QgsVectorRenderer;
+}
+
+/** Merges features before drawing them. */
+export interface QgsMergedFeatureRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "mergedFeatureRenderer";
+  /** Other settings. */
+  attributes?: QgsAttributes;
+  /** Renderer for the merged features. */
+  renderer?: QgsVectorRenderer;
+}
+
+/** Pseudo-3D (2.5D) extruded polygons. */
+export interface Qgs25DRenderer extends QgsFeatureRendererBase {
+  /** Discriminant, matching the QGIS renderer name. */
+  type: "25dRenderer";
+  /** Other settings. */
+  attributes?: QgsAttributes;
+  /** Generated symbol for the walls and roofs. */
+  symbol?: QgsSymbol;
 }
 
 /** Rule of a {@link QgsRuleBasedRenderer}. */
@@ -1153,6 +1255,12 @@ export type QgsVectorRenderer =
   | QgsGraduatedRenderer
   | QgsRuleBasedRenderer
   | QgsNullSymbolRenderer
+  | QgsHeatmapRenderer
+  | QgsPointDisplacementRenderer
+  | QgsPointClusterRenderer
+  | QgsInvertedPolygonRenderer
+  | QgsMergedFeatureRenderer
+  | Qgs25DRenderer
   | QgsUnknownVectorRenderer;
 
 /**

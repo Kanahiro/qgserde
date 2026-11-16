@@ -91,3 +91,11 @@ memory layers and a mutually exclusive group with a custom property, project
 variables, WMS properties, ellipsoid and units, transaction mode and flags,
 snapping, a coordinate operation, a relation, a map theme, a bookmark, time
 settings, predefined scales, project metadata, display and style settings.
+
+## qgis3-renderers.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package). Memory
+layers use heatmap, point displacement (embedding a categorized renderer),
+point cluster, inverted polygon, 2.5D, and merged feature renderers, and a
+single-symbol renderer with an order-by clause and paint effect stacks on the
+renderer and its symbol layer.

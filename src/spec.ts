@@ -375,7 +375,8 @@ export function readSpec(
         model[entry.field] = readVariant(target);
         break;
       case "properties":
-        model[entry.field] = readProperties(target);
+        if (findChild(target, "Option") || findChild(target, "prop"))
+          model[entry.field] = readProperties(target);
         break;
       case "dataDefined": {
         const value = readDataDefined(target, entry.tag);
@@ -798,13 +799,17 @@ export function writeSpec(
             value as QgsVariant,
           );
         break;
-      case "properties":
-        writeProperties(
-          existing ?? ensurePath(element, entry.at),
-          (value ?? {}) as never,
-          target,
-        );
+      case "properties": {
+        const host = existing ?? ensurePath(element, entry.at);
+        if (
+          value === undefined &&
+          !findChild(host, "Option") &&
+          !findChild(host, "prop")
+        )
+          break;
+        writeProperties(host, (value ?? {}) as never, target);
         break;
+      }
       case "dataDefined":
         writeDataDefined(
           existing ?? ensurePath(element, entry.at),
