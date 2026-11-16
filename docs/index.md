@@ -166,18 +166,26 @@ Operations that would erase unknown nested elements or collapse distinct view
 settings fail with `INVALID_EDIT`.
 Explicit removal of a modeled object removes that object's associated data.
 
-Models can be stored as JSON:
+Store models with `serializeJson` and restore them with `parseJson`:
 
 ```ts
-const saved = JSON.stringify(project);
-const restored = JSON.parse(saved);
+import { parseJson, serializeJson } from "qgserde";
+
+const saved = serializeJson(project);
+const restored = parseJson(saved);
 const xml = serializeQgs(restored, { version: "4.2" });
 ```
 
-Keep `extensions` in stored models. It holds the unknown data and order needed
-for reconstruction and has no public editing API. A newly created empty
-project needs no extension data. Serialization does not mutate the model,
-including when it fails.
+The output has the form `{"qgserde":"<version>","project":{...}}`. `parseJson`
+accepts JSON written by a compatible qgserde version: the same major version,
+or the same minor version before 1.0. Other versions cause `INVALID_VERSION`,
+because the `extensions` format may change between them. Malformed JSON or a
+missing envelope causes `INVALID_JSON`. The model itself is validated when it
+is written with `serializeQgs`.
+
+The internal `extensions` property holds the unknown data and order needed for
+reconstruction and has no public editing API. Serialization does not mutate the
+model, including when it fails.
 
 ## Choose an output version
 
@@ -216,7 +224,8 @@ try {
 | ----------------- | ----------------------------------------------------------------------------------------------------- |
 | `INVALID_XML`     | Malformed XML, unsupported XML syntax, an internal DTD subset, or excessive depth.                    |
 | `INVALID_PROJECT` | Invalid root, missing required attributes, or invalid modeled values.                                 |
-| `INVALID_VERSION` | Invalid version syntax, a missing target, or an unsupported target major version.                     |
+| `INVALID_JSON`    | Malformed JSON or a missing qgserde JSON envelope.                                                    |
+| `INVALID_VERSION` | Invalid version syntax, a missing target, an unsupported target major version, or incompatible JSON.  |
 | `INVALID_EDIT`    | An edit that would lose data, duplicate IDs, cycles, non-finite numbers, or other invalid model data. |
 
 ## Scope and runtime

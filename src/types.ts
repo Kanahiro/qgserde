@@ -61,7 +61,7 @@ export interface XmlDocument {
  * An editable project model, independent of the QGIS version used to read it.
  *
  * Edit the typed properties and choose a target version with {@link serializeQgs}.
- * When storing the model as JSON, keep its internal extension and order data.
+ * Store it with {@link serializeJson} and restore it with {@link parseJson}.
  */
 export interface QgsProject {
   /** Project title. Edits synchronize the title locations used by QGIS. */
