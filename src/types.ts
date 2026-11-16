@@ -122,6 +122,14 @@ export interface QgsProject {
   dataDefinedServerProperties?: QgsDataDefinedProperties;
   /** Elevation shading (eye-dome lighting and hillshading) settings. */
   elevationShading?: QgsAttributes;
+  /** Automatic transaction groups of older projects (`active`). */
+  autoTransaction?: QgsAttributes;
+  /** Provider-side default values of older projects (`active`). */
+  evaluateDefaultValues?: QgsAttributes;
+  /** Trusted layer metadata of older projects (`active`). */
+  trust?: QgsAttributes;
+  /** Map canvas units of older projects, such as `degrees` or `meters`. */
+  canvasUnits?: string;
   /** Whether the project's predefined scales replace the global ones. */
   useProjectScales?: boolean;
   /** Predefined scale denominators, as stored. */
@@ -205,6 +213,8 @@ export interface QgsLayoutMapGrid {
   markerSymbol?: QgsSymbol;
   /** Annotation text format. */
   format?: QgsTextFormat;
+  /** Annotation font settings of older projects. */
+  annotationFont?: QgsAttributes;
   /** Data-defined and custom properties. */
   layoutObject?: QgsLayoutObject;
   /** @internal */
@@ -280,6 +290,18 @@ export interface QgsLayoutItem {
   fillSymbol1?: QgsSymbol;
   /** Scale bar second fill symbol. */
   fillSymbol2?: QgsSymbol;
+  /** Scale bar stroke color. */
+  strokeColor?: QgsAttributes;
+  /** Scale bar first fill color. */
+  fillColor?: QgsAttributes;
+  /** Scale bar second fill color. */
+  fillColor2?: QgsAttributes;
+  /** Map item clipping settings. */
+  itemClipping?: QgsAttributes;
+  /** Map atlas clipping settings. */
+  atlasClipping?: QgsAttributes;
+  /** Layers clipped to the atlas feature. */
+  atlasClippingLayers?: string[];
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -312,6 +334,8 @@ export interface QgsLayoutMultiFrame {
   columns?: QgsLayoutTableColumn[];
   /** Sort columns. */
   sortColumns?: QgsLayoutTableColumn[];
+  /** Table cell styles by part, such as `oddRows` or `headerRow`, each with `enabled` and `cellBackgroundColor`. */
+  cellStyles?: Record<string, QgsAttributes>;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -567,6 +591,8 @@ export interface QgsMapLayerBase {
   scaleBasedVisibility?: boolean;
   /** Other `<maplayer>` attributes, such as `autoRefreshMode`, `styleCategories`, or `simplifyDrawingTol`. */
   attributes?: QgsAttributes;
+  /** Layer extent in WGS 84, as stored by QGIS. */
+  wgs84Extent?: QgsRectangle;
   /** Layer flags (`<flags>`): `Identifiable`, `Removable`, `Searchable`, and `Private`, as `1` or `0`. */
   flags?: QgsAttributes;
   /** Plugin and application properties stored with the layer. */
@@ -751,12 +777,55 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   geometryOptions?: QgsGeometryOptions;
   /** Selection settings (`<selection>`), such as `mode`. */
   selection?: QgsAttributes;
+  /** Layer-specific selection color: `spec` (such as `rgb`) and components from 0 to 1, or `invalid`. */
+  selectionColor?: QgsAttributes;
+  /** Diagram renderer. */
+  diagram?: QgsDiagramRenderer;
+  /** Diagram placement settings. */
+  diagramSettings?: QgsDiagramSettings;
   /** Auxiliary storage settings (`<auxiliaryLayer>`). */
   auxiliaryLayer?: QgsAttributes;
   /** Relations to referenced layers, kept with the layer for portable styles. */
   referencedLayers?: QgsRelation[];
   /** Relations from referencing layers, kept with the layer for portable styles. */
   referencingLayers?: QgsRelation[];
+}
+
+/** Category of a diagram renderer (`<DiagramCategory>`). */
+export interface QgsDiagramCategory {
+  /** Settings such as `width`, `height`, `opacity`, `penColor`, and `sizeType`. */
+  attributes?: QgsAttributes;
+  /** Font settings. */
+  font?: QgsAttributes;
+  /** Diagram attributes, each with `field` (an expression), `color`, and `label`. */
+  fields?: QgsAttributes[];
+  /** Histogram axis symbol. */
+  axisSymbol?: QgsSymbol;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Diagram renderer. */
+export interface QgsDiagramRenderer {
+  /**
+   * Renderer element: `SingleCategoryDiagramRenderer`,
+   * `LinearlyInterpolatedDiagramRenderer`, or `StackedDiagramRenderer`.
+   */
+  renderer: string;
+  /** Settings such as `diagramType` (`Pie`, `Histogram`, `Text`) and interpolation bounds. */
+  attributes?: QgsAttributes;
+  /** Categories. */
+  categories?: QgsDiagramCategory[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Diagram placement settings (`<DiagramLayerSettings>`). */
+export interface QgsDiagramSettings {
+  /** Settings such as `placement`, `dist`, `priority`, `zIndex`, and `showAll`. */
+  attributes?: QgsAttributes;
+  /** Diagram data-defined properties. */
+  dataDefinedProperties?: QgsDataDefinedProperties;
 }
 
 /** Join to another vector layer. */
@@ -929,6 +998,8 @@ export interface QgsMeshLayer extends QgsMapLayerBase {
   staticActiveDataset?: QgsAttributes;
   /** Mesh simplification settings. */
   simplify?: QgsAttributes;
+  /** Dataset groups. */
+  datasetGroups?: QgsMeshDatasetGroups;
 }
 
 /** Scalar dataset rendering of a mesh dataset group. */
@@ -969,6 +1040,28 @@ export interface QgsMeshRendererSettings {
   edgeMesh?: QgsAttributes;
   /** 3D averaging method. */
   averaging?: QgsAttributes;
+  /** Sigma averaging settings. */
+  averagingSigma?: QgsAttributes;
+}
+
+/** Item of the mesh dataset group tree. */
+export interface QgsMeshDatasetGroupItem {
+  /** Settings such as `display-name`, `is-enabled`, and `dataset-index`. */
+  attributes?: QgsAttributes;
+  /** Child items. */
+  children?: QgsMeshDatasetGroupItem[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Mesh dataset groups and their sources. */
+export interface QgsMeshDatasetGroups {
+  /** Dataset group tree. */
+  tree?: QgsMeshDatasetGroupItem[];
+  /** Dataset sources, each with `source-type`, `source-index`, and `global-index`. */
+  datasets?: QgsAttributes[];
+  /** Group names by global index. */
+  nameToGlobalIndex?: QgsAttributes[];
 }
 
 /** Vector tile layer. */
@@ -1181,6 +1274,8 @@ export interface QgsField {
   labelOnTop?: boolean;
   /** Whether new features reuse the last entered value. */
   reuseLastValue?: boolean;
+  /** Reuse-last-value policy, such as `NotAllowed` or `AllowedDefaultOn`. */
+  reuseLastValuePolicy?: string;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }

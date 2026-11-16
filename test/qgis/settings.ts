@@ -177,6 +177,35 @@ export function createSettingsProject(): QgsProject {
           durationUnit: "min",
         },
       },
+      diagram: {
+        renderer: "SingleCategoryDiagramRenderer",
+        attributes: { diagramType: "Pie", attributeLegend: "1" },
+        categories: [
+          {
+            attributes: {
+              enabled: "1",
+              width: "12",
+              height: "12",
+              sizeType: "MM",
+              opacity: "1",
+            },
+            fields: [
+              { field: '"pop"', color: "#ff0000", label: "Population" },
+              { field: '"id"', color: "#0000ff", label: "ID" },
+            ],
+          },
+        ],
+      },
+      diagramSettings: {
+        attributes: { placement: "0", dist: "2", priority: "5", showAll: "1" },
+      },
+      selectionColor: {
+        spec: "rgb",
+        red: "1",
+        green: "0",
+        blue: "1",
+        alpha: "1",
+      },
       geometryOptions: {
         attributes: { geometryPrecision: "0.01", removeDuplicateNodes: "1" },
       },

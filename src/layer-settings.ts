@@ -1,7 +1,15 @@
 import { putElementText, remove, replaceChildren } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import { labeling } from "./labeling.ts";
-import type { Custom, Entry, Spec } from "./spec.ts";
+import {
+  type Custom,
+  captureOwned,
+  type Entry,
+  readOwned,
+  restoreOwned,
+  type Spec,
+  writeOwned,
+} from "./spec.ts";
 import type { QgsVariant, QgsVariantMap, XmlElement } from "./types.ts";
 import { bindVariant, isMap, readVariant, writeVariant } from "./variant.ts";
 import { createElement, findChild, findChildren, getText } from "./xml.ts";
@@ -226,6 +234,7 @@ export const commonLayerEntries: Entry[] = [
     ],
   },
   { kind: "texts", field: "flags", at: ["flags"] },
+  { kind: "extent", field: "wgs84Extent", tag: "wgs84extent" },
   { kind: "custom", field: "customProperties", custom: customProperties },
   text("blendMode", "blendMode", "number"),
   text("mapTip", "mapTip"),
@@ -375,6 +384,76 @@ const relation: Spec = {
     { kind: "attributes", field: "attributes" },
     { kind: "records", field: "fieldRefs", at: [], item: "fieldRef" },
   ],
+};
+
+const diagramCategory: Spec = {
+  tag: "DiagramCategory",
+  entries: [
+    { kind: "attributes", field: "attributes" },
+    attributes("font", "fontProperties"),
+    { kind: "records", field: "fields", at: [], item: "attribute" },
+    symbolIn("axisSymbol", "axisSymbol"),
+  ],
+};
+const diagramTags = [
+  "SingleCategoryDiagramRenderer",
+  "LinearlyInterpolatedDiagramRenderer",
+  "StackedDiagramRenderer",
+];
+const diagramSpecs = new Map(
+  diagramTags.map((tag) => [
+    tag,
+    {
+      tag,
+      aliases: diagramTags,
+      entries: [
+        { kind: "attributes", field: "attributes" },
+        { kind: "owners", field: "categories", spec: diagramCategory },
+      ],
+    } satisfies Spec,
+  ]),
+);
+const diagramSpec = (model: Record<string, unknown>): Spec => {
+  const spec =
+    typeof model.renderer === "string"
+      ? diagramSpecs.get(model.renderer)
+      : undefined;
+  if (!spec)
+    throw new QgsError(
+      "INVALID_EDIT",
+      `Unknown diagram renderer: ${String(model.renderer)}`,
+    );
+  return spec;
+};
+
+/** Diagram renderer, stored as an element named after its type. */
+const diagram: Custom = {
+  read(element, codec) {
+    const child = findChildren(element).find((item) =>
+      diagramTags.includes(item.name),
+    );
+    if (!child) return undefined;
+    const model = readOwned(diagramSpecs.get(child.name) as Spec, child, codec);
+    model.renderer = child.name;
+    return model;
+  },
+  capture(value, _element, codec) {
+    if (isMap(value)) captureOwned(diagramSpec(value), value, codec);
+  },
+  restore(value, codec, version) {
+    if (isMap(value)) restoreOwned(diagramSpec(value), value, codec, version);
+  },
+  write(value, element, codec, target) {
+    if (value !== undefined && !isMap(value))
+      throw new QgsError("INVALID_EDIT", "A diagram must be an object");
+    replaceChildren(
+      element,
+      diagramTags,
+      value === undefined
+        ? []
+        : [writeOwned(diagramSpec(value), value, codec, target)],
+    );
+  },
 };
 
 /** Vector layer settings described declaratively. */
@@ -555,6 +634,24 @@ export const vectorLayerEntries: Entry[] = [
     },
   },
   attributes("selection", "selection"),
+  attributes("selectionColor", "selection", "selectionColor"),
+  { kind: "custom", field: "diagram", custom: diagram },
+  {
+    kind: "object",
+    field: "diagramSettings",
+    at: ["DiagramLayerSettings"],
+    spec: {
+      tag: "DiagramLayerSettings",
+      entries: [
+        { kind: "attributes", field: "attributes" },
+        {
+          kind: "dataDefined",
+          field: "dataDefinedProperties",
+          tag: "properties",
+        },
+      ],
+    },
+  },
   attributes("auxiliaryLayer", "auxiliaryLayer"),
   {
     kind: "owners",

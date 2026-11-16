@@ -50,6 +50,7 @@ const mapGrid: Spec = {
     symbolIn("lineSymbol", "lineStyle"),
     symbolIn("markerSymbol", "markerStyle"),
     format("format"),
+    attributes("annotationFont", "annotationFontProperties"),
     layoutObject,
   ],
 };
@@ -97,6 +98,17 @@ export const layoutItemSpec: Spec = {
     symbolIn("subdivisionLineSymbol", "subdivisionLineSymbol"),
     symbolIn("fillSymbol1", "fillSymbol1"),
     symbolIn("fillSymbol2", "fillSymbol2"),
+    attributes("strokeColor", "strokeColor"),
+    attributes("fillColor", "fillColor"),
+    attributes("fillColor2", "fillColor2"),
+    attributes("itemClipping", "itemClippingSettings"),
+    attributes("atlasClipping", "atlasClippingSettings"),
+    {
+      kind: "values",
+      field: "atlasClippingLayers",
+      at: ["atlasClippingSettings", "layersToClip"],
+      item: "Layer",
+    },
   ],
 };
 
@@ -126,6 +138,25 @@ export const layoutMultiFrameSpec: Spec = {
       field: "sortColumns",
       at: ["sortColumns"],
       spec: tableColumn("column"),
+    },
+    {
+      kind: "object",
+      field: "cellStyles",
+      at: ["cellStyles"],
+      spec: {
+        tag: "cellStyles",
+        entries: [
+          "oddColumns",
+          "evenColumns",
+          "oddRows",
+          "evenRows",
+          "firstColumn",
+          "lastColumn",
+          "headerRow",
+          "firstRow",
+          "lastRow",
+        ].map((tag) => attributes(tag, tag)),
+      },
     },
   ],
 };

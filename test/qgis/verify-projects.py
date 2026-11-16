@@ -292,6 +292,13 @@ def check_settings(project):
     assert cities.temporalProperties().isActive()
     assert cities.temporalProperties().startField() == "pop"
     assert cities.geometryOptions().geometryPrecision() == 0.01
+    diagram = cities.diagramRenderer()
+    assert diagram.rendererName() == "SingleCategory", diagram.rendererName()
+    category = diagram.diagramSettings()[0]
+    assert category.enabled and category.categoryLabels == ["Population", "ID"]
+    assert category.categoryColors[0].name() == "#ff0000"
+    assert cities.diagramLayerSettings().priority() == 5
+    assert cities.selectionProperties().selectionColor().name() == "#ff00ff"
 
 
 def check_project_settings(project):

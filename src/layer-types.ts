@@ -102,6 +102,13 @@ export const vectorTileEntries: Entry[] = [
   },
 ];
 
+function datasetGroupItem(): Spec {
+  const entries: Entry[] = [{ kind: "attributes", field: "attributes" }];
+  const spec: Spec = { tag: "mesh-dataset-group-tree-item", entries };
+  entries.push({ kind: "owners", field: "children", spec });
+  return spec;
+}
+
 export const meshEntries: Entry[] = [
   {
     kind: "object",
@@ -145,10 +152,29 @@ export const meshEntries: Entry[] = [
         attributes("triangularMesh", "mesh-settings-triangular"),
         attributes("edgeMesh", "mesh-settings-edge"),
         attributes("averaging", "averaging-3d"),
+        attributes("averagingSigma", "averaging-3d", "sigma-settings"),
       ],
     },
   },
   attributes("staticActiveDataset", "static-active-dataset"),
+  {
+    kind: "object",
+    field: "datasetGroups",
+    at: ["mesh-dataset-groups-store"],
+    spec: {
+      tag: "mesh-dataset-groups-store",
+      entries: [
+        { kind: "owners", field: "tree", spec: datasetGroupItem() },
+        { kind: "records", field: "datasets", at: [], item: "mesh-dataset" },
+        {
+          kind: "records",
+          field: "nameToGlobalIndex",
+          at: [],
+          item: "name-to-global-index",
+        },
+      ],
+    },
+  },
   attributes("simplify", "mesh-simplify-settings"),
 ];
 

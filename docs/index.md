@@ -214,7 +214,9 @@ default value, constraints and their strengths, split, duplicate, and merge
 policies, and `editable`, `labelOnTop`, and `reuseLastValue`. Renaming a field
 renames all of its records.
 
-Vector layers also model virtual `expressionFields`, `joins`, data and layer
+Vector layers also model `diagram` renderers (pie, histogram, and text, with
+categories and their fields) and `diagramSettings`, virtual `expressionFields`,
+`joins`, data and layer
 dependencies, `actions`, the attribute table, conditional styles, stored
 expressions, the attribute `form` (including drag-and-drop `items` with
 `container`, `field`, and other `kind`s), relation editor `widgets`, geometry

@@ -167,3 +167,39 @@ test("custom properties use <property> before QGIS 3.20", () => {
     /name="nested" type="Map"/u,
   );
 });
+
+test("reads and edits diagrams written by QGIS", () => {
+  const project = parseQgs(
+    readFileSync(
+      new URL("./fixtures/qgis3-relations.qgs", import.meta.url),
+      "utf8",
+    ),
+  );
+  const layer = project.layers.find(
+    (item) => item.type === "vector" && item.diagram,
+  );
+  if (layer?.type !== "vector" || !layer.diagram) throw new Error("diagram");
+  assert.match(layer.diagram.renderer, /DiagramRenderer$/u);
+  assert.ok(layer.diagram.attributes?.diagramType);
+  const category = layer.diagram.categories![0]!;
+  assert.ok(category.attributes?.width);
+  assert.ok(layer.diagramSettings?.attributes?.placement);
+  layer.diagram = {
+    renderer: "LinearlyInterpolatedDiagramRenderer",
+    attributes: { diagramType: "Pie" },
+    categories: [
+      {
+        attributes: { enabled: "1" },
+        fields: [{ field: "1", color: "#ff0000", label: "x" }],
+      },
+    ],
+  };
+  const output = serializeQgs(project, { version: "3.44" });
+  const reparsed = parseQgs(output).layers.find((item) => item.id === layer.id);
+  if (reparsed?.type !== "vector") throw new Error("vector");
+  assert.equal(
+    reparsed.diagram?.renderer,
+    "LinearlyInterpolatedDiagramRenderer",
+  );
+  assert.equal(reparsed.diagram?.categories?.[0]?.fields?.[0]?.label, "x");
+});

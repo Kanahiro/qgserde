@@ -60,6 +60,7 @@ function canonicalDocument(xml: string) {
   // spelling of the double.
   const visit = (element: XmlElement) => {
     for (const child of findChildren(element)) {
+      if (child.name === "wgs84extent") extentText(child);
       if (child.name === "Extent")
         for (const key of ["xmin", "ymin", "xmax", "ymax"])
           if (child.attributes[key] !== undefined)

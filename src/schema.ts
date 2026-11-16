@@ -110,4 +110,10 @@ export const fieldRecords: readonly {
     key: "name",
     values: { reuseLastValue: ["reuseLastValue", "boolean"] },
   },
+  {
+    container: "reuseLastValuePolicy",
+    tag: "field",
+    key: "name",
+    values: { reuseLastValuePolicy: ["reuseLastValuePolicy", "string"] },
+  },
 ];

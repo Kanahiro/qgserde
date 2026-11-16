@@ -164,6 +164,15 @@ export const projectSpec: Spec = {
       tag: "dataDefinedServerProperties",
     },
     attributes("elevationShading", "elevation-shading-renderer"),
+    attributes("autoTransaction", "autotransaction"),
+    attributes("evaluateDefaultValues", "evaluateDefaultValues"),
+    attributes("trust", "trust"),
+    {
+      kind: "text",
+      field: "canvasUnits",
+      at: ["mapcanvas", "units"],
+      type: "string",
+    },
     {
       kind: "attribute",
       field: "useProjectScales",
