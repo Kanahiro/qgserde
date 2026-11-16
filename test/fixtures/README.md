@@ -99,3 +99,11 @@ layers use heatmap, point displacement (embedding a categorized renderer),
 point cluster, inverted polygon, 2.5D, and merged feature renderers, and a
 single-symbol renderer with an order-by clause and paint effect stacks on the
 renderer and its symbol layer.
+
+## qgis3-layer-types.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package): an XYZ
+vector tile layer with a basic renderer style and labeling style, a mesh layer
+read from a one-quad 2DM file (not committed) with a native mesh frame, an
+annotation layer with point text, marker, and line items, and a group layer
+with a memory child layer.

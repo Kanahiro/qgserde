@@ -126,8 +126,11 @@ export function checkPublicTypes(
   }
   if (layer.type === "point-cloud") {
     const pointCloud: QgsPointCloudLayer = layer;
-    void pointCloud;
-    // @ts-expect-error Only vector and raster layers expose renderer settings.
+    const type: string | undefined = layer.renderer?.type;
+    void [pointCloud, type];
+  }
+  if (layer.type === "plugin") {
+    // @ts-expect-error Plugin layers do not expose renderer settings.
     layer.renderer;
   }
   switch (layer.type) {

@@ -89,9 +89,15 @@ Check `layer.type` to narrow the `QgsMapLayer` union. Vector layers expose
 `fields`; raster layers expose band settings through `renderer`. Other recognized
 types each have their own interface (`QgsMeshLayer`, `QgsVectorTileLayer`,
 `QgsPointCloudLayer`, `QgsPluginLayer`, `QgsAnnotationLayer`, `QgsGroupLayer`,
-and `QgsTiledSceneLayer`) with common settings only; type-specific settings stay
-in extension data. An unrecognized type becomes `QgsUnknownLayer`, with its
+and `QgsTiledSceneLayer`); settings that are not modeled stay in extension data.
+An unrecognized type becomes `QgsUnknownLayer`, with its
 original type name in `xmlType`.
+
+Vector tile layers model their basic renderer and labeling styles; mesh layers
+their renderer settings (scalar shaders, mesh frames, averaging); annotation
+layers their items with symbols and text formats; group layers their child
+layer IDs; point cloud and tiled scene layers their renderers. The project's
+main annotation layer items are `project.mainAnnotationItems`.
 
 Editor-widget identifiers and symbol layer classes remain strings because QGIS
 plugins can extend them. Layouts are held in extension data. Field settings affect the

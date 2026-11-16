@@ -233,7 +233,12 @@ test("new and renamed layer IDs must survive QGIS loading", () => {
   for (const type of ["vector", "raster", "vector-tile"] as const) {
     for (const id of ["states", "1234567890"])
       assert.throws(
-        () => writeLayer({ ...vector, type, id }, new ExtensionCodec(), target),
+        () =>
+          writeLayer(
+            { ...vector, type, id } as never,
+            new ExtensionCodec(),
+            target,
+          ),
         (error) =>
           error instanceof QgsError &&
           error.code === "INVALID_EDIT" &&
@@ -242,7 +247,7 @@ test("new and renamed layer IDs must survive QGIS loading", () => {
     assert.equal(
       readLayerId(
         writeLayer(
-          { ...vector, type, id: "12345678901" },
+          { ...vector, type, id: "12345678901" } as never,
           new ExtensionCodec(),
           target,
         ),

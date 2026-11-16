@@ -16,7 +16,23 @@ export const colorRampSpec: Spec = {
   ],
 };
 
-const contrast = (field: string): Entry => ({
+/** `<colorrampshader>`, shared by raster, mesh, and point cloud renderers. */
+export const colorRampShaderSpec: Spec = {
+  tag: "colorrampshader",
+  entries: [
+    { kind: "attributes", field: "attributes" },
+    {
+      kind: "object",
+      field: "colorRamp",
+      at: ["colorramp"],
+      spec: colorRampSpec,
+    },
+    { kind: "records", field: "items", at: [], item: "item" },
+    { kind: "attributes", field: "legend", at: ["rampLegendSettings"] },
+  ],
+};
+
+export const contrast = (field: string): Entry => ({
   kind: "texts",
   field,
   at: [field],
@@ -64,20 +80,7 @@ const rendererSpec: Spec = {
       kind: "object",
       field: "shader",
       at: ["rastershader", "colorrampshader"],
-      spec: {
-        tag: "colorrampshader",
-        entries: [
-          { kind: "attributes", field: "attributes" },
-          {
-            kind: "object",
-            field: "colorRamp",
-            at: ["colorramp"],
-            spec: colorRampSpec,
-          },
-          { kind: "records", field: "items", at: [], item: "item" },
-          { kind: "attributes", field: "legend", at: ["rampLegendSettings"] },
-        ],
-      },
+      spec: colorRampShaderSpec,
     },
     {
       kind: "records",

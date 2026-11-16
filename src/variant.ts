@@ -305,6 +305,8 @@ export function writeProperties(
     return;
   }
   let option = findChild(element, "Option");
+  // Nothing to store and nothing stored: leave the element as it is.
+  if (!option && !props.length && !Object.keys(properties).length) return;
   if (!option) {
     option = createElement("Option", { type: "Map" });
     const first = props[0] ? element.children.indexOf(props[0]) : 0;

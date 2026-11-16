@@ -3,6 +3,7 @@ import {
   metadataBase,
   relationSpec,
 } from "./layer-settings.ts";
+import { annotationItemSpec } from "./layer-types.ts";
 import { projectProperties } from "./properties.ts";
 import type { Entry, Spec } from "./spec.ts";
 
@@ -38,6 +39,12 @@ export const projectSpec: Spec = {
   tag: "qgis",
   entries: [
     { kind: "custom", field: "properties", custom: projectProperties },
+    {
+      kind: "owners",
+      field: "mainAnnotationItems",
+      at: ["main-annotation-layer", "items"],
+      spec: annotationItemSpec,
+    },
     {
       kind: "attribute",
       field: "transactionMode",

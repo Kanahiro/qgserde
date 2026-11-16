@@ -2,6 +2,11 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
+import {
+  createLayerTypesProject,
+  editLayerTypesFixture,
+  writeMeshData,
+} from "./layer-types.ts";
 import { createProjectSettingsProject } from "./project-settings.ts";
 import { createRasterProject, writeRasterData } from "./raster.ts";
 import { createSettingsProject } from "./settings.ts";
@@ -92,6 +97,19 @@ export function writeQgisFixtures(directory: string, version: string): void {
     serializeQgs(JSON.parse(JSON.stringify(parseQgs(projectSettings))), {
       version,
     }),
+  );
+
+  writeMeshData(directory);
+  const layerTypes = serializeQgs(createLayerTypesProject(), { version });
+  writeFileSync(join(directory, "layer-types.qgs"), layerTypes);
+  writeFileSync(
+    join(directory, "layer-types-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(layerTypes))), { version }),
+  );
+
+  writeFileSync(
+    join(directory, "layer-types-edited.qgs"),
+    serializeQgs(editLayerTypesFixture(), { version }),
   );
 
   writeRasterData(directory);

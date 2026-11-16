@@ -16,6 +16,14 @@ import {
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
 import { commonLayerEntries, vectorLayerEntries } from "./layer-settings.ts";
+import {
+  annotationEntries,
+  groupEntries,
+  meshEntries,
+  pointCloudEntries,
+  tiledSceneEntries,
+  vectorTileEntries,
+} from "./layer-types.ts";
 import { rasterLayerSpec } from "./raster.ts";
 import { fieldRecords } from "./schema.ts";
 import { readSpec, type Spec, writeSpec } from "./spec.ts";
@@ -40,13 +48,25 @@ const rasterSpec: Spec = {
   entries: [...commonLayerEntries, ...rasterLayerSpec.entries],
 };
 
+const typeSpecs: Record<string, Spec> = Object.fromEntries(
+  Object.entries({
+    "vector-tile": vectorTileEntries,
+    mesh: meshEntries,
+    annotation: annotationEntries,
+    group: groupEntries,
+    "point-cloud": pointCloudEntries,
+    "tiled-scene": tiledSceneEntries,
+  }).map(([type, entries]) => [
+    type,
+    { tag: "maplayer", entries: [...commonLayerEntries, ...entries] },
+  ]),
+);
+
 /** Declarative settings of a layer type; hand-written settings are handled below. */
 export function layerSpec(type: string): Spec {
-  return type === "vector"
-    ? vectorLayerSpec
-    : type === "raster"
-      ? rasterSpec
-      : commonLayerSpec;
+  if (type === "vector") return vectorLayerSpec;
+  if (type === "raster") return rasterSpec;
+  return (Object.hasOwn(typeSpecs, type) && typeSpecs[type]) || commonLayerSpec;
 }
 
 export function readLayerId(element: XmlElement): string {
@@ -261,7 +281,7 @@ export function readLayer(
         {
           ...base,
           type: "point-cloud",
-          ...readSpec(commonLayerSpec, element, codec),
+          ...readSpec(layerSpec("point-cloud"), element, codec),
         },
         element,
       );
@@ -273,7 +293,7 @@ export function readLayer(
     case "group":
     case "tiled-scene":
       return codec.remember(
-        { ...base, type, ...readSpec(commonLayerSpec, element, codec) },
+        { ...base, type, ...readSpec(layerSpec(type), element, codec) },
         element,
       );
     default:
@@ -371,6 +391,14 @@ export function writeLayer(
     ["datasource", layer.source],
     ["provider", layer.provider],
   ] as const) {
+    // Annotation and group layers store no provider; empty means absent there.
+    if (
+      value === "" &&
+      tag === "provider" &&
+      (layer.type === "annotation" || layer.type === "group") &&
+      !findChild(element, tag)
+    )
+      continue;
     putText(element, tag, value);
   }
   if (element.attributes.id !== undefined)

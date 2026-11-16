@@ -98,6 +98,8 @@ export interface QgsProject {
    * `WMSServiceTitle`. `SpatialRefSys/ProjectionsEnabled` follows {@link QgsProject.crs}.
    */
   properties?: QgsProjectProperties;
+  /** Items of the project's main annotation layer, drawn above all layers. */
+  mainAnnotationItems?: QgsAnnotationItem[];
   /** Transaction mode, such as `Disabled`, `AutomaticGroups`, or `BufferedGroups`. */
   transactionMode?: string;
   /** Project flags joined with `|`, such as `EvaluateDefaultValuesOnProviderSide`. */
@@ -758,22 +760,138 @@ export interface QgsRasterLayer extends QgsMapLayerBase {
   noData?: QgsRasterNoData[];
 }
 
-/** Mesh layer. Type-specific settings stay in extension data. */
+/** Mesh layer. */
 export interface QgsMeshLayer extends QgsMapLayerBase {
   /** Discriminant for a mesh layer. */
   type: "mesh";
+  /** Mesh rendering settings. */
+  renderer?: QgsMeshRendererSettings;
+  /** Active static datasets (`scalar`, `vector`). */
+  staticActiveDataset?: QgsAttributes;
+  /** Mesh simplification settings. */
+  simplify?: QgsAttributes;
 }
 
-/** Vector tile layer. Type-specific settings stay in extension data. */
+/** Scalar dataset rendering of a mesh dataset group. */
+export interface QgsMeshScalarSettings {
+  /** Settings such as `group`, `min-val`, `max-val`, `opacity`, and `interpolation-method`. */
+  attributes?: QgsAttributes;
+  /** Color ramp shader. */
+  shader?: QgsColorRampShader;
+  /** Edge settings, such as `stroke-width-unit`. */
+  edge?: QgsAttributes;
+  /** Edge stroke width settings. */
+  edgeStrokeWidth?: QgsAttributes;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Vector dataset rendering of a mesh dataset group. */
+export interface QgsMeshVectorSettings {
+  /** Settings such as `group`, `symbology`, and `color`. */
+  attributes?: QgsAttributes;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Mesh rendering settings. */
+export interface QgsMeshRendererSettings {
+  /** Active dataset groups (`scalar`, `vector`). */
+  activeDatasetGroup?: QgsAttributes;
+  /** Scalar rendering per dataset group. */
+  scalarSettings?: QgsMeshScalarSettings[];
+  /** Vector rendering per dataset group. */
+  vectorSettings?: QgsMeshVectorSettings[];
+  /** Native mesh frame, such as `enabled`, `color`, and `line-width`. */
+  nativeMesh?: QgsAttributes;
+  /** Triangular mesh frame. */
+  triangularMesh?: QgsAttributes;
+  /** Edge mesh frame. */
+  edgeMesh?: QgsAttributes;
+  /** 3D averaging method. */
+  averaging?: QgsAttributes;
+}
+
+/** Vector tile layer. */
 export interface QgsVectorTileLayer extends QgsMapLayerBase {
   /** Discriminant for a vector tile layer. */
   type: "vector-tile";
+  /** Tile styles. A basic renderer is added for new layers without one. */
+  renderer?: QgsVectorTileRenderer;
+  /** Tile labeling. */
+  labeling?: QgsVectorTileLabeling;
 }
 
-/** Point cloud layer. Type-specific settings stay in extension data. */
+/** Style of a vector tile renderer. */
+export interface QgsVectorTileStyle {
+  /** Settings such as `name`, `layer`, `geometry`, `enabled`, `min-zoom`, `max-zoom`, and `expression`. */
+  attributes?: QgsAttributes;
+  /** Symbol. */
+  symbol?: QgsSymbol;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Vector tile renderer discriminated by `type`. */
+export type QgsVectorTileRenderer =
+  | {
+      /** Basic renderer. */
+      type: "basic";
+      /** Styles in drawing order. */
+      styles: QgsVectorTileStyle[];
+      /** @internal */
+      readonly extensions?: QgsExtensions;
+    }
+  | QgsUnknownLabeling;
+
+/** Labeling style of a vector tile layer. */
+export interface QgsVectorTileLabelStyle {
+  /** Settings such as `name`, `layer`, `geometry`, `min-zoom`, and `expression`. */
+  attributes?: QgsAttributes;
+  /** Label settings. */
+  settings?: QgsLabelSettings;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Vector tile labeling discriminated by `type`. */
+export type QgsVectorTileLabeling =
+  | {
+      /** Basic labeling. */
+      type: "basic";
+      /** Other settings, such as `labelsEnabled`. */
+      attributes?: QgsAttributes;
+      /** Styles. */
+      styles: QgsVectorTileLabelStyle[];
+      /** @internal */
+      readonly extensions?: QgsExtensions;
+    }
+  | QgsUnknownLabeling;
+
+/** Point cloud layer. */
 export interface QgsPointCloudLayer extends QgsMapLayerBase {
   /** Discriminant for a point cloud layer. The input spelling `pointcloud` is normalized to `point-cloud`. */
   type: "point-cloud";
+  /** Point cloud renderer. */
+  renderer?: QgsPointCloudRenderer;
+}
+
+/** Point cloud renderer; QGIS reads the parts its type uses. */
+export interface QgsPointCloudRenderer {
+  /** Renderer type, such as `rgb`, `ramp`, `classified`, `extent`, or `single-color`. */
+  type: string;
+  /** Settings such as `attribute`, `pointSize`, `pointSizeUnit`, and `drawOrder2d`. */
+  attributes?: QgsAttributes;
+  /** Classified categories, each with `value`, `color`, `label`, and `render`. */
+  categories?: QgsAttributes[];
+  /** Ramp shader. */
+  shader?: QgsColorRampShader;
+  /** Red contrast enhancement. */
+  redContrastEnhancement?: QgsAttributes;
+  /** Green contrast enhancement. */
+  greenContrastEnhancement?: QgsAttributes;
+  /** Blue contrast enhancement. */
+  blueContrastEnhancement?: QgsAttributes;
 }
 
 /** Plugin layer. Type-specific settings stay in extension data. */
@@ -782,22 +900,56 @@ export interface QgsPluginLayer extends QgsMapLayerBase {
   type: "plugin";
 }
 
-/** Annotation layer. Type-specific settings stay in extension data. */
+/** Annotation layer. */
 export interface QgsAnnotationLayer extends QgsMapLayerBase {
   /** Discriminant for an annotation layer. */
   type: "annotation";
+  /** Annotation items. */
+  items?: QgsAnnotationItem[];
 }
 
-/** Group layer. Type-specific settings stay in extension data. */
+/** Annotation item; QGIS stores only the parts its item type uses. */
+export interface QgsAnnotationItem {
+  /** Settings such as `type`, `id`, `wkt`, `zIndex`, and `text`. */
+  attributes?: QgsAttributes;
+  /** Marker symbol. */
+  markerSymbol?: QgsSymbol;
+  /** Line symbol. */
+  lineSymbol?: QgsSymbol;
+  /** Fill symbol. */
+  fillSymbol?: QgsSymbol;
+  /** Text format. */
+  format?: QgsTextFormat;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Group layer, which renders other layers as one. */
 export interface QgsGroupLayer extends QgsMapLayerBase {
   /** Discriminant for a group layer. */
   type: "group";
+  /** IDs of the child layers. */
+  childLayers?: string[];
 }
 
-/** Tiled scene layer. Type-specific settings stay in extension data. */
+/** Tiled scene layer. */
 export interface QgsTiledSceneLayer extends QgsMapLayerBase {
   /** Discriminant for a tiled scene layer. */
   type: "tiled-scene";
+  /** Tiled scene renderer. */
+  renderer?: QgsTiledSceneRenderer;
+}
+
+/** Tiled scene renderer. */
+export interface QgsTiledSceneRenderer {
+  /** Renderer type, such as `texture` or `wireframe`. */
+  type: string;
+  /** Settings such as `maximumScreenError` and `tileBorderRendering`. */
+  attributes?: QgsAttributes;
+  /** Fill symbol. */
+  fillSymbol?: QgsSymbol;
+  /** Line symbol. */
+  lineSymbol?: QgsSymbol;
 }
 
 /** Unrecognized layer type, kept separate so known layer types can still be narrowed. */

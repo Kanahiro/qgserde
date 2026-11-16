@@ -531,6 +531,7 @@ for (const fixture of [
   "qgis3",
   "qgis3-custom-order",
   "qgis3-labeling",
+  "qgis3-layer-types",
   "qgis3-project-settings",
   "qgis3-raster-styles",
   "qgis3-renderers",

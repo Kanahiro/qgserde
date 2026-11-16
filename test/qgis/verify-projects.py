@@ -334,6 +334,52 @@ def check_project_settings(project):
     assert metadata.contacts()[0].name == "Bob" and metadata.history() == ["v1"]
 
 
+def check_layer_types(project):
+    layers = {layer.name(): layer for layer in project.mapLayers().values()}
+    names = sorted(layers)
+    assert names == ["annotations", "group", "inner", "mesh", "tiles"] or names == [
+        "group",
+        "inner",
+        "mesh",
+        "notes",
+        "tiles",
+    ], names
+    if "annotations" in layers:
+        layers["notes"] = layers["annotations"]
+    tiles = layers["tiles"]
+    assert tiles.isValid()
+    styles = tiles.renderer().styles()
+    assert [s.styleName() for s in styles] == ["roads"]
+    assert styles[0].minZoomLevel() == 5 and styles[0].layerName() == "roads"
+    assert styles[0].filterExpression() == "\"class\" = 'major'"
+    assert styles[0].symbol().color().name() == "#ff0000"
+    label_styles = tiles.labeling().styles()
+    assert [s.styleName() for s in label_styles] == ["names"]
+    assert label_styles[0].labelSettings().fieldName == "name"
+
+    mesh = layers["mesh"]
+    assert mesh.isValid(), mesh.error().summary()
+    settings = mesh.rendererSettings()
+    assert settings.nativeMeshSettings().isEnabled()
+    assert settings.nativeMeshSettings().color().name() == "#ff0000"
+
+    if project.title() == "Layer types (edited)":
+        # Edited from QGIS output, which keeps its dataset-group store.
+        scalar = settings.scalarSettings(0)
+        assert scalar.opacity() == 0.8 and scalar.classificationMaximum() == 4
+        items = scalar.colorRampShader().colorRampItemList()
+        assert [item.label for item in items] == ["low", "high"]
+
+    notes = layers["notes"]
+    items = sorted(notes.items().values(), key=lambda item: item.type())
+    assert [item.type() for item in items] == ["marker", "pointtext"]
+    assert items[0].symbol().color().name() == "#0000ff"
+    assert items[1].text() == "Hello" and items[1].format().size() == 14
+
+    group = layers["group"]
+    assert [layer.id() for layer in group.childLayers()] == [layers["inner"].id()]
+
+
 def check_raster(project):
     layers = {layer.name(): layer for layer in project.mapLayers().values()}
     assert len(layers) == 5, sorted(layers)
@@ -412,6 +458,9 @@ def main():
             ("settings-roundtrip.qgs", check_settings),
             ("project-settings.qgs", check_project_settings),
             ("project-settings-roundtrip.qgs", check_project_settings),
+            ("layer-types.qgs", check_layer_types),
+            ("layer-types-roundtrip.qgs", check_layer_types),
+            ("layer-types-edited.qgs", check_layer_types),
             ("raster.qgs", check_raster),
             ("raster-roundtrip.qgs", check_raster),
             ("wms.qgs", check_wms),
@@ -428,7 +477,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 15 projects", flush=True)
+    print("QGIS verified 18 projects", flush=True)
 
 
 if __name__ == "__main__":
