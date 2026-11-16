@@ -83,8 +83,10 @@ numbers; flags are booleans.
 
 Check `layer.type` to narrow the `QgsMapLayer` union. Vector layers expose
 `fields`; raster layers expose band settings through `renderer`. Other recognized
-types are `mesh`, `vector-tile`, `point-cloud`, `plugin`, `annotation`, `group`,
-and `tiled-scene`. An unrecognized type becomes `QgsUnknownLayer`, with its
+types each have their own interface (`QgsMeshLayer`, `QgsVectorTileLayer`,
+`QgsPointCloudLayer`, `QgsPluginLayer`, `QgsAnnotationLayer`, `QgsGroupLayer`,
+and `QgsTiledSceneLayer`) with common settings only; type-specific settings stay
+in extension data. An unrecognized type becomes `QgsUnknownLayer`, with its
 original type name in `xmlType`.
 
 Renderer and editor-widget identifiers remain strings because QGIS plugins can
