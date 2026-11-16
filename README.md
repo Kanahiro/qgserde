@@ -96,7 +96,7 @@ Models can be stored with `serializeJson` and restored with `parseJson`. The
 JSON records the qgserde version that wrote it; `parseJson` rejects JSON from an
 incompatible version (a different major, or a different minor before 1.0) with
 `INVALID_VERSION`, because the internal `extensions` format may change between
-them. Keep `extensions`; removing it loses unknown data and order.
+them.
 Serialization leaves the model unchanged, so it can be written repeatedly for
 different target versions.
 

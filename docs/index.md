@@ -166,7 +166,7 @@ Operations that would erase unknown nested elements or collapse distinct view
 settings fail with `INVALID_EDIT`.
 Explicit removal of a modeled object removes that object's associated data.
 
-Models can be stored as JSON:
+Store models with `serializeJson` and restore them with `parseJson`:
 
 ```ts
 import { parseJson, serializeJson } from "qgserde";
@@ -183,10 +183,9 @@ because the `extensions` format may change between them. Malformed JSON or a
 missing envelope causes `INVALID_JSON`. The model itself is validated when it
 is written with `serializeQgs`.
 
-Keep `extensions` in stored models. It holds the unknown data and order needed
-for reconstruction and has no public editing API. A newly created empty
-project needs no extension data. Serialization does not mutate the model,
-including when it fails.
+The internal `extensions` property holds the unknown data and order needed for
+reconstruction and has no public editing API. Serialization does not mutate the
+model, including when it fails.
 
 ## Choose an output version
 
