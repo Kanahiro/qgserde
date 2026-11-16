@@ -236,6 +236,7 @@ export function writeExtent(
   for (const coordinate of ["xmin", "ymin", "xmax", "ymax"] as const) {
     if (
       name === "DefaultViewExtent" ||
+      name === "Extent" ||
       element.attributes[coordinate] !== undefined
     )
       putAttribute(element, coordinate, extent[coordinate]);

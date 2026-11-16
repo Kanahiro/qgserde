@@ -98,6 +98,8 @@ export interface QgsProject {
    * `WMSServiceTitle`. `SpatialRefSys/ProjectionsEnabled` follows {@link QgsProject.crs}.
    */
   properties?: QgsProjectProperties;
+  /** Print layouts. */
+  layouts?: QgsLayout[];
   /** Items of the project's main annotation layer, drawn above all layers. */
   mainAnnotationItems?: QgsAnnotationItem[];
   /** Transaction mode, such as `Disabled`, `AutomaticGroups`, or `BufferedGroups`. */
@@ -183,6 +185,163 @@ export interface QgsRectangle {
 export interface QgsReferencedRectangle extends QgsRectangle {
   /** Extent CRS. An extent without one uses the project CRS on serialization. */
   crs?: QgsCrs;
+}
+
+/** Data-defined and custom properties of a layout object (`<LayoutObject>`). */
+export interface QgsLayoutObject {
+  /** Data-defined properties, such as `PositionX` or `ItemRotation`. */
+  dataDefinedProperties?: QgsDataDefinedProperties;
+  /** Plugin and application properties. */
+  customProperties?: QgsVariantMap;
+}
+
+/** Map grid of a layout map item. */
+export interface QgsLayoutMapGrid {
+  /** Settings such as `name`, `show`, `intervalX`, `intervalY`, and `gridStyle`. */
+  attributes?: QgsAttributes;
+  /** Grid line symbol. */
+  lineSymbol?: QgsSymbol;
+  /** Grid marker symbol. */
+  markerSymbol?: QgsSymbol;
+  /** Annotation text format. */
+  format?: QgsTextFormat;
+  /** Data-defined and custom properties. */
+  layoutObject?: QgsLayoutObject;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Overview of a layout map item. */
+export interface QgsLayoutMapOverview {
+  /** Settings such as `name`, `show`, `frameMap`, and `inverted`. */
+  attributes?: QgsAttributes;
+  /** Overview frame symbol. */
+  symbol?: QgsSymbol;
+  /** Data-defined and custom properties. */
+  layoutObject?: QgsLayoutObject;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Text style of a legend component, such as `title` or `symbolLabel`. */
+export interface QgsLayoutLegendStyle {
+  /** Settings such as `name`, `alignment`, and `marginTop`. */
+  attributes?: QgsAttributes;
+  /** Text format. */
+  format?: QgsTextFormat;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/**
+ * Layout item. `type` is the QGIS item type number, such as `65638` (page),
+ * `65639` (map), `65640` (picture), `65641` (label), `65642` (legend),
+ * `65643` (shape), `65645` (polyline), `65646` (scale bar), or `65647`
+ * (frame of a multi-frame). QGIS reads only the parts its type uses.
+ */
+export interface QgsLayoutItem {
+  /** QGIS item type number. */
+  type: string;
+  /** Item settings, such as `id`, `uuid`, `position`, `size`, `labelText`, or `file`. */
+  attributes?: QgsAttributes;
+  /** Frame color (`red`, `green`, `blue`, `alpha`). */
+  frameColor?: QgsAttributes;
+  /** Background color (`red`, `green`, `blue`, `alpha`). */
+  backgroundColor?: QgsAttributes;
+  /** Data-defined and custom properties. */
+  layoutObject?: QgsLayoutObject;
+  /** Shape, polyline, polygon, or page symbol. */
+  symbol?: QgsSymbol;
+  /** Label or scale bar text format. */
+  format?: QgsTextFormat;
+  /** Map extent. */
+  extent?: QgsRectangle;
+  /** Map CRS. */
+  crs?: QgsCrs;
+  /** Locked map layers, each with `source`, `provider`, `name`, and the layer `id`. */
+  layers?: QgsAttributes[];
+  /** Map grids. */
+  grids?: QgsLayoutMapGrid[];
+  /** Map overviews. */
+  overviews?: QgsLayoutMapOverview[];
+  /** Map atlas settings (`atlasDriven`, `scalingMode`, `margin`). */
+  atlasMap?: QgsAttributes;
+  /** Polyline or polygon nodes, each with `x` and `y`. */
+  nodes?: QgsAttributes[];
+  /** Legend text styles. */
+  legendStyles?: QgsLayoutLegendStyle[];
+  /** Scale bar line symbol. */
+  lineSymbol?: QgsSymbol;
+  /** Scale bar division line symbol. */
+  divisionLineSymbol?: QgsSymbol;
+  /** Scale bar subdivision line symbol. */
+  subdivisionLineSymbol?: QgsSymbol;
+  /** Scale bar first fill symbol. */
+  fillSymbol1?: QgsSymbol;
+  /** Scale bar second fill symbol. */
+  fillSymbol2?: QgsSymbol;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Column of a layout table. */
+export interface QgsLayoutTableColumn {
+  /** Settings such as `attribute`, `heading`, `width`, and `hAlignment`. */
+  attributes?: QgsAttributes;
+  /** Background color. */
+  backgroundColor?: QgsAttributes;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Layout multi-frame, such as an attribute table (`65649`) or HTML (`65650`). */
+export interface QgsLayoutMultiFrame {
+  /** QGIS multi-frame type number. */
+  type: string;
+  /** Settings such as `uuid`, `vectorLayer`, and `maxFeatures`. */
+  attributes?: QgsAttributes;
+  /** Data-defined and custom properties. */
+  layoutObject?: QgsLayoutObject;
+  /** Frames, each with the `uuid` of a frame item. */
+  frames?: QgsAttributes[];
+  /** Table header text format. */
+  headerFormat?: QgsTextFormat;
+  /** Table content text format. */
+  contentFormat?: QgsTextFormat;
+  /** Displayed table columns. */
+  columns?: QgsLayoutTableColumn[];
+  /** Sort columns. */
+  sortColumns?: QgsLayoutTableColumn[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Print layout. */
+export interface QgsLayout {
+  /** Layout name. */
+  name: string;
+  /** Other settings, such as `units` and `printResolution`. */
+  attributes?: QgsAttributes;
+  /** Snapping settings. */
+  snapper?: QgsAttributes;
+  /** Grid settings. */
+  grid?: QgsAttributes;
+  /** Pages, as layout items of type `65638`. */
+  pages?: QgsLayoutItem[];
+  /** Default page symbol. */
+  pageSymbol?: QgsSymbol;
+  /** Guides, each with attributes. */
+  guides?: QgsAttributes[];
+  /** Items, excluding pages. */
+  items?: QgsLayoutItem[];
+  /** Multi-frames. */
+  multiFrames?: QgsLayoutMultiFrame[];
+  /** Atlas settings, such as `enabled`, `coverageLayer`, and `filenamePattern`. */
+  atlas?: QgsAttributes;
+  /** Plugin and application properties. */
+  customProperties?: QgsVariantMap;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** Typed value in the project property tree. */

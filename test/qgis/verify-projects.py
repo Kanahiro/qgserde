@@ -12,6 +12,7 @@ from qgis.core import (
     QgsExpressionContextUtils,
     QgsFieldConstraints,
     QgsLayerTreeGroup,
+    QgsLayoutItemShape,
     QgsMapLayer,
     QgsPalLayerSettings,
     QgsProject,
@@ -380,6 +381,37 @@ def check_layer_types(project):
     assert [layer.id() for layer in group.childLayers()] == [layers["inner"].id()]
 
 
+def check_layouts(project):
+    manager = project.layoutManager()
+    names = sorted(layout.name() for layout in manager.layouts())
+    assert names == ["Edited layout", "New layout"], names
+    edited = manager.layoutByName("Edited layout")
+    assert edited.itemById("title").text() == "Edited title"
+    map_item = edited.itemById("main map")
+    extent = map_item.extent()
+    assert (extent.xMinimum(), extent.yMaximum()) == (135, 42), extent.toString()
+    assert [layer.name() for layer in map_item.layers()] == ["points"]
+    assert map_item.grids().grid(0).intervalX() == 2
+    shapes = [i for i in edited.items() if isinstance(i, QgsLayoutItemShape)]
+    assert shapes[0].symbol().color().name() == "#008000"
+    assert edited.atlas().filenameExpression() == "'atlas_' || @atlas_featurenumber"
+    tables = [f for f in edited.multiFrames() if f.type() == 65649]
+    assert tables[0].columns()[0].heading() == "Name!"
+    assert edited.customProperty("plugin/x") == "2"
+
+    created = manager.layoutByName("New layout")
+    assert created.pageCollection().pageCount() == 1
+    page = created.pageCollection().page(0)
+    assert round(page.pageSize().width()) == 297
+    heading = created.itemById("heading")
+    assert heading.text() == "Hello layout"
+    assert heading.textFormat().size() == 24
+    overview = created.itemById("overview map")
+    assert overview.extent().xMaximum() == 150
+    assert overview.crs().authid() == "EPSG:4326"
+    assert [layer.name() for layer in overview.layers()] == ["points"]
+
+
 def check_raster(project):
     layers = {layer.name(): layer for layer in project.mapLayers().values()}
     assert len(layers) == 5, sorted(layers)
@@ -461,6 +493,8 @@ def main():
             ("layer-types.qgs", check_layer_types),
             ("layer-types-roundtrip.qgs", check_layer_types),
             ("layer-types-edited.qgs", check_layer_types),
+            ("layouts.qgs", check_layouts),
+            ("layouts-roundtrip.qgs", check_layouts),
             ("raster.qgs", check_raster),
             ("raster-roundtrip.qgs", check_raster),
             ("wms.qgs", check_wms),
@@ -477,7 +511,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 18 projects", flush=True)
+    print("QGIS verified 20 projects", flush=True)
 
 
 if __name__ == "__main__":

@@ -107,3 +107,10 @@ vector tile layer with a basic renderer style and labeling style, a mesh layer
 read from a one-quad 2DM file (not committed) with a native mesh frame, an
 annotation layer with point text, marker, and line items, and a group layer
 with a memory child layer.
+
+## qgis3-layouts.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package): a
+print layout with a map (grid, locked layer set), label, legend, scale bar,
+picture, shape, polyline, an attribute table with one frame, an enabled atlas,
+and a custom property.

@@ -7,6 +7,7 @@ import {
   editLayerTypesFixture,
   writeMeshData,
 } from "./layer-types.ts";
+import { createLayoutsProject } from "./layouts.ts";
 import { createProjectSettingsProject } from "./project-settings.ts";
 import { createRasterProject, writeRasterData } from "./raster.ts";
 import { createSettingsProject } from "./settings.ts";
@@ -110,6 +111,13 @@ export function writeQgisFixtures(directory: string, version: string): void {
   writeFileSync(
     join(directory, "layer-types-edited.qgs"),
     serializeQgs(editLayerTypesFixture(), { version }),
+  );
+
+  const layouts = serializeQgs(createLayoutsProject(), { version });
+  writeFileSync(join(directory, "layouts.qgs"), layouts);
+  writeFileSync(
+    join(directory, "layouts-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(layouts))), { version }),
   );
 
   writeRasterData(directory);

@@ -4,6 +4,7 @@ import {
   relationSpec,
 } from "./layer-settings.ts";
 import { annotationItemSpec } from "./layer-types.ts";
+import { layoutSpec } from "./layouts.ts";
 import { projectProperties } from "./properties.ts";
 import type { Entry, Spec } from "./spec.ts";
 
@@ -39,6 +40,7 @@ export const projectSpec: Spec = {
   tag: "qgis",
   entries: [
     { kind: "custom", field: "properties", custom: projectProperties },
+    { kind: "owners", field: "layouts", at: ["Layouts"], spec: layoutSpec },
     {
       kind: "owners",
       field: "mainAnnotationItems",

@@ -100,7 +100,7 @@ layer IDs; point cloud and tiled scene layers their renderers. The project's
 main annotation layer items are `project.mainAnnotationItems`.
 
 Editor-widget identifiers and symbol layer classes remain strings because QGIS
-plugins can extend them. Layouts are held in extension data. Field settings affect the
+plugins can extend them. Field settings affect the
 project; they do not change the data source schema or feature values.
 
 ### Symbology
@@ -299,6 +299,18 @@ predefined scales, style, time, terrain, display, and GPS settings, and
 project metadata keywords, contacts, links, history, and dates. Layer-tree
 nodes model their other attributes, such as `mutually-exclusive`, and custom
 properties.
+
+### Layouts
+
+`project.layouts` lists print layouts. Each has its `pages`, `items`, and
+`multiFrames` (such as attribute tables), atlas settings, guides, and custom
+properties. A `QgsLayoutItem` has the QGIS item type number in `type` (for
+example `65639` for maps and `65641` for labels) and its settings in
+`attributes`, such as `labelText`, `position`, and `size`. Items also model
+their colors, data-defined and custom properties, symbols, text formats, map
+extents, CRS, locked layers, grids and overviews, polyline nodes, legend
+styles, and scale bar symbols. QGIS reads only the parts an item type uses.
+Legend trees and other unmodeled item children stay with their item.
 
 ## Preserve data and order
 
