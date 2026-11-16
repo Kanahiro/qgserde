@@ -265,17 +265,46 @@ export interface QgsRasterLayer extends QgsMapLayerBase {
   renderer?: QgsRasterRenderer;
 }
 
-/** Other recognized layer types. Common settings are editable; type-specific data stays in extensions. */
-export interface QgsOtherLayer extends QgsMapLayerBase {
-  /** Layer type. The input spelling `pointcloud` is normalized to `point-cloud`. */
-  type:
-    | "mesh"
-    | "vector-tile"
-    | "point-cloud"
-    | "plugin"
-    | "annotation"
-    | "group"
-    | "tiled-scene";
+/** Mesh layer. Type-specific settings stay in extension data. */
+export interface QgsMeshLayer extends QgsMapLayerBase {
+  /** Discriminant for a mesh layer. */
+  type: "mesh";
+}
+
+/** Vector tile layer. Type-specific settings stay in extension data. */
+export interface QgsVectorTileLayer extends QgsMapLayerBase {
+  /** Discriminant for a vector tile layer. */
+  type: "vector-tile";
+}
+
+/** Point cloud layer. Type-specific settings stay in extension data. */
+export interface QgsPointCloudLayer extends QgsMapLayerBase {
+  /** Discriminant for a point cloud layer. The input spelling `pointcloud` is normalized to `point-cloud`. */
+  type: "point-cloud";
+}
+
+/** Plugin layer. Type-specific settings stay in extension data. */
+export interface QgsPluginLayer extends QgsMapLayerBase {
+  /** Discriminant for a plugin layer. */
+  type: "plugin";
+}
+
+/** Annotation layer. Type-specific settings stay in extension data. */
+export interface QgsAnnotationLayer extends QgsMapLayerBase {
+  /** Discriminant for an annotation layer. */
+  type: "annotation";
+}
+
+/** Group layer. Type-specific settings stay in extension data. */
+export interface QgsGroupLayer extends QgsMapLayerBase {
+  /** Discriminant for a group layer. */
+  type: "group";
+}
+
+/** Tiled scene layer. Type-specific settings stay in extension data. */
+export interface QgsTiledSceneLayer extends QgsMapLayerBase {
+  /** Discriminant for a tiled scene layer. */
+  type: "tiled-scene";
 }
 
 /** Unrecognized layer type, kept separate so known layer types can still be narrowed. */
@@ -299,7 +328,13 @@ export interface QgsUnknownLayer extends QgsMapLayerBase {
 export type QgsMapLayer =
   | QgsVectorLayer
   | QgsRasterLayer
-  | QgsOtherLayer
+  | QgsMeshLayer
+  | QgsVectorTileLayer
+  | QgsPointCloudLayer
+  | QgsPluginLayer
+  | QgsAnnotationLayer
+  | QgsGroupLayer
+  | QgsTiledSceneLayer
   | QgsUnknownLayer;
 
 /** Vector field display and input settings, excluding field values. */

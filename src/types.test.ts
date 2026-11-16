@@ -1,6 +1,7 @@
 import type {
   QgsField,
   QgsMapLayer,
+  QgsPointCloudLayer,
   QgsProject,
   QgsVectorLayer,
 } from "./index.ts";
@@ -64,5 +65,28 @@ export function checkPublicTypes(
     void band;
     // @ts-expect-error Raster layers do not have vector field configurations.
     layer.fields;
+  }
+  if (layer.type === "point-cloud") {
+    const pointCloud: QgsPointCloudLayer = layer;
+    void pointCloud;
+    // @ts-expect-error Only vector and raster layers expose renderer settings.
+    layer.renderer;
+  }
+  switch (layer.type) {
+    case "vector":
+    case "raster":
+    case "mesh":
+    case "vector-tile":
+    case "point-cloud":
+    case "plugin":
+    case "annotation":
+    case "group":
+    case "tiled-scene":
+    case "unknown":
+      break;
+    default: {
+      const exhaustive: never = layer;
+      void exhaustive;
+    }
   }
 }
