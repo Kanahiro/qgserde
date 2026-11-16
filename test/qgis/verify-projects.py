@@ -412,6 +412,13 @@ def check_layouts(project):
     assert [layer.name() for layer in overview.layers()] == ["points"]
 
 
+def check_archive(project):
+    assert project.title() == "Archive (edited)", project.title()
+    layers = list(project.mapLayers().values())
+    assert len(layers) == 1 and layers[0].isValid(), layers
+    assert layers[0].crs().authid() == "EPSG:4326"
+
+
 def check_raster(project):
     layers = {layer.name(): layer for layer in project.mapLayers().values()}
     assert len(layers) == 5, sorted(layers)
@@ -495,6 +502,8 @@ def main():
             ("layer-types-edited.qgs", check_layer_types),
             ("layouts.qgs", check_layouts),
             ("layouts-roundtrip.qgs", check_layouts),
+            ("archive.qgz", check_archive),
+            ("archive-new.qgz", check_archive),
             ("raster.qgs", check_raster),
             ("raster-roundtrip.qgs", check_raster),
             ("wms.qgs", check_wms),
@@ -511,7 +520,7 @@ def main():
         del project
     finally:
         app.exitQgis()
-    print("QGIS verified 20 projects", flush=True)
+    print("QGIS verified 22 projects", flush=True)
 
 
 if __name__ == "__main__":

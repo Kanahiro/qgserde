@@ -31,7 +31,8 @@ for (const layer of project.layers) {
 const xml = serializeQgs(project, { version: "4.2" });
 ```
 
-Input and output are strings. Your application reads and writes the files.
+QGS input and output are strings, and `.qgz` archives are bytes. Your
+application reads and writes the files.
 
 To start a new project:
 
@@ -66,14 +67,16 @@ Use `parseQgs(xml)` to load an existing project, then edit its properties.
 | `serializeQgs(project, { version })` | Write a model for a QGIS 3 or 4 version.                              |
 | `serializeJson(project)`             | Store a model as JSON tagged with the qgserde version.                |
 | `parseJson(json)`                    | Restore a model stored by `serializeJson`.                            |
+| `parseQgz(bytes)`                    | Read a `.qgz` archive: the project and its companion files.           |
+| `serializeQgz(archive, { version })` | Write a `.qgz` archive with the project and companion files.          |
 | `parseQgisVersion(value)`            | Split a QGIS version into numeric parts and an optional release name. |
 | `QgsError`                           | Identify failures by their `code`.                                    |
 
 The model contains plain objects and arrays. `QgsMapLayer` is a discriminated
 union: checking `layer.type` gives access to vector fields and renderers, raster
-bands, or the common settings of other layer types. Vector renderers are also
-discriminated by `type`, with symbols, symbol layers, and data-defined
-properties nested inside them. See the [guide](https://kanahiro.github.io/qgserde/)
+bands, or the common settings of other layer types. Vector renderers, labeling,
+and layout items are modeled with their symbols, text formats, and settings;
+see the guide for the full coverage. See the [guide](https://kanahiro.github.io/qgserde/)
 for editing rules and the full type reference.
 
 ## Data preservation
@@ -108,8 +111,9 @@ The target QGIS installation must support those features.
 
 ## Scope
 
-- QGS XML only. QGZ archives, QGD databases, attachments, and geographic data are
-  outside the library's scope.
+- QGS XML, and QGZ archives through `parseQgz` and `serializeQgz`. Companion
+  files in an archive, such as QGD databases, are kept byte for byte but not
+  interpreted. Geographic data is outside the library's scope.
 - File paths and data source URIs are kept as supplied. qgserde does not check
   whether a source exists or rewrite paths for a new project location.
 - Layer ID edits update tree references and drawing order. References in

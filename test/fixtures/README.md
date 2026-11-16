@@ -114,3 +114,9 @@ Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package): a
 print layout with a map (grid, locked layer set), label, legend, scale bar,
 picture, shape, polyline, an attribute table with one frame, an enabled atlas,
 and a custom property.
+
+## qgis3-archive.qgz
+
+Saved as a `.qgz` with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04
+package): a project with one memory layer and the style database QGIS adds to
+archives.

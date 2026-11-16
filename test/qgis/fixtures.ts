@@ -1,7 +1,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
+import {
+  createProject,
+  parseQgs,
+  parseQgz,
+  serializeQgs,
+  serializeQgz,
+} from "../../src/index.ts";
 import {
   createLayerTypesProject,
   editLayerTypesFixture,
@@ -14,7 +20,10 @@ import { createSettingsProject } from "./settings.ts";
 import { createSymbologyProject } from "./symbology.ts";
 import { createTileGallery } from "./tile-gallery.ts";
 
-export function writeQgisFixtures(directory: string, version: string): void {
+export async function writeQgisFixtures(
+  directory: string,
+  version: string,
+): Promise<void> {
   mkdirSync(directory, { recursive: true });
   const project = createProject({ title: "検証 & 地図" });
   project.layers.push({
@@ -120,6 +129,29 @@ export function writeQgisFixtures(directory: string, version: string): void {
     serializeQgs(JSON.parse(JSON.stringify(parseQgs(layouts))), { version }),
   );
 
+  // Archives: an edited QGIS-written .qgz and a new one with a companion file.
+  const archive = await parseQgz(
+    new Uint8Array(
+      readFileSync(new URL("../fixtures/qgis3-archive.qgz", import.meta.url)),
+    ),
+  );
+  archive.project.title = "Archive (edited)";
+  writeFileSync(
+    join(directory, "archive.qgz"),
+    await serializeQgz(archive, { version }),
+  );
+  writeFileSync(
+    join(directory, "archive-new.qgz"),
+    await serializeQgz(
+      {
+        project: { ...project, title: "Archive (edited)" },
+        projectFile: "archive-new.qgs",
+        files: { "notes.txt": new TextEncoder().encode("kept") },
+      },
+      { version },
+    ),
+  );
+
   writeRasterData(directory);
   const raster = serializeQgs(createRasterProject(), { version });
   writeFileSync(join(directory, "raster.qgs"), raster);
@@ -161,5 +193,5 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     throw new Error(
       "Usage: node test/qgis/fixtures.ts <directory> <QGIS version>",
     );
-  writeQgisFixtures(directory, version);
+  await writeQgisFixtures(directory, version);
 }

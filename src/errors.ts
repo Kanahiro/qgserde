@@ -7,13 +7,15 @@
  * - `INVALID_VERSION`: Invalid version syntax, a missing target, an unsupported target major version,
  *   or JSON written by an incompatible qgserde version.
  * - `INVALID_EDIT`: Duplicate IDs, cycles, edits that would lose data, or other invalid model data.
+ * - `INVALID_ARCHIVE`: A malformed, encrypted, or unsupported `.qgz` archive, or invalid archive files.
  */
 export type QgsErrorCode =
   | "INVALID_XML"
   | "INVALID_PROJECT"
   | "INVALID_JSON"
   | "INVALID_VERSION"
-  | "INVALID_EDIT";
+  | "INVALID_EDIT"
+  | "INVALID_ARCHIVE";
 
 /** Codec error. Use {@link code} to classify the failure. */
 export class QgsError extends Error {
