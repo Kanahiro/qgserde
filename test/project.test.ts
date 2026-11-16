@@ -449,6 +449,73 @@ test("reads and writes ProjectionsEnabled in both QGIS property formats", () => 
   ]);
 });
 
+test("QGIS 3 output rewrites QGIS 4 property keys as element names", () => {
+  const xml = readFileSync(
+    new URL("./fixtures/qgis4-translation.qgs", import.meta.url),
+    "utf8",
+  );
+  const project = parseQgs(xml);
+  const before = JSON.stringify(project);
+  const output = serializeQgs(project, { version: "3.44" });
+  assert.equal(JSON.stringify(project), before);
+  const properties = findChild(readXml(output).root, "properties")!;
+  const named: string[] = [];
+  const visit = (element: XmlElement) => {
+    for (const child of findChildren(element)) {
+      // A key literally called "properties" is legal in both formats.
+      if (child.name === "properties" && child.attributes.name !== undefined)
+        named.push(child.attributes.name);
+      visit(child);
+    }
+  };
+  visit(properties);
+  assert.deepEqual(named, []);
+  assert.equal(properties.attributes.name, undefined);
+  const measurement = findChild(properties, "Measurement")!;
+  const distance = findChild(measurement, "DistanceUnits")!;
+  assert.deepEqual(distance.attributes, { type: "QString" });
+  assert.equal(getText(distance), "meters");
+  // QStringList values keep their <value> children.
+  const keywords = findChild(findChild(properties, "WMSKeywordList")!, "value");
+  assert.ok(keywords);
+  assert.equal(serializeQgs(parseQgs(output), { version: "3.44" }), output);
+  // QGIS 4 output keeps the named format.
+  assert.match(
+    serializeQgs(project, { version: "4.1" }),
+    /<properties name="Measurement">/,
+  );
+
+  // The named entry wins over a legacy copy of the same key.
+  const mixed = serializeQgs(
+    parseQgs(
+      '<qgis version="4.3.0"><properties name="properties"><properties name="Paths"><properties name="Absolute" type="bool">true</properties><Absolute type="bool">false</Absolute></properties><Paths><Absolute type="bool">false</Absolute></Paths></properties></qgis>',
+    ),
+    { version: "3.44" },
+  );
+  const paths = findChildren(
+    findChild(readXml(mixed).root, "properties")!,
+    "Paths",
+  );
+  assert.equal(paths.length, 1);
+  assert.deepEqual(
+    findChildren(paths[0]!).map((child) => getText(child)),
+    ["true"],
+  );
+
+  // Keys that are not XML names cannot be stored for QGIS 3.
+  const invalid = parseQgs(
+    '<qgis version="4.2.0"><properties name="properties"><properties name="my plugin"><properties name="a" type="int">1</properties></properties></properties></qgis>',
+  );
+  assert.throws(
+    () => serializeQgs(invalid, { version: "3.44" }),
+    (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
+  );
+  assert.match(
+    serializeQgs(invalid, { version: "4.2" }),
+    /<properties name="my plugin">/,
+  );
+});
+
 for (const fixture of [
   "qgis3",
   "qgis3-custom-order",

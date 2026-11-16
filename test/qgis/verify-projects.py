@@ -34,6 +34,13 @@ def check_memory(project):
     )
 
 
+def check_edited(project):
+    check_memory(project)
+    # Written from a QGIS 4 property tree; QGIS 3 needs element-named keys.
+    assert project.readEntry("Measurement", "/DistanceUnits") == ("meters", True)
+    assert project.readNumEntry("Gui", "/CanvasColorBluePart") == (255, True)
+
+
 def check_gallery(project):
     layers = list(project.mapLayers().values())
     assert len(layers) == 27, len(layers)
@@ -114,7 +121,7 @@ def main():
         for name, check in [
             ("generated.qgs", check_memory),
             ("converted.qgs", check_memory),
-            ("edited.qgs", check_memory),
+            ("edited.qgs", check_edited),
             ("gallery.qgs", check_gallery),
             ("gallery-roundtrip.qgs", check_gallery),
             ("wms.qgs", check_wms),
