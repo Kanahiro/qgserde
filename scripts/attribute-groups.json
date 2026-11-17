@@ -1141,5 +1141,25 @@
     "keys": [
       "^qgslegendpatchshape\\.cpp\\|@QgsLegendPatchShape::writeXml:element$"
     ]
+  },
+  "RasterLabeling": {
+    "doc": "Raster `<labeling>` attributes (QGIS 4+).",
+    "keys": ["^qgsrasterlabeling\\.cpp\\|labeling$"]
+  },
+  "RasterLabelPlacement": {
+    "doc": "Raster labeling `<placement>`.",
+    "keys": ["^qgsrasterlabeling\\.cpp\\|placement$"]
+  },
+  "RasterLabelThinning": {
+    "doc": "Raster labeling `<thinning>`.",
+    "keys": ["^qgsrasterlabeling\\.cpp\\|thinning$"]
+  },
+  "RasterLabelRendering": {
+    "doc": "Raster labeling `<rendering>`.",
+    "keys": ["^qgsrasterlabeling\\.cpp\\|rendering$"]
+  },
+  "SunLight3D": {
+    "doc": "3D `<sun-light>` (QGIS 4.2+).",
+    "keys": ["^qgssunlightsettings\\.cpp\\|sun-light$"]
   }
 }

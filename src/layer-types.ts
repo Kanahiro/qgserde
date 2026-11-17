@@ -433,6 +433,18 @@ export const annotationItemSpec: Spec = {
     { kind: "symbol", field: "markerSymbol", name: "markerSymbol" },
     { kind: "symbol", field: "lineSymbol", name: "lineSymbol" },
     { kind: "symbol", field: "fillSymbol", name: "fillSymbol" },
+    {
+      kind: "symbol",
+      field: "backgroundSymbol",
+      name: "backgroundSymbol",
+      at: ["backgroundSymbol"],
+    },
+    {
+      kind: "symbol",
+      field: "frameSymbol",
+      name: "frameSymbol",
+      at: ["frameSymbol"],
+    },
     { kind: "custom", field: "format", custom: annotationFormat },
   ],
 };

@@ -34,6 +34,10 @@ import {
   metadataLinkAttributes,
   metadataSpatialExtentAttributes,
   metadataUrlAttributes,
+  rasterLabelingAttributes,
+  rasterLabelPlacementAttributes,
+  rasterLabelRenderingAttributes,
+  rasterLabelThinningAttributes,
   relationAttributes,
   relationFieldRefAttributes,
   selectionAttributes,
@@ -959,3 +963,45 @@ export function styleVariants(entries: readonly Entry[]): Entry {
     },
   };
 }
+
+/** Raster `<labeling>` (QGIS 4+). */
+export const rasterLabelingEntry: Entry = {
+  kind: "object",
+  field: "labeling",
+  at: ["labeling"],
+  spec: {
+    tag: "labeling",
+    entries: [
+      {
+        kind: "attributes",
+        field: "attributes",
+        table: rasterLabelingAttributes,
+      },
+      {
+        kind: "object",
+        field: "format",
+        at: ["textFormat", "text-style"],
+        spec: textFormatSpec,
+      },
+      numericFormat("numericFormat", "numericFormat"),
+      {
+        kind: "attributes",
+        field: "placement",
+        table: rasterLabelPlacementAttributes,
+        at: ["placement"],
+      },
+      {
+        kind: "attributes",
+        field: "thinning",
+        table: rasterLabelThinningAttributes,
+        at: ["thinning"],
+      },
+      {
+        kind: "attributes",
+        field: "rendering",
+        table: rasterLabelRenderingAttributes,
+        at: ["rendering"],
+      },
+    ],
+  },
+};

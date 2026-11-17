@@ -151,6 +151,10 @@ import type {
   QgsProviderResamplingAttributes,
   QgsRampLegendSettingsAttributes,
   QgsRasterAttributeTableAttributes,
+  QgsRasterLabelingAttributes,
+  QgsRasterLabelPlacementAttributes,
+  QgsRasterLabelRenderingAttributes,
+  QgsRasterLabelThinningAttributes,
   QgsRasterRendererAttributes,
   QgsRasterResamplerAttributes,
   QgsRelationAttributes,
@@ -174,6 +178,7 @@ import type {
   QgsSnappingLayerSettingsAttributes,
   QgsSnappingSettingsAttributes,
   QgsStoredExpressionAttributes,
+  QgsSunLight3DAttributes,
   QgsSvgAnnotationAttributes,
   QgsSymbol3DAttributes,
   QgsSymbol3DDataAttributes,
@@ -706,10 +711,12 @@ export interface QgsScene3D {
 
 /** Light source of a 3D scene. */
 export interface QgsLight3D {
-  /** `point` (`<point-light>`) or `directional` (`<directional-light>`). */
-  kind: "point" | "directional";
-  /** Position or direction, `color`, and `intensity`. */
-  attributes?: QgsPointLight3DAttributes & QgsDirectionalLight3DAttributes;
+  /** `point` (`<point-light>`), `directional` (`<directional-light>`), or `sun` (`<sun-light>`, QGIS 4.2+). */
+  kind: "point" | "directional" | "sun";
+  /** Position, direction, or sun time, `color`, and `intensity`. */
+  attributes?: QgsPointLight3DAttributes &
+    QgsDirectionalLight3DAttributes &
+    QgsSunLight3DAttributes;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -1711,6 +1718,10 @@ export interface QgsRasterLayer extends QgsMapLayerBase {
   noData?: QgsRasterNoData[];
   /** Raster attribute tables stored in files, by `band` and `path`. */
   attributeTables?: QgsRasterAttributeTableAttributes[];
+  /** Whether labels are drawn (QGIS 4+). */
+  labelsEnabled?: boolean;
+  /** Pixel value labels (QGIS 4+). */
+  labeling?: QgsRasterLabeling;
   /** Data-defined properties of the raster pipe. */
   pipeDataDefinedProperties?: QgsDataDefinedProperties;
 }
@@ -1947,6 +1958,10 @@ export interface QgsAnnotationItem {
   lineSymbol?: QgsSymbol;
   /** Fill symbol. */
   fillSymbol?: QgsSymbol;
+  /** Background symbol of a rectangle-based item, such as a picture or text box. */
+  backgroundSymbol?: QgsSymbol;
+  /** Frame symbol of a rectangle-based item. */
+  frameSymbol?: QgsSymbol;
   /** Text format. */
   format?: QgsTextFormat;
   /** @internal */
@@ -2340,6 +2355,22 @@ export interface QgsClassificationMethod {
   parameters?: QgsVariant;
   /** Values the method computed, such as the standard deviation of `StdDev`. */
   extraInformation?: QgsClassificationExtraAttributes;
+}
+
+/** Labels of raster pixel values. */
+export interface QgsRasterLabeling {
+  /** `type`, `band`, `priority`, and resampling settings. */
+  attributes?: QgsRasterLabelingAttributes;
+  /** Text format. */
+  format?: QgsTextFormat;
+  /** Number format. */
+  numericFormat?: QgsNumericFormat;
+  /** Overlap handling. */
+  placement?: QgsRasterLabelPlacementAttributes;
+  /** Label count and size limits. */
+  thinning?: QgsRasterLabelThinningAttributes;
+  /** Scale visibility. */
+  rendering?: QgsRasterLabelRenderingAttributes;
 }
 
 /** Temporal extent of layer metadata, in ISO 8601. */

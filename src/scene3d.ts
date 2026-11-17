@@ -29,6 +29,7 @@ import {
   scene3DOriginAttributes,
   scene3DTerrainAttributes,
   shadow3DAttributes,
+  sunLight3DAttributes,
   symbol3DAttributes,
   symbol3DDataAttributes,
   symbol3DTransformAttributes,
@@ -225,6 +226,10 @@ export const scene3DSpec: Spec = {
         directional: {
           tag: "directional-light",
           entries: [group("attributes", directionalLight3DAttributes)],
+        },
+        sun: {
+          tag: "sun-light",
+          entries: [group("attributes", sunLight3DAttributes)],
         },
       },
     },

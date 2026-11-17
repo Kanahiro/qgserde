@@ -48,6 +48,11 @@ export function createRasterProject(): QgsProject {
         },
       },
       brightnessContrast: { brightness: 10, contrast: 20, gamma: 1.5 },
+      labelsEnabled: true,
+      labeling: {
+        attributes: { type: "simple", band: 1, priority: 3 },
+        format: { style: { fontSize: 8 } },
+      },
       hueSaturation: { saturation: -50, grayscaleMode: 2 },
       providerResampling: {
         enabled: true,

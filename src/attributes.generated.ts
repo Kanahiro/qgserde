@@ -6312,3 +6312,108 @@ export const legendPatchAttributes = {
   type: "number",
   wkt: "string",
 } as const satisfies AttributeTable;
+
+/** Raster `<labeling>` attributes (QGIS 4+). */
+export interface QgsRasterLabelingAttributes {
+  /** `band`. */
+  band?: number;
+  /** `priority`. */
+  priority?: number;
+  /** `resampleMethod`. */
+  resampleMethod?: string;
+  /** `resampleOver`. */
+  resampleOver?: number;
+  /** `type`. */
+  type?: string;
+  /** `zIndex`. */
+  zIndex?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const rasterLabelingAttributes = {
+  band: "number",
+  priority: "number",
+  resampleMethod: "string",
+  resampleOver: "number",
+  type: "string",
+  zIndex: "number",
+} as const satisfies AttributeTable;
+
+/** Raster labeling `<placement>`. */
+export interface QgsRasterLabelPlacementAttributes {
+  /** `overlapHandling`. */
+  overlapHandling?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const rasterLabelPlacementAttributes = {
+  overlapHandling: "string",
+} as const satisfies AttributeTable;
+
+/** Raster labeling `<thinning>`. */
+export interface QgsRasterLabelThinningAttributes {
+  /** `limitNumLabels`, stored as 1 or 0. */
+  limitNumLabels?: boolean;
+  /** `maxNumLabels`. */
+  maxNumLabels?: number;
+  /** `minFeatureSize`. */
+  minFeatureSize?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const rasterLabelThinningAttributes = {
+  limitNumLabels: "boolean",
+  maxNumLabels: "number",
+  minFeatureSize: "number",
+} as const satisfies AttributeTable;
+
+/** Raster labeling `<rendering>`. */
+export interface QgsRasterLabelRenderingAttributes {
+  /** `scaleMax`. */
+  scaleMax?: number;
+  /** `scaleMin`. */
+  scaleMin?: number;
+  /** `scaleVisibility`, stored as 1 or 0. */
+  scaleVisibility?: boolean;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const rasterLabelRenderingAttributes = {
+  scaleMax: "number",
+  scaleMin: "number",
+  scaleVisibility: "boolean",
+} as const satisfies AttributeTable;
+
+/** 3D `<sun-light>` (QGIS 4.2+). */
+export interface QgsSunLight3DAttributes {
+  /** `atmospheric-pressure`. */
+  "atmospheric-pressure"?: number;
+  /** `color`. */
+  color?: string;
+  /** `id`. */
+  id?: string;
+  /** `intensity`. */
+  intensity?: number;
+  /** `reference-elevation`. */
+  "reference-elevation"?: number;
+  /** `sun-time`. */
+  "sun-time"?: string;
+  /** `temperature`. */
+  temperature?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const sunLight3DAttributes = {
+  "atmospheric-pressure": "number",
+  color: "string",
+  id: "string",
+  intensity: "number",
+  "reference-elevation": "number",
+  "sun-time": "string",
+  temperature: "number",
+} as const satisfies AttributeTable;

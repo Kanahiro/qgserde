@@ -193,6 +193,12 @@ export const rasterLayerSpec: Spec = {
       at: ["pipe", "provider", "resampling"],
     },
     {
+      kind: "attribute",
+      field: "labelsEnabled",
+      attribute: "labelsEnabled",
+      type: "boolean",
+    },
+    {
       kind: "records",
       field: "attributeTables",
       at: ["FileBasedAttributeTables"],

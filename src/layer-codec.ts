@@ -17,6 +17,7 @@ import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
 import {
   commonLayerEntries,
+  rasterLabelingEntry,
   styleVariants,
   vectorLayerEntries,
 } from "./layer-settings.ts";
@@ -56,6 +57,7 @@ const vectorLayerSpec = withVariants(
 const rasterSpec = withVariants([
   ...commonLayerEntries,
   ...rasterLayerSpec.entries,
+  rasterLabelingEntry,
 ]);
 const typeSpecs: Record<string, Spec> = Object.fromEntries(
   Object.entries({

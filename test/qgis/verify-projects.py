@@ -554,6 +554,13 @@ def check_raster(project):
         assert layer.isValid(), (layer.name(), layer.error().summary())
 
     gray = layers["gray"]
+    if hasattr(gray, "labeling"):  # QGIS 4+
+        from qgis.core import QgsRasterLayerSimpleLabeling
+
+        assert gray.labelsEnabled()
+        labeling = sip.cast(gray.labeling(), QgsRasterLayerSimpleLabeling)
+        assert labeling.band() == 1 and labeling.priority() == 3
+        assert labeling.textFormat().size() == 8
     renderer = gray.renderer()
     assert renderer.type() == "singlebandgray", renderer.type()
     assert renderer.gradient() == prop(
