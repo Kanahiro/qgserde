@@ -257,9 +257,9 @@ cannot store nested values, and as an `<Option>` map afterwards. QGIS writes
 
 Adding a layer to `project.layers` adds a tree reference and an entry in any
 existing drawing-order list when serialized. Removing a layer removes its tree
-and order references. Tree references keep their own name, provider, and
-source, which QGIS can store in a provider-generated form such as a UID;
-editing the layer does not change them.
+and order references. A tree reference holds only the layer ID; its name,
+source, and provider are written from the layer, so layer edits reach every
+reference. A reference to a layer outside the project keeps its stored values.
 
 Layer IDs are read-only: tree, drawing-order, relation, join, layout, and
 plugin references use them. A layer with another ID is another layer.

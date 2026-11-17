@@ -82,11 +82,7 @@ test("pushes plain typed layers and builds their XML and tree references", () =>
   assert.equal(JSON.stringify(project), before);
 });
 
-// ponytail: tree nodes keep their own name/source/provider (no origin); layer
-// edits reach them only through an explicit API, not yet written.
-test("typed edits synchronize every nested tree reference and keep renderer symbols", {
-  todo: "explicit tree sync API",
-}, () => {
+test("typed edits synchronize every nested tree reference and keep renderer symbols", () => {
   const xml = readFileSync(
     new URL("./fixtures/qgis4.qgs", import.meta.url),
     "utf8",

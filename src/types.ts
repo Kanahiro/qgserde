@@ -1179,14 +1179,12 @@ export interface QgsLayerTreeGroup {
 export interface QgsLayerTreeLayer {
   /** Discriminant for a layer reference. */
   type: "layer";
-  /** Referenced {@link QgsMapLayerBase.id}. */
+  /**
+   * Referenced {@link QgsMapLayerBase.id}. The node's name, source, and
+   * provider are written from that layer; a reference to a layer outside the
+   * project keeps them as stored.
+   */
   layerId: string;
-  /** Tree display name, including references to external layers. */
-  name?: string;
-  /** Tree connection URI, which may include provider-generated UIDs. */
-  source?: string;
-  /** Tree connection provider identifier. */
-  provider?: string;
   /** Whether the node is expanded in the layer tree. */
   expanded: boolean;
   /** Layer reference check state. Parent group states also affect visibility. */
@@ -1236,7 +1234,7 @@ export interface QgsMapLayerBase {
    * when read from XML.
    */
   readonly id: string;
-  /** Layer name. Tree references keep their own copy. */
+  /** Layer name, also written to its tree references. */
   name: string;
   /** Provider connection string or URI. Source availability is not checked and paths are not rewritten. */
   source: string;

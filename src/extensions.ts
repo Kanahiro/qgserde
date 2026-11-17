@@ -463,12 +463,6 @@ export class ExtensionCodec {
       this.attribute(element, "name", { property: ["name"] });
     } else {
       this.attribute(element, "id", { property: ["layerId"] });
-      for (const [attribute, property] of [
-        ["name", "name"],
-        ["source", "source"],
-        ["providerKey", "provider"],
-      ] as const)
-        this.attribute(element, attribute, { property: [property] });
     }
     captureSpec(treeNodeSpec(node.type), node as never, element, this, []);
     this.capture(node, element);

@@ -150,30 +150,35 @@ test("removes deleted references and adds only new unreferenced layers", () => {
   );
 });
 
-test("keeps provider-generated tree URIs when the typed layer source changes", () => {
+test("layer references take their name, source and provider from the layer", () => {
   const codec = new ExtensionCodec();
   const source = readXml(
     '<layer-tree-group><layer-tree-layer id="v" name="Cities" source="Point?uid=provider-generated" providerKey="memory"/></layer-tree-group>',
   ).root;
   const tree = readTree(source, codec);
   if (tree.type !== "group") throw new Error("Expected group");
+  assert.deepEqual(Object.keys(tree.children[0]!).sort(), [
+    "checked",
+    "expanded",
+    "layerId",
+    "type",
+  ]);
   const parsedLayer = readLayer(
     readXml(
       '<maplayer type="vector"><id>v</id><layername>Cities</layername><datasource>Point</datasource><provider>memory</provider></maplayer>',
     ).root,
     codec,
   );
-  const write = () =>
-    writeTree(tree, [parsedLayer], new Set(["v"]), codec, target);
-  assert.equal(
-    findChild(write(), "layer-tree-layer")!.attributes.source,
-    "Point?uid=provider-generated",
-  );
-  // Tree nodes own their values; a layer edit does not rewrite them.
+  parsedLayer.name = "Towns";
   parsedLayer.source = "./cities.gpkg";
-  assert.equal(
-    findChild(write(), "layer-tree-layer")!.attributes.source,
-    "Point?uid=provider-generated",
+  parsedLayer.provider = "ogr";
+  const written = findChild(
+    writeTree(tree, [parsedLayer], new Set(["v"]), codec, target),
+    "layer-tree-layer",
+  )!.attributes;
+  assert.deepEqual(
+    [written.name, written.source, written.providerKey],
+    ["Towns", "./cities.gpkg", "ogr"],
   );
   assert.equal(
     findChild(source, "layer-tree-layer")!.attributes.source,

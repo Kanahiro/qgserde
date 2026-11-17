@@ -37,7 +37,6 @@ export function createProjectSettingsProject(): QgsProject {
       {
         type: "layer",
         layerId: lines,
-        name: "lines",
         expanded: true,
         checked: "checked",
         patch: { type: 1, wkt: "LineString (0 0, 1 1)", preserveAspect: true },

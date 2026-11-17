@@ -51,13 +51,6 @@ export function readTree(
       layerId: element.attributes.id ?? "",
       ...state,
     };
-    for (const [attribute, property] of [
-      ["name", "name"],
-      ["source", "source"],
-      ["providerKey", "provider"],
-    ] as const)
-      if (element.attributes[attribute] !== undefined)
-        node[property] = element.attributes[attribute];
     Object.assign(node, readSpec(treeNodeSpec("layer"), element, codec));
     return codec.remember(node, element);
   }
@@ -140,14 +133,16 @@ export function writeTree(
         );
       if (layer) referenced.add(id);
       putAttribute(element, "id", id);
-      // The node keeps its own values: QGIS stores a provider-generated source
-      // here that can differ from the layer's. New nodes take the layer's.
-      for (const [attribute, property] of [
-        ["name", "name"],
-        ["source", "source"],
-        ["providerKey", "provider"],
-      ] as const)
-        putAttribute(element, attribute, node[property] ?? layer?.[property]);
+      // Name, source, and provider come from the layer. QGIS resolves the
+      // reference by ID; a reference to a layer outside the project keeps
+      // its stored values.
+      if (layer)
+        for (const [attribute, value] of [
+          ["name", layer.name],
+          ["source", layer.source],
+          ["providerKey", layer.provider],
+        ] as const)
+          putAttribute(element, attribute, value);
       return element;
     }
     putAttribute(element, "name", node.name);

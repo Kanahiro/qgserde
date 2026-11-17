@@ -93,10 +93,36 @@ function canonicalDocument(xml: string) {
   return document;
 }
 
-// The document outside <maplayer>, which keeps its structure and order.
+const textOf = (parent: XmlElement, name: string) => {
+  const child = findChild(parent, name);
+  return child ? getText(child) : "";
+};
+
+// The document outside <maplayer>, which keeps its structure and order. Tree
+// references take their name, source, and provider from the layer.
 function withoutLayers(xml: string) {
   const document = canonicalDocument(xml);
   const layers = findChild(document.root, "projectlayers");
+  const byId = new Map(
+    (layers ? findChildren(layers, "maplayer") : []).map((layer) => [
+      getText(findChild(layer, "id")!),
+      {
+        name: textOf(layer, "layername"),
+        source: textOf(layer, "datasource"),
+        // Annotation and group layers store no provider.
+        providerKey: textOf(layer, "provider"),
+      },
+    ]),
+  );
+  const visit = (element: XmlElement) => {
+    for (const child of findChildren(element)) {
+      const layer = byId.get(child.attributes.id ?? "");
+      if (child.name === "layer-tree-layer" && layer)
+        Object.assign(child.attributes, layer);
+      visit(child);
+    }
+  };
+  visit(document.root);
   if (layers)
     layers.children = layers.children.filter(
       (node) => node.type !== "element" || node.name !== "maplayer",
