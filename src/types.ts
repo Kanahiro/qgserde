@@ -74,17 +74,25 @@ import type {
   QgsMapThemeAttributes,
   QgsMapThemeLayerAttributes,
   QgsMeshActiveDatasetAttributes,
+  QgsMeshArrowSettingsAttributes,
   QgsMeshAveragingAttributes,
   QgsMeshDatasetAttributes,
   QgsMeshDatasetGroupTreeItemAttributes,
   QgsMeshEdgeSettingsAttributes,
+  QgsMeshElevationAveragingAttributes,
   QgsMeshFrameSettingsAttributes,
+  QgsMeshHeightAveragingAttributes,
+  QgsMeshLayersAveragingAttributes,
   QgsMeshNameIndexAttributes,
   QgsMeshScalarSettingsAttributes,
+  QgsMeshShaftLengthAttributes,
   QgsMeshSigmaAveragingAttributes,
   QgsMeshSimplifyAttributes,
+  QgsMeshStreamlineSettingsAttributes,
   QgsMeshStrokeWidthAttributes,
+  QgsMeshTracesSettingsAttributes,
   QgsMeshVectorSettingsAttributes,
+  QgsMeshWindBarbSettingsAttributes,
   QgsMetadataAddressAttributes,
   QgsMetadataConstraintAttributes,
   QgsMetadataContactAttributes,
@@ -1354,6 +1362,18 @@ export interface QgsMeshScalarSettings {
 export interface QgsMeshVectorSettings {
   /** Settings such as `group`, `symbology`, and `color`. */
   attributes?: QgsMeshVectorSettingsAttributes;
+  /** Color ramp used when `coloring-method` is a color ramp. */
+  shader?: QgsColorRampShader;
+  /** Arrow shape (`<vector-arrow-settings>`). */
+  arrow?: QgsMeshArrowSettingsAttributes;
+  /** Arrow shaft length: `method` (`minmax`, `scaled`, `fixed`) and its values. */
+  shaftLength?: QgsMeshShaftLengthAttributes;
+  /** Streamline seeding. */
+  streamline?: QgsMeshStreamlineSettingsAttributes;
+  /** Particle traces. */
+  traces?: QgsMeshTracesSettingsAttributes;
+  /** Wind barbs. */
+  windBarb?: QgsMeshWindBarbSettingsAttributes;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -1376,6 +1396,12 @@ export interface QgsMeshRendererSettings {
   averaging?: QgsMeshAveragingAttributes;
   /** Sigma averaging settings. */
   averagingSigma?: QgsMeshSigmaAveragingAttributes;
+  /** Vertical layer range of the multi-level averaging method. */
+  averagingLayers?: QgsMeshLayersAveragingAttributes;
+  /** Height range of the relative height averaging methods. */
+  averagingHeight?: QgsMeshHeightAveragingAttributes;
+  /** Elevation range of the elevation averaging method. */
+  averagingElevation?: QgsMeshElevationAveragingAttributes;
 }
 
 /** Item of the mesh dataset group tree. */

@@ -181,6 +181,17 @@ export function editLayerTypesFixture(): QgsProject {
         { value: 2, color: "#0000ff", alpha: 255, label: "low" },
         { value: 4, color: "#ff0000", alpha: 255, label: "high" },
       ];
+      layer.renderer!.vectorSettings = [
+        {
+          attributes: { group: 0, symbology: 0, "line-width": 0.4 },
+          arrow: {
+            "arrow-head-width-ratio": 0.3,
+            "arrow-head-length-ratio": 0.4,
+          },
+          shaftLength: { method: "fixed", "fixed-length": 12 },
+          windBarb: { "shaft-length": 5 },
+        },
+      ];
     }
     if (layer.type === "annotation" && layer.items) {
       layer.items = layer.items.filter(

@@ -4869,3 +4869,141 @@ export const sizeLegendClassAttributes = {
   label: "string",
   size: "number",
 } as const satisfies AttributeTable;
+
+/** `<vector-arrow-settings>` attributes. */
+export interface QgsMeshArrowSettingsAttributes {
+  /** `arrow-head-length-ratio`. */
+  "arrow-head-length-ratio"?: number;
+  /** `arrow-head-width-ratio`. */
+  "arrow-head-width-ratio"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshArrowSettingsAttributes = {
+  "arrow-head-length-ratio": "number",
+  "arrow-head-width-ratio": "number",
+} as const satisfies AttributeTable;
+
+/** Arrow `<shaft-length>` attributes. */
+export interface QgsMeshShaftLengthAttributes {
+  /** `fixed-length`. */
+  "fixed-length"?: number;
+  /** `max`. */
+  max?: number;
+  /** `method`. */
+  method?: string;
+  /** `min`. */
+  min?: number;
+  /** `scale-factor`. */
+  "scale-factor"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshShaftLengthAttributes = {
+  "fixed-length": "number",
+  max: "number",
+  method: "string",
+  min: "number",
+  "scale-factor": "number",
+} as const satisfies AttributeTable;
+
+/** `<vector-streamline-settings>` attributes. */
+export interface QgsMeshStreamlineSettingsAttributes {
+  /** `seeding-density`. */
+  "seeding-density"?: number;
+  /** `seeding-method`. */
+  "seeding-method"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshStreamlineSettingsAttributes = {
+  "seeding-density": "number",
+  "seeding-method": "number",
+} as const satisfies AttributeTable;
+
+/** `<vector-traces-settings>` attributes. */
+export interface QgsMeshTracesSettingsAttributes {
+  /** `maximum-tail-length`. */
+  "maximum-tail-length"?: number;
+  /** `maximum-tail-length-unit`. */
+  "maximum-tail-length-unit"?: number;
+  /** `particles-count`. */
+  "particles-count"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshTracesSettingsAttributes = {
+  "maximum-tail-length": "number",
+  "maximum-tail-length-unit": "number",
+  "particles-count": "number",
+} as const satisfies AttributeTable;
+
+/** `<vector-windbarb-settings>` attributes. */
+export interface QgsMeshWindBarbSettingsAttributes {
+  /** `magnitude-multiplier`. */
+  "magnitude-multiplier"?: number;
+  /** `magnitude-units`. */
+  "magnitude-units"?: number;
+  /** `shaft-length`. */
+  "shaft-length"?: number;
+  /** `shaft-length-units`. */
+  "shaft-length-units"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshWindBarbSettingsAttributes = {
+  "magnitude-multiplier": "number",
+  "magnitude-units": "number",
+  "shaft-length": "number",
+  "shaft-length-units": "number",
+} as const satisfies AttributeTable;
+
+/** `<multi-vertical-layers-settings>` attributes. */
+export interface QgsMeshLayersAveragingAttributes {
+  /** `end-layer-index`. */
+  "end-layer-index"?: number;
+  /** `start-layer-index`. */
+  "start-layer-index"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshLayersAveragingAttributes = {
+  "end-layer-index": "number",
+  "start-layer-index": "number",
+} as const satisfies AttributeTable;
+
+/** `<relative-height-settings>` attributes. */
+export interface QgsMeshHeightAveragingAttributes {
+  /** `end-height`. */
+  "end-height"?: number;
+  /** `start-height`. */
+  "start-height"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshHeightAveragingAttributes = {
+  "end-height": "number",
+  "start-height": "number",
+} as const satisfies AttributeTable;
+
+/** `<elevation-settings>` attributes. */
+export interface QgsMeshElevationAveragingAttributes {
+  /** `end-elevation`. */
+  "end-elevation"?: number;
+  /** `start-elevation`. */
+  "start-elevation"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshElevationAveragingAttributes = {
+  "end-elevation": "number",
+  "start-elevation": "number",
+} as const satisfies AttributeTable;

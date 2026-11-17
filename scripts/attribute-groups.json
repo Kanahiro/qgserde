@@ -846,5 +846,40 @@
   "SizeLegendClass": {
     "doc": "Size legend `<class>`.",
     "keys": ["^qgsdatadefinedsizelegend\\.cpp\\|class$"]
+  },
+  "MeshArrowSettings": {
+    "doc": "`<vector-arrow-settings>` attributes.",
+    "keys": ["^qgsmeshrenderersettings\\.cpp\\|vector-arrow-settings$"]
+  },
+  "MeshShaftLength": {
+    "doc": "Arrow `<shaft-length>` attributes.",
+    "keys": ["^qgsmeshrenderersettings\\.cpp\\|shaft-length$"],
+    "kinds": {
+      "method": "string"
+    }
+  },
+  "MeshStreamlineSettings": {
+    "doc": "`<vector-streamline-settings>` attributes.",
+    "keys": ["^qgsmeshrenderersettings\\.cpp\\|vector-streamline-settings$"]
+  },
+  "MeshTracesSettings": {
+    "doc": "`<vector-traces-settings>` attributes.",
+    "keys": ["^qgsmeshrenderersettings\\.cpp\\|vector-traces-settings$"]
+  },
+  "MeshWindBarbSettings": {
+    "doc": "`<vector-windbarb-settings>` attributes.",
+    "keys": ["^qgsmeshrenderersettings\\.cpp\\|vector-windbarb-settings$"]
+  },
+  "MeshLayersAveraging": {
+    "doc": "`<multi-vertical-layers-settings>` attributes.",
+    "keys": ["^qgsmesh3daveraging\\.cpp\\|multi-vertical-layers-settings$"]
+  },
+  "MeshHeightAveraging": {
+    "doc": "`<relative-height-settings>` attributes.",
+    "keys": ["^qgsmesh3daveraging\\.cpp\\|relative-height-settings$"]
+  },
+  "MeshElevationAveraging": {
+    "doc": "`<elevation-settings>` attributes.",
+    "keys": ["^qgsmesh3daveraging\\.cpp\\|elevation-settings$"]
   }
 }

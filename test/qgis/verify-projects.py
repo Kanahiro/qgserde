@@ -399,6 +399,12 @@ def check_layer_types(project):
         # Edited from QGIS output, which keeps its dataset-group store.
         scalar = settings.scalarSettings(0)
         assert scalar.opacity() == 0.8 and scalar.classificationMaximum() == 4
+        vector = settings.vectorSettings(0)
+        arrow = vector.arrowSettings()
+        assert arrow.arrowHeadWidthRatio() == 0.3, arrow.arrowHeadWidthRatio()
+        assert arrow.fixedShaftLength() == 12
+        if hasattr(vector, "windBarbSettings"):  # QGIS 3.38+
+            assert vector.windBarbSettings().shaftLength() == 5
         items = scalar.colorRampShader().colorRampItemList()
         assert [item.label for item in items] == ["low", "high"]
 
