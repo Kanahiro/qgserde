@@ -1,6 +1,6 @@
 {
   "name": "qgserde",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Editable, information-preserving QGIS project XML for TypeScript",
   "license": "AGPL-3.0-or-later",
   "repository": {
