@@ -465,6 +465,12 @@ def check_layouts(project):
     assert scale.numericFormat().numberDecimalPlaces() == 3
     groups = [i for i in created.items() if i.type() == 65637]
     assert len(groups) == 1 and len(groups[0].items()) == 2, groups
+    profile = created.itemById("profile")
+    assert profile.profileCurve().asWkt() == "LineString (139 35, 141 37)"
+    assert profile.tolerance() == 5
+    assert [layer.name() for layer in profile.layers()] == ["points"]
+    assert profile.plot().xAxis().gridIntervalMajor() == 20
+    assert profile.plot().yMaximum() == 50
     tables = [f for f in created.multiFrames() if f.type() == 65652]
     assert len(tables) == 1 and tables[0].frameCount() == 1
     contents = tables[0].tableContents()

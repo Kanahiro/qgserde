@@ -8,6 +8,7 @@ import type {
   QgsBookmarkAttributes,
   QgsBrightnessContrastAttributes,
   QgsCanvasAnnotationAttributes,
+  QgsChartSeriesAttributes,
   QgsClassificationExtraAttributes,
   QgsClassificationLabelFormatAttributes,
   QgsColorAttributes,
@@ -45,6 +46,7 @@ import type {
   QgsLabelSubstitutionAttributes,
   QgsLayerFlagsAttributes,
   QgsLayerLegendAttributes,
+  QgsLayerRefAttributes,
   QgsLayerTreeGroupAttributes,
   QgsLayerTreeLayerAttributes,
   QgsLayoutAtlasAttributes,
@@ -105,10 +107,13 @@ import type {
   QgsOrderByClauseAttributes,
   QgsPaletteEntryAttributes,
   QgsPixelListEntryAttributes,
+  QgsPlotAttributes,
+  QgsPlotAxisAttributes,
   QgsPointCloudCategoryAttributes,
   QgsPointCloudRendererAttributes,
   QgsPointClusterRendererAttributes,
   QgsPointDisplacementRendererAttributes,
+  QgsProfileCustomSourceAttributes,
   QgsProjectAttributes,
   QgsProjectDisplaySettingsAttributes,
   QgsProjectElevationAttributes,
@@ -462,6 +467,18 @@ export interface QgsLayoutItem {
   filterByMaps?: string[];
   /** Scale bar number format. */
   numericFormat?: QgsNumericFormat;
+  /** Plot of an elevation profile or chart. */
+  plot?: QgsLayoutPlot;
+  /** Elevation profile curve as WKT. */
+  curve?: string;
+  /** Layers of an elevation profile. */
+  profileLayers?: QgsLayerRefAttributes[];
+  /** Elevation profile sources in drawing order (QGIS 3.44+). */
+  profileSources?: QgsProfileSource[];
+  /** Symbol of elevation profile subsection lines. */
+  subsectionsSymbol?: QgsSymbol;
+  /** Chart data series (QGIS 4.2+). */
+  series?: QgsChartSeriesAttributes[];
   /** Polyline or polygon nodes, each with `x` and `y`. */
   nodes?: QgsLayoutNodeAttributes[];
   /** Legend text styles. */
@@ -500,6 +517,78 @@ export interface QgsLegendTextOnSymbol {
   format?: QgsTextFormat;
   /** Text per legend item, by legend key. */
   content?: QgsLegendTextOnSymbolItemAttributes[];
+}
+
+/** Plot of an elevation profile or chart item. */
+export interface QgsLayoutPlot {
+  /** Settings such as `plotType`, `margins`, `minX`, and `maxY`. */
+  attributes?: QgsPlotAttributes;
+  /** Data-defined properties. */
+  dataDefinedProperties?: QgsDataDefinedProperties;
+  /** X axis. */
+  xAxis?: QgsPlotAxis;
+  /** Y axis. */
+  yAxis?: QgsPlotAxis;
+  /** Chart area background symbol. */
+  backgroundSymbol?: QgsSymbol;
+  /** Chart area border symbol. */
+  borderSymbol?: QgsSymbol;
+  /** Bar and pie chart fill symbols, by series index. */
+  fillSymbols?: QgsPlotSymbol[];
+  /** Line chart line symbols, by series index. */
+  lineSymbols?: QgsPlotSymbol[];
+  /** Line chart marker symbols, by series index. */
+  markerSymbols?: QgsPlotSymbol[];
+  /** Pie chart color ramps, by series index. */
+  colorRamps?: QgsPlotColorRamp[];
+  /** Pie chart label format. */
+  textFormat?: QgsTextFormat;
+  /** Pie chart number format. */
+  numericFormat?: QgsNumericFormat;
+}
+
+/** Axis of a layout plot. */
+export interface QgsPlotAxis {
+  /** Settings such as `type`, `gridIntervalMajor`, and `suffix`. */
+  attributes?: QgsPlotAxisAttributes;
+  /** Label number format. */
+  numericFormat?: QgsNumericFormat;
+  /** Major grid line symbol. */
+  gridMajorSymbol?: QgsSymbol;
+  /** Minor grid line symbol. */
+  gridMinorSymbol?: QgsSymbol;
+  /** Label text format. */
+  textFormat?: QgsTextFormat;
+}
+
+/** Chart symbol of one series. */
+export interface QgsPlotSymbol {
+  /** Series index. */
+  index?: number;
+  /** Symbol. */
+  symbol?: QgsSymbol;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Pie chart color ramp of one series. */
+export interface QgsPlotColorRamp {
+  /** Series index. */
+  index?: number;
+  /** Color ramp `type` and `properties`. */
+  colorRamp?: QgsColorRamp;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Source of an elevation profile: a layer or a custom source. */
+export interface QgsProfileSource {
+  /** `layer` (`<profileLayerSource>`) or `custom` (`<profileCustomSource>`). */
+  kind: "layer" | "custom";
+  /** Layer reference, or the custom source `id`. */
+  attributes?: QgsLayerRefAttributes & QgsProfileCustomSourceAttributes;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** Row of a manual layout table. */

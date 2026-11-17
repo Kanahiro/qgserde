@@ -169,7 +169,7 @@
     "doc": "`<LayoutItem>` attributes of every item type.",
     "keys": [
       "^qgslayoutitem\\.cpp\\|LayoutItem$",
-      "^qgslayoutitem\\w*\\.cpp\\|@QgsLayoutItem(Label|Legend|Map|Marker|Picture|Polyline|Polygon|ScaleBar|Shape|Page|Group|ElevationProfile|3DMap)::writePropertiesToElement:\\w+$",
+      "^qgslayoutitem\\w*\\.cpp\\|@QgsLayoutItem(Label|Legend|Map|Marker|Picture|Polyline|Polygon|ScaleBar|Shape|Page|Group|ElevationProfile|3DMap|Chart)::writePropertiesToElement:\\w+$",
       "^qgslayoutframe\\.cpp\\|@QgsLayoutFrame::writePropertiesToElement:\\w+$"
     ],
     "exclude": ["type"]
@@ -178,7 +178,7 @@
     "doc": "`<LayoutMultiFrame>` attributes of every multi-frame type.",
     "keys": [
       "^qgslayoutmultiframe\\.cpp\\|LayoutMultiFrame$",
-      "^qgslayout\\w*\\.cpp\\|@QgsLayout(Table|ItemAttributeTable|ItemTextTable|ItemManualTable|ItemHtml|ItemChart)::writePropertiesToElement:\\w+$"
+      "^qgslayout\\w*\\.cpp\\|@QgsLayout(Table|ItemAttributeTable|ItemTextTable|ItemManualTable|ItemHtml)::writePropertiesToElement:\\w+$"
     ],
     "exclude": ["type"]
   },
@@ -894,5 +894,34 @@
     "keys": [
       "^qgsclassificationstandarddeviation\\.cpp\\|@QgsClassificationStandardDeviation::writeXml:element$"
     ]
+  },
+  "Plot": {
+    "doc": "Layout `<plot>` attributes of every plot type.",
+    "keys": [
+      "^qgsplot\\.cpp\\|@Qgs(2DXy|2D)?Plot::writeXml:element$",
+      "^qgspiechartplot\\.cpp\\|@QgsPieChartPlot::writeXml:element$"
+    ]
+  },
+  "PlotAxis": {
+    "doc": "Plot `<xAxis>` or `<yAxis>` attributes.",
+    "keys": ["^qgsplot\\.cpp\\|@QgsPlotAxis::writeXml:element$"]
+  },
+  "ChartSeries": {
+    "doc": "Chart `<series>`.",
+    "keys": ["^qgslayoutitemchart\\.cpp\\|series$"]
+  },
+  "LayerRef": {
+    "doc": "Layer reference by `id`, `name`, `source`, and `provider`.",
+    "keys": [],
+    "kinds": {
+      "id": "string",
+      "name": "string",
+      "source": "string",
+      "provider": "string"
+    }
+  },
+  "ProfileCustomSource": {
+    "doc": "Elevation profile `<profileCustomSource>`.",
+    "keys": ["^qgslayoutitemelevationprofile\\.cpp\\|profileCustomSource$"]
   }
 }

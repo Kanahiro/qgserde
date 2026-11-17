@@ -144,6 +144,26 @@ export function createLayoutsProject(): QgsProject {
           visibility: "1",
         },
       },
+      {
+        type: "65654",
+        attributes: {
+          id: "profile",
+          uuid: "{aaaaaaaa-0000-0000-0000-000000000009}",
+          position: "170,140,mm",
+          size: "100,50,mm",
+          positionOnPage: "170,140,mm",
+          tolerance: 5,
+          visibility: "1",
+        },
+        crs: { authId: "EPSG:4326" },
+        curve: "LineString (139 35, 141 37)",
+        profileLayers: [{ id: points.id }],
+        plot: {
+          attributes: { minX: 0, maxX: 100, minY: -5, maxY: 50 },
+          xAxis: { attributes: { gridIntervalMajor: 20, suffix: " m" } },
+          yAxis: { attributes: { gridIntervalMajor: 10 } },
+        },
+      },
     ],
     multiFrames: [
       {

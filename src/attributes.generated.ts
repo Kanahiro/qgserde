@@ -826,6 +826,8 @@ export interface QgsLayoutItemAttributes {
   alignment?: number;
   /** `anchorPoint`. */
   anchorPoint?: number;
+  /** `applyRendererStyle`, stored as 1 or 0. */
+  applyRendererStyle?: boolean;
   /** `arrowHeadFillColor`. */
   arrowHeadFillColor?: string;
   /** `arrowHeadOutlineColor`. */
@@ -870,6 +872,10 @@ export interface QgsLayoutItemAttributes {
   excludeFromExports?: boolean;
   /** `file`. */
   file?: string;
+  /** `filterOnlyVisibleFeatures`, stored as 1 or 0. */
+  filterOnlyVisibleFeatures?: boolean;
+  /** `filterToAtlasIntersection`, stored as 1 or 0. */
+  filterToAtlasIntersection?: boolean;
   /** `followPreset`, stored as true or false. */
   followPreset?: boolean;
   /** `followPresetName`. */
@@ -878,6 +884,8 @@ export interface QgsLayoutItemAttributes {
   frame?: string;
   /** `frameJoinStyle`. */
   frameJoinStyle?: string;
+  /** `generateCategoriesFromRenderer`, stored as 1 or 0. */
+  generateCategoriesFromRenderer?: boolean;
   /** `groupUuid`. */
   groupUuid?: string;
   /** `halign`. */
@@ -1006,6 +1014,12 @@ export interface QgsLayoutItemAttributes {
   shapeType?: number;
   /** `size`. */
   size?: string;
+  /** `sortAscending`, stored as 1 or 0. */
+  sortAscending?: boolean;
+  /** `sortExpression`. */
+  sortExpression?: string;
+  /** `sortFeatures`, stored as 1 or 0. */
+  sortFeatures?: boolean;
   /** `splitLayer`. */
   splitLayer?: number;
   /** `startMarkerFile`. */
@@ -1050,6 +1064,14 @@ export interface QgsLayoutItemAttributes {
   uuid?: string;
   /** `valign`. */
   valign?: number;
+  /** `vectorLayer`. */
+  vectorLayer?: string;
+  /** `vectorLayerName`. */
+  vectorLayerName?: string;
+  /** `vectorLayerProvider`. */
+  vectorLayerProvider?: string;
+  /** `vectorLayerSource`. */
+  vectorLayerSource?: string;
   /** `version`. */
   version?: number;
   /** `visibility`. */
@@ -1073,6 +1095,7 @@ export interface QgsLayoutItemAttributes {
 export const layoutItemAttributes = {
   alignment: "number",
   anchorPoint: "number",
+  applyRendererStyle: "boolean",
   arrowHeadFillColor: "string",
   arrowHeadOutlineColor: "string",
   arrowHeadWidth: "number",
@@ -1095,10 +1118,13 @@ export const layoutItemAttributes = {
   equalColumnWidth: "number",
   excludeFromExports: "boolean",
   file: "string",
+  filterOnlyVisibleFeatures: "boolean",
+  filterToAtlasIntersection: "boolean",
   followPreset: "flag",
   followPresetName: "string",
   frame: "string",
   frameJoinStyle: "string",
+  generateCategoriesFromRenderer: "boolean",
   groupUuid: "string",
   halign: "number",
   height: "number",
@@ -1163,6 +1189,9 @@ export const layoutItemAttributes = {
   segmentSizeMode: "number",
   shapeType: "number",
   size: "string",
+  sortAscending: "boolean",
+  sortExpression: "string",
+  sortFeatures: "boolean",
   splitLayer: "number",
   startMarkerFile: "string",
   startMarkerMode: "number",
@@ -1185,6 +1214,10 @@ export const layoutItemAttributes = {
   unitType: "string",
   uuid: "string",
   valign: "number",
+  vectorLayer: "string",
+  vectorLayerName: "string",
+  vectorLayerProvider: "string",
+  vectorLayerSource: "string",
   version: "number",
   visibility: "string",
   wmsLegendHeight: "number",
@@ -1197,8 +1230,6 @@ export const layoutItemAttributes = {
 
 /** `<LayoutMultiFrame>` attributes of every multi-frame type. */
 export interface QgsLayoutMultiFrameAttributes {
-  /** `applyRendererStyle`, stored as 1 or 0. */
-  applyRendererStyle?: boolean;
   /** `backgroundColor`. */
   backgroundColor?: string;
   /** `cellMargin`. */
@@ -1215,12 +1246,8 @@ export interface QgsLayoutMultiFrameAttributes {
   featureFilter?: string;
   /** `filterFeatures`, stored as true or false. */
   filterFeatures?: boolean;
-  /** `filterOnlyVisibleFeatures`, stored as 1 or 0. */
-  filterOnlyVisibleFeatures?: boolean;
   /** `filterToAtlasIntersection`, stored as 1 or 0. */
   filterToAtlasIntersection?: boolean;
-  /** `generateCategoriesFromRenderer`, stored as 1 or 0. */
-  generateCategoriesFromRenderer?: boolean;
   /** `gridColor`. */
   gridColor?: string;
   /** `gridStrokeWidth`. */
@@ -1253,12 +1280,6 @@ export interface QgsLayoutMultiFrameAttributes {
   showOnlyVisibleFeatures?: boolean;
   /** `showUniqueRowsOnly`, stored as 1 or 0. */
   showUniqueRowsOnly?: boolean;
-  /** `sortAscending`, stored as 1 or 0. */
-  sortAscending?: boolean;
-  /** `sortExpression`. */
-  sortExpression?: string;
-  /** `sortFeatures`, stored as 1 or 0. */
-  sortFeatures?: boolean;
   /** `source`. */
   source?: number;
   /** `stylesheet`. */
@@ -1294,7 +1315,6 @@ export interface QgsLayoutMultiFrameAttributes {
 }
 
 export const layoutMultiFrameAttributes = {
-  applyRendererStyle: "boolean",
   backgroundColor: "string",
   cellMargin: "number",
   contentMode: "number",
@@ -1303,9 +1323,7 @@ export const layoutMultiFrameAttributes = {
   evaluateExpressions: "flag",
   featureFilter: "string",
   filterFeatures: "flag",
-  filterOnlyVisibleFeatures: "boolean",
   filterToAtlasIntersection: "boolean",
-  generateCategoriesFromRenderer: "boolean",
   gridColor: "string",
   gridStrokeWidth: "number",
   headerHAlignment: "number",
@@ -1322,9 +1340,6 @@ export const layoutMultiFrameAttributes = {
   showGrid: "boolean",
   showOnlyVisibleFeatures: "boolean",
   showUniqueRowsOnly: "boolean",
-  sortAscending: "boolean",
-  sortExpression: "string",
-  sortFeatures: "boolean",
   source: "number",
   stylesheet: "string",
   stylesheetEnabled: "flag",
@@ -5036,4 +5051,118 @@ export interface QgsClassificationExtraAttributes {
 export const classificationExtraAttributes = {
   effective_symmetry_point: "number",
   std_dev: "number",
+} as const satisfies AttributeTable;
+
+/** Layout `<plot>` attributes of every plot type. */
+export interface QgsPlotAttributes {
+  /** `flipAxes`, stored as 1 or 0. */
+  flipAxes?: boolean;
+  /** `margins`. */
+  margins?: string;
+  /** `maxX`. */
+  maxX?: number;
+  /** `maxY`. */
+  maxY?: number;
+  /** `minX`. */
+  minX?: number;
+  /** `minY`. */
+  minY?: number;
+  /** `pieChartLabelType`. */
+  pieChartLabelType?: string;
+  /** `plotType`. */
+  plotType?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const plotAttributes = {
+  flipAxes: "boolean",
+  margins: "string",
+  maxX: "number",
+  maxY: "number",
+  minX: "number",
+  minY: "number",
+  pieChartLabelType: "string",
+  plotType: "string",
+} as const satisfies AttributeTable;
+
+/** Plot `<xAxis>` or `<yAxis>` attributes. */
+export interface QgsPlotAxisAttributes {
+  /** `gridIntervalMajor`. */
+  gridIntervalMajor?: number;
+  /** `gridIntervalMinor`. */
+  gridIntervalMinor?: number;
+  /** `labelInterval`. */
+  labelInterval?: number;
+  /** `suffix`. */
+  suffix?: string;
+  /** `suffixPlacement`. */
+  suffixPlacement?: string;
+  /** `type`. */
+  type?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const plotAxisAttributes = {
+  gridIntervalMajor: "number",
+  gridIntervalMinor: "number",
+  labelInterval: "number",
+  suffix: "string",
+  suffixPlacement: "string",
+  type: "string",
+} as const satisfies AttributeTable;
+
+/** Chart `<series>`. */
+export interface QgsChartSeriesAttributes {
+  /** `filterExpression`. */
+  filterExpression?: string;
+  /** `name`. */
+  name?: string;
+  /** `xExpression`. */
+  xExpression?: string;
+  /** `yExpression`. */
+  yExpression?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const chartSeriesAttributes = {
+  filterExpression: "string",
+  name: "string",
+  xExpression: "string",
+  yExpression: "string",
+} as const satisfies AttributeTable;
+
+/** Layer reference by `id`, `name`, `source`, and `provider`. */
+export interface QgsLayerRefAttributes {
+  /** `id`. */
+  id?: string;
+  /** `name`. */
+  name?: string;
+  /** `provider`. */
+  provider?: string;
+  /** `source`. */
+  source?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const layerRefAttributes = {
+  id: "string",
+  name: "string",
+  provider: "string",
+  source: "string",
+} as const satisfies AttributeTable;
+
+/** Elevation profile `<profileCustomSource>`. */
+export interface QgsProfileCustomSourceAttributes {
+  /** `id`. */
+  id?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const profileCustomSourceAttributes = {
+  id: "string",
 } as const satisfies AttributeTable;

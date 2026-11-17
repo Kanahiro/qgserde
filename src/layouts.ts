@@ -1,5 +1,7 @@
 import {
+  chartSeriesAttributes,
   fontAttributes,
+  layerRefAttributes,
   layoutAtlasAttributes,
   layoutAtlasMapAttributes,
   layoutAttributes,
@@ -21,6 +23,9 @@ import {
   legendTreeGroupAttributes,
   legendTreeLayerAttributes,
   mapGridAttributes,
+  plotAttributes,
+  plotAxisAttributes,
+  profileCustomSourceAttributes,
   tableColumnWidthAttributes,
   tableRowHeightAttributes,
 } from "./attributes.generated.ts";
@@ -110,6 +115,99 @@ const legendLayer: Spec = {
   specs: { group: legendGroup, layer: legendLayer },
 });
 
+const indexedSymbols = (
+  field: string,
+  container: string,
+  tag: string,
+): Entry => ({
+  kind: "owners",
+  field,
+  at: [container],
+  spec: {
+    tag,
+    entries: [
+      { kind: "attribute", field: "index", attribute: "index", type: "number" },
+      symbolIn("symbol"),
+    ],
+  },
+});
+
+const plotAxis = (field: string, tag: string): Entry => ({
+  kind: "object",
+  field,
+  at: [tag],
+  spec: {
+    tag,
+    entries: [
+      rest(plotAxisAttributes),
+      numericFormat("numericFormat", "numericFormat"),
+      symbolIn("gridMajorSymbol", "gridMajorSymbol"),
+      symbolIn("gridMinorSymbol", "gridMinorSymbol"),
+      format("textFormat", "textFormat"),
+    ],
+  },
+});
+
+/** `<plot>` of elevation profiles and charts. */
+const plot: Entry = {
+  kind: "object",
+  field: "plot",
+  at: ["plot"],
+  spec: {
+    tag: "plot",
+    entries: [
+      rest(plotAttributes),
+      {
+        kind: "dataDefined",
+        field: "dataDefinedProperties",
+        tag: "dataDefinedProperties",
+      },
+      plotAxis("xAxis", "xAxis"),
+      plotAxis("yAxis", "yAxis"),
+      symbolIn("backgroundSymbol", "backgroundSymbol"),
+      symbolIn("borderSymbol", "borderSymbol"),
+      indexedSymbols("fillSymbols", "fillSymbols", "fillSymbol"),
+      indexedSymbols("lineSymbols", "lineSymbols", "lineSymbol"),
+      indexedSymbols("markerSymbols", "markerSymbols", "markerSymbol"),
+      {
+        kind: "owners",
+        field: "colorRamps",
+        at: ["colorRamps"],
+        spec: {
+          tag: "colorRamp",
+          entries: [
+            {
+              kind: "attribute",
+              field: "index",
+              attribute: "index",
+              type: "number",
+            },
+            {
+              kind: "object",
+              field: "colorRamp",
+              at: ["colorramp"],
+              spec: {
+                tag: "colorramp",
+                entries: [
+                  {
+                    kind: "attribute",
+                    field: "type",
+                    attribute: "type",
+                    type: "string",
+                  },
+                  { kind: "properties", field: "properties" },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      format("textFormat", "textFormat"),
+      numericFormat("numericFormat", "numericFormat"),
+    ],
+  },
+};
+
 /** `<LayoutItem>`; QGIS reads the parts its item type uses. */
 export const layoutItemSpec: Spec = {
   tag: "LayoutItem",
@@ -163,6 +261,43 @@ export const layoutItemSpec: Spec = {
       attribute: "uuid",
     },
     numericFormat("numericFormat", "numericFormat"),
+    plot,
+    { kind: "text", field: "curve", at: ["curve"], type: "string" },
+    {
+      kind: "records",
+      field: "profileLayers",
+      at: ["layers"],
+      item: "layer",
+      table: layerRefAttributes,
+    },
+    {
+      kind: "nodes",
+      field: "profileSources",
+      at: ["profileSources"],
+      specs: {
+        layer: {
+          tag: "profileLayerSource",
+          entries: [rest(layerRefAttributes)],
+        },
+        custom: {
+          tag: "profileCustomSource",
+          entries: [rest(profileCustomSourceAttributes)],
+        },
+      },
+    },
+    {
+      kind: "symbol",
+      field: "subsectionsSymbol",
+      name: "subsections",
+      at: ["subsections"],
+    },
+    {
+      kind: "records",
+      field: "series",
+      at: ["seriesList"],
+      item: "series",
+      table: chartSeriesAttributes,
+    },
     {
       kind: "records",
       field: "nodes",
