@@ -157,6 +157,17 @@ test is skipped. `QGIS_VERSION` defaults to `4.2`. The local test and CI share
 the fixture generator and Python verifier; a QGIS version mismatch fails the
 test.
 
+## Tracking upstream QGIS
+
+The weekly `QGIS upstream` workflow (also runnable by hand) warns about QGIS
+changes before they reach the pinned CI matrix. It runs the integration checks
+in `qgis/qgis:stable` and the nightly `qgis/qgis:latest`, and regenerates the
+attribute groups from QGIS 3.44 and master sources. A missing writer or a diff
+in `src/attributes.generated.ts` fails the run. Review the change; update the
+CI matrix, `scripts/attribute-groups.json`, or the codec when a release adopts it.
+To see which commits touch the writers, run `git log` in a QGIS checkout over
+the files that `scripts/attribute-groups.json` names.
+
 ## Attribute groups
 
 `src/attributes.generated.ts` holds the typed attribute groups. Do not edit it
