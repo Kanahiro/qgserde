@@ -13,7 +13,7 @@ const layerOf = (output: string) =>
 test("keeps unmodeled layer XML as plain data next to its modeled sibling", () => {
   const layer = parseQgs(xml).layers[0]!;
   assert.deepEqual(layer.unmodeled, {
-    "": {
+    ".": {
       attributes: { plugin: "a" },
       children: [
         {
@@ -62,15 +62,17 @@ test("unmodeled data follows copies and goes with removed elements", () => {
 test("modeled values win over unmodeled attributes and malformed data fails", () => {
   const project = parseQgs(xml);
   const layer = project.layers[0]!;
-  layer.unmodeled![""]!.attributes!.type = "vector";
+  layer.unmodeled!["."]!.attributes!.type = "vector";
   assert.equal(
     layerOf(serializeQgs(project, { version: "4.2" })).attributes.type,
     "raster",
   );
   for (const unmodeled of [
-    { "": { children: [{ node: { type: "bogus" } }] } },
+    { ".": { children: [{ node: { type: "bogus" } }] } },
     { "a]": { attributes: {} } },
-    { "": { attributes: { a: 1 } } },
+    { ".": { attributes: { a: 1 } } },
+    // The owner is ".", not an empty path.
+    { "": { attributes: { a: "1" } } },
   ]) {
     layer.unmodeled = unmodeled as never;
     assert.throws(

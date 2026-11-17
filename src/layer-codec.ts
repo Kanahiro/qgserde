@@ -283,7 +283,7 @@ function writeFields(
         Object.fromEntries(
           Object.entries(field.unmodeled ?? {}).flatMap(([path, entry]) =>
             path === prefix
-              ? [["", entry]]
+              ? [[".", entry]]
               : path.startsWith(`${prefix}/`)
                 ? [[path.slice(prefix.length + 1), entry]]
                 : [],
