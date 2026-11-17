@@ -9,7 +9,7 @@ import {
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
 import { readLayerId } from "./layer-codec.ts";
-import { treeNodeSpec } from "./project-settings.ts";
+import { treeNodeSpec, treeTags } from "./project-settings.ts";
 import { readSpec, writeSpec } from "./spec.ts";
 import type {
   QgisVersion,
@@ -37,6 +37,8 @@ function readCheckState(value: string | undefined): QgsCheckState {
   );
 }
 
+const treeElements: string[] = Object.values(treeTags);
+
 export function readTree(
   element: XmlElement,
   codec: ExtensionCodec,
@@ -58,7 +60,17 @@ export function readTree(
     ] as const)
       if (element.attributes[attribute] !== undefined)
         node[property] = element.attributes[attribute];
-    Object.assign(node, readSpec(treeNodeSpec(false), element, codec));
+    Object.assign(node, readSpec(treeNodeSpec("layer"), element, codec));
+    return codec.remember(node, element);
+  }
+  if (element.name === treeTags.custom) {
+    const node: Extract<QgsLayerTreeNode, { type: "custom" }> = {
+      type: "custom",
+      id: element.attributes.id ?? "",
+      name: element.attributes.name ?? "",
+      ...state,
+    };
+    Object.assign(node, readSpec(treeNodeSpec("custom"), element, codec));
     return codec.remember(node, element);
   }
   const group: QgsLayerTreeGroup = {
@@ -66,11 +78,7 @@ export function readTree(
     name: element.attributes.name ?? "",
     ...state,
     children: findChildren(element)
-      .filter(
-        (child) =>
-          child.name === "layer-tree-group" ||
-          child.name === "layer-tree-layer",
-      )
+      .filter((child) => treeElements.includes(child.name))
       .map((child) => readTree(child, codec)),
   };
   const order = findChild(element, "custom-order");
@@ -79,7 +87,7 @@ export function readTree(
       enabled: boolean(order.attributes.enabled) ?? false,
       layerIds: findChildren(order, "item").map(getText),
     };
-  Object.assign(group, readSpec(treeNodeSpec(true), element, codec));
+  Object.assign(group, readSpec(treeNodeSpec("group"), element, codec));
   return codec.remember(group, element);
 }
 
@@ -106,23 +114,20 @@ export function writeTree(
       );
     active.add(node);
     const element = structuredClone(
-      codec.source(node) ??
-        createElement(
-          node.type === "group" ? "layer-tree-group" : "layer-tree-layer",
-        ),
+      codec.source(node) ?? createElement(treeTags[node.type]),
     );
     putAttribute(element, "expanded", node.expanded);
     const state = checkStates[node.checked];
     if (!state)
       throw new QgsError("INVALID_EDIT", "Invalid layer-tree check state");
     putAttribute(element, "checked", state);
-    writeSpec(
-      treeNodeSpec(node.type === "group"),
-      node as never,
-      element,
-      codec,
-      target,
-    );
+    writeSpec(treeNodeSpec(node.type), node as never, element, codec, target);
+    if (node.type === "custom") {
+      putAttribute(element, "id", node.id);
+      putAttribute(element, "name", node.name);
+      active.delete(node);
+      return element;
+    }
     if (node.type === "layer") {
       const id = resolve(node.layerId);
       const layer = layerMap.get(id);
@@ -165,11 +170,7 @@ export function writeTree(
       const encoded = encode(child, depth + 1);
       return encoded ? [encoded] : [];
     });
-    replaceChildren(
-      element,
-      ["layer-tree-group", "layer-tree-layer"],
-      children,
-    );
+    replaceChildren(element, treeElements, children);
     if (node.customOrder) {
       const order = ensure(element, "custom-order");
       putAttribute(order, "enabled", node.customOrder.enabled);

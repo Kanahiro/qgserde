@@ -8,6 +8,7 @@ import {
   gpsTimeStampFieldAttributes,
   htmlAnnotationAttributes,
   labelEngineRuleAttributes,
+  layerTreeCustomNodeAttributes,
   layerTreeGroupAttributes,
   layerTreeLayerAttributes,
   legendPatchAttributes,
@@ -561,20 +562,35 @@ export const projectMetadataSpec: Spec = {
 };
 
 /** Layer-tree node settings beyond the hand-written ones. */
-export function treeNodeSpec(group: boolean): Spec {
+/** Element name of each layer tree node type. */
+export const treeTags = {
+  group: "layer-tree-group",
+  layer: "layer-tree-layer",
+  custom: "layer-tree-custom-node",
+} as const;
+
+const treeAttributes = {
+  group: {
+    table: layerTreeGroupAttributes,
+    exclude: ["name", "checked", "expanded"],
+  },
+  layer: {
+    table: layerTreeLayerAttributes,
+    exclude: ["id", "name", "source", "providerKey", "checked", "expanded"],
+  },
+  custom: {
+    table: layerTreeCustomNodeAttributes,
+    exclude: ["id", "name", "checked", "expanded"],
+  },
+};
+
+export function treeNodeSpec(type: keyof typeof treeTags): Spec {
   return {
-    tag: group ? "layer-tree-group" : "layer-tree-layer",
+    tag: treeTags[type],
     entries: [
-      {
-        kind: "attributes",
-        field: "attributes",
-        table: group ? layerTreeGroupAttributes : layerTreeLayerAttributes,
-        exclude: group
-          ? ["name", "checked", "expanded"]
-          : ["id", "name", "source", "providerKey", "checked", "expanded"],
-      },
+      { kind: "attributes", field: "attributes", ...treeAttributes[type] },
       { kind: "custom", field: "customProperties", custom: customProperties },
-      ...(group ? [] : [patchEntry]),
+      ...(type === "layer" ? [patchEntry] : []),
     ],
   };
 }

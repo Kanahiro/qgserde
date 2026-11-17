@@ -6417,3 +6417,12 @@ export const sunLight3DAttributes = {
   "sun-time": "string",
   temperature: "number",
 } as const satisfies AttributeTable;
+
+/** `<layer-tree-custom-node>` attributes (QGIS 4.2+). */
+export interface QgsLayerTreeCustomNodeAttributes {
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const layerTreeCustomNodeAttributes =
+  {} as const satisfies AttributeTable;

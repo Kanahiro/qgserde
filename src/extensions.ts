@@ -5,6 +5,7 @@ import {
   projectMetadataSpec,
   projectSpec,
   treeNodeSpec,
+  treeTags,
 } from "./project-settings.ts";
 import { crsStrings, fieldRecords, metadataTags } from "./schema.ts";
 import { captureSpec, restoreSpec } from "./spec.ts";
@@ -416,6 +417,9 @@ export class ExtensionCodec {
         property: ["customOrder", "enabled"],
       });
       // Item IDs are stable identities for matching extension attributes after reordering.
+    } else if (node.type === "custom") {
+      this.attribute(element, "id", { property: ["id"] });
+      this.attribute(element, "name", { property: ["name"] });
     } else {
       this.attribute(element, "id", { property: ["layerId"] });
       for (const [attribute, property] of [
@@ -425,13 +429,7 @@ export class ExtensionCodec {
       ] as const)
         this.attribute(element, attribute, { property: [property] });
     }
-    captureSpec(
-      treeNodeSpec(node.type === "group"),
-      node as never,
-      element,
-      this,
-      [],
-    );
+    captureSpec(treeNodeSpec(node.type), node as never, element, this, []);
     this.capture(node, element);
     this.slots.set(element, { kind: "slot", name: element.name });
   }
@@ -666,18 +664,8 @@ export class ExtensionCodec {
           "Cyclic or excessively deep layer tree",
         );
       active.add(group);
-      restoreSpec(
-        treeNodeSpec(group.type === "group"),
-        group as never,
-        this,
-        version,
-        0,
-      );
-      this.restore(
-        group,
-        version,
-        group.type === "group" ? "layer-tree-group" : "layer-tree-layer",
-      );
+      restoreSpec(treeNodeSpec(group.type), group as never, this, version, 0);
+      this.restore(group, version, treeTags[group.type]);
       if (group.type === "group")
         for (const child of group.children) restoreTree(child, depth + 1);
       active.delete(group);

@@ -61,6 +61,7 @@ import type {
   QgsLayerFlagsAttributes,
   QgsLayerLegendAttributes,
   QgsLayerRefAttributes,
+  QgsLayerTreeCustomNodeAttributes,
   QgsLayerTreeGroupAttributes,
   QgsLayerTreeLayerAttributes,
   QgsLayout3DTemporalAttributes,
@@ -1141,8 +1142,31 @@ export interface QgsLayerTreeLayer {
   readonly extensions?: QgsExtensions;
 }
 
-/** Tree node discriminated by `type`: a group or a layer reference. */
-export type QgsLayerTreeNode = QgsLayerTreeGroup | QgsLayerTreeLayer;
+/** Plugin-defined node of a layer tree (QGIS 4.2+). */
+export interface QgsLayerTreeCustomNode {
+  /** Discriminant for a custom node. */
+  type: "custom";
+  /** Node ID. */
+  id: string;
+  /** Display name. */
+  name: string;
+  /** Whether the node is expanded in the layer tree. */
+  expanded: boolean;
+  /** Check state. */
+  checked: QgsCheckState;
+  /** Other attributes. */
+  attributes?: QgsLayerTreeCustomNodeAttributes;
+  /** Plugin and application properties stored with the node. */
+  customProperties?: QgsVariantMap;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Tree node discriminated by `type`: a group, a layer reference, or a custom node. */
+export type QgsLayerTreeNode =
+  | QgsLayerTreeGroup
+  | QgsLayerTreeLayer
+  | QgsLayerTreeCustomNode;
 
 /** Settings shared by all layer types. Edits do not modify the data source itself. */
 export interface QgsMapLayerBase {

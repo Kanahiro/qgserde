@@ -1161,5 +1161,10 @@
   "SunLight3D": {
     "doc": "3D `<sun-light>` (QGIS 4.2+).",
     "keys": ["^qgssunlightsettings\\.cpp\\|sun-light$"]
+  },
+  "LayerTreeCustomNode": {
+    "doc": "`<layer-tree-custom-node>` attributes (QGIS 4.2+).",
+    "keys": ["^qgslayertreecustomnode\\.cpp\\|layer-tree-custom-node$"],
+    "exclude": ["id", "name", "checked", "expanded"]
   }
 }

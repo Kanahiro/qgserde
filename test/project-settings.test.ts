@@ -119,3 +119,32 @@ test("edits relations, themes, bookmarks, and tree node settings", () => {
   assert.equal(node.attributes?.["mutually-exclusive"], "0");
   assert.equal(reparsed.timeSettings?.range?.end, "2022-01-01T00:00:00Z");
 });
+
+test("reads, edits, and writes custom layer tree nodes", () => {
+  const project = parseQgs(
+    '<qgis version="4.2.0"><layer-tree-group><layer-tree-custom-node id="note" name="Note" checked="Qt::Unchecked" expanded="0" kind="x"><customproperties><Option type="Map"><Option name="k" type="QString" value="v"/></Option></customproperties></layer-tree-custom-node></layer-tree-group><projectlayers/></qgis>',
+  );
+  const node = project.layerTree!.children[0]!;
+  if (node.type !== "custom") throw new Error("custom");
+  assert.deepEqual(
+    {
+      id: node.id,
+      name: node.name,
+      checked: node.checked,
+      expanded: node.expanded,
+    },
+    { id: "note", name: "Note", checked: "unchecked", expanded: false },
+  );
+  assert.deepEqual(node.attributes, { other: { kind: "x" } });
+  assert.deepEqual(node.customProperties, { k: "v" });
+  node.name = "Renamed";
+  const output = serializeQgs(parseJson(serializeJson(project)), {
+    version: "4.2",
+  });
+  assert.match(
+    output,
+    /<layer-tree-custom-node id="note" name="Renamed" checked="Qt::Unchecked" expanded="0" kind="x">/u,
+  );
+  const again = parseQgs(output).layerTree!.children[0]!;
+  assert.equal(again.type, "custom");
+});
