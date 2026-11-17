@@ -100,6 +100,19 @@ export function createProjectSettingsProject(): QgsProject {
   };
   project.useProjectScales = true;
   project.scales = ["5000", "1000"];
+  project.loadProjectExtent = true;
+  project.presetFullExtent = { xmin: 139, ymin: 35, xmax: 141, ymax: 37 };
+  project.presetFullExtentCrs = { authId: "EPSG:4326" };
+  project.labelEngineRules = [
+    {
+      id: "minimumDistanceLabelToLabel",
+      name: "Spread",
+      distance: 5,
+      distanceUnit: "MM",
+      labeledLayer: "points_layer_0001",
+      targetLayer: "points_layer_0001",
+    },
+  ];
   project.timeSettings = {
     attributes: { timeStep: 2, timeStepUnit: "h", frameRate: 5 },
     range: { start: "2020-01-01T00:00:00Z", end: "2021-01-01T00:00:00Z" },

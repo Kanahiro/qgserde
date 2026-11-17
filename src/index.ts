@@ -38,6 +38,7 @@ export type {
   QgsHueSaturationAttributes,
   QgsInvertedPolygonRendererAttributes,
   QgsJoinAttributes,
+  QgsLabelEngineRuleAttributes,
   QgsLabelFormattingAttributes,
   QgsLabelPlacementAttributes,
   QgsLabelRenderingAttributes,

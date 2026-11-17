@@ -345,6 +345,12 @@ def check_project_settings(project):
     assert snapping.enabled() and snapping.tolerance() == 20
     assert project.viewSettings().useProjectScales()
     assert sorted(project.viewSettings().mapScales()) == [1000, 5000]
+    full = project.viewSettings().presetFullExtent()
+    assert full.xMaximum() == 141 and full.crs().authid() == "EPSG:4326", full
+    engine = project.labelingEngineSettings()
+    if hasattr(engine, "rules"):
+        assert [rule.name() for rule in engine.rules()] == ["Spread"]
+        assert engine.rules()[0].distance() == 5
     assert project.timeSettings().timeStep() == 2
     assert project.timeSettings().temporalRange().begin().date().year() == 2020
     group = project.layerTreeRoot().findGroup("Group")

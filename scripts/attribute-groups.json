@@ -814,5 +814,16 @@
   "TableColumnWidth": {
     "doc": "Manual table `<columnWidths>` `<column>`.",
     "keys": ["^qgslayoutitemmanualtable\\.cpp\\|column$"]
+  },
+  "LabelEngineRule": {
+    "doc": "Labeling engine `<rule>`; `id` names the rule type.",
+    "keys": [
+      "^qgslabelingenginerule_impl\\.cpp\\|@Qgs\\w*LabelingEngineRule\\w*::writeXml:element$"
+    ],
+    "kinds": {
+      "id": "string",
+      "name": "string",
+      "active": "boolean"
+    }
   }
 }

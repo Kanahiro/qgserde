@@ -38,6 +38,7 @@ import type {
   QgsHueSaturationAttributes,
   QgsInvertedPolygonRendererAttributes,
   QgsJoinAttributes,
+  QgsLabelEngineRuleAttributes,
   QgsLabelFormattingAttributes,
   QgsLabelPlacementAttributes,
   QgsLabelRenderingAttributes,
@@ -281,6 +282,14 @@ export interface QgsProject {
   useProjectScales?: boolean;
   /** Predefined scale denominators, as stored. */
   scales?: string[];
+  /** Whether opening the project zooms to its default view extent. */
+  loadProjectExtent?: boolean;
+  /** Full extent that replaces the extent of all layers (`<PresetFullExtent>`). */
+  presetFullExtent?: QgsRectangle;
+  /** CRS of {@link QgsProject.presetFullExtent}. */
+  presetFullExtentCrs?: QgsCrs;
+  /** Labeling engine rules (QGIS 3.40+), such as a minimum distance between labels and features. */
+  labelEngineRules?: QgsLabelEngineRuleAttributes[];
   /** Default symbol and style database settings. */
   styleSettings?: QgsProjectStyleSettings;
   /** Temporal navigation settings. */

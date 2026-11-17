@@ -4746,3 +4746,57 @@ export interface QgsTableColumnWidthAttributes {
 export const tableColumnWidthAttributes = {
   width: "number",
 } as const satisfies AttributeTable;
+
+/** Labeling engine `<rule>`; `id` names the rule type. */
+export interface QgsLabelEngineRuleAttributes {
+  /** `active`, stored as 1 or 0. */
+  active?: boolean;
+  /** `cost`. */
+  cost?: number;
+  /** `distance`. */
+  distance?: number;
+  /** `distanceUnit`. */
+  distanceUnit?: string;
+  /** `distanceUnitScale`. */
+  distanceUnitScale?: string;
+  /** `id`. */
+  id?: string;
+  /** `labeledLayer`. */
+  labeledLayer?: string;
+  /** `labeledLayerName`. */
+  labeledLayerName?: string;
+  /** `labeledLayerProvider`. */
+  labeledLayerProvider?: string;
+  /** `labeledLayerSource`. */
+  labeledLayerSource?: string;
+  /** `name`. */
+  name?: string;
+  /** `targetLayer`. */
+  targetLayer?: string;
+  /** `targetLayerName`. */
+  targetLayerName?: string;
+  /** `targetLayerProvider`. */
+  targetLayerProvider?: string;
+  /** `targetLayerSource`. */
+  targetLayerSource?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const labelEngineRuleAttributes = {
+  active: "boolean",
+  cost: "number",
+  distance: "number",
+  distanceUnit: "string",
+  distanceUnitScale: "string",
+  id: "string",
+  labeledLayer: "string",
+  labeledLayerName: "string",
+  labeledLayerProvider: "string",
+  labeledLayerSource: "string",
+  name: "string",
+  targetLayer: "string",
+  targetLayerName: "string",
+  targetLayerProvider: "string",
+  targetLayerSource: "string",
+} as const satisfies AttributeTable;
