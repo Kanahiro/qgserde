@@ -307,6 +307,9 @@ def check_settings(project):
     assert metadata.keywords() == {"gmd:topicCategory": ["location"]}
     assert metadata.contacts()[0].email == "a@example.com"
     assert metadata.licenses() == ["CC-BY"] and metadata.history() == ["created"]
+    periods = metadata.extent().temporalExtents()
+    assert [p.begin().date().year() for p in periods] == [2020, 2022], periods
+    assert periods[0].end().date().year() == 2021 and periods[1].isInstant()
     assert cities.temporalProperties().isActive()
     assert cities.temporalProperties().startField() == "pop"
     assert cities.geometryOptions().geometryPrecision() == 0.01

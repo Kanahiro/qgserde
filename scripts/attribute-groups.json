@@ -881,5 +881,18 @@
   "MeshElevationAveraging": {
     "doc": "`<elevation-settings>` attributes.",
     "keys": ["^qgsmesh3daveraging\\.cpp\\|elevation-settings$"]
+  },
+  "RasterAttributeTable": {
+    "doc": "File-based raster `<AttributeTable>`.",
+    "keys": ["^qgsrasterlayer\\.cpp\\|AttributeTable$"],
+    "kinds": {
+      "band": "number"
+    }
+  },
+  "ClassificationExtra": {
+    "doc": "Classification `<extraInformation>` attributes.",
+    "keys": [
+      "^qgsclassificationstandarddeviation\\.cpp\\|@QgsClassificationStandardDeviation::writeXml:element$"
+    ]
   }
 }

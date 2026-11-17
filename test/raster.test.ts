@@ -125,3 +125,24 @@ test("edits raster pipes and keeps unmodeled children in place", () => {
     );
   }
 });
+
+test("writes file-based raster attribute tables", () => {
+  const project = fixture();
+  const gray = raster(project, "gray");
+  gray.attributeTables = [{ band: 1, path: "./gray.vat.dbf" }];
+  const output = serializeQgs(parseJson(serializeJson(project)), {
+    version: "3.44",
+  });
+  const layer = findChildren(
+    findChild(readXml(output).root, "projectlayers")!,
+    "maplayer",
+  ).find((item) => getText(findChild(item, "layername")!) === "gray")!;
+  const table = findChild(
+    findChild(layer, "FileBasedAttributeTables")!,
+    "AttributeTable",
+  )!;
+  assert.deepEqual(table.attributes, { band: "1", path: "./gray.vat.dbf" });
+  assert.deepEqual(raster(parseQgs(output), "gray").attributeTables, [
+    { band: 1, path: "./gray.vat.dbf" },
+  ]);
+});

@@ -1,4 +1,5 @@
 import {
+  classificationExtraAttributes,
   classificationLabelFormatAttributes,
   fontAttributes,
   heatmapRendererAttributes,
@@ -408,6 +409,12 @@ const rendererExtrasByType: Record<string, Entry[]> = {
             kind: "variant",
             field: "parameters",
             at: ["parameters", "Option"],
+          },
+          {
+            kind: "attributes",
+            field: "extraInformation",
+            table: classificationExtraAttributes,
+            at: ["extraInformation"],
           },
         ],
       },

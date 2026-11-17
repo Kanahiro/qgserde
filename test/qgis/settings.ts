@@ -182,6 +182,10 @@ export function createSettingsProject(): QgsProject {
         contacts: [{ fields: { name: "Alice", email: "a@example.com" } }],
         links: [{ name: "home", type: "WWW:LINK", url: "https://example.com" }],
         licenses: ["CC-BY"],
+        temporalExtents: [
+          { start: "2020-01-01T00:00:00Z", end: "2021-01-01T00:00:00Z" },
+          { instant: "2022-06-01T00:00:00Z" },
+        ],
         rights: ["open"],
         history: ["created"],
       },

@@ -10,6 +10,7 @@ import {
   pixelListEntryAttributes,
   providerResamplingAttributes,
   rampLegendSettingsAttributes,
+  rasterAttributeTableAttributes,
   rasterRendererAttributes,
   rasterResamplerAttributes,
 } from "./attributes.generated.ts";
@@ -190,6 +191,13 @@ export const rasterLayerSpec: Spec = {
       field: "providerResampling",
       table: providerResamplingAttributes,
       at: ["pipe", "provider", "resampling"],
+    },
+    {
+      kind: "records",
+      field: "attributeTables",
+      at: ["FileBasedAttributeTables"],
+      item: "AttributeTable",
+      table: rasterAttributeTableAttributes,
     },
     {
       kind: "owners",

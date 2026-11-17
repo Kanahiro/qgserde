@@ -8,6 +8,7 @@ import type {
   QgsBookmarkAttributes,
   QgsBrightnessContrastAttributes,
   QgsCanvasAnnotationAttributes,
+  QgsClassificationExtraAttributes,
   QgsClassificationLabelFormatAttributes,
   QgsColorAttributes,
   QgsColorRampItemAttributes,
@@ -117,6 +118,7 @@ import type {
   QgsProjectTimeSettingsAttributes,
   QgsProviderResamplingAttributes,
   QgsRampLegendSettingsAttributes,
+  QgsRasterAttributeTableAttributes,
   QgsRasterRendererAttributes,
   QgsRasterResamplerAttributes,
   QgsRelationAttributes,
@@ -1058,6 +1060,8 @@ export interface QgsLayerMetadata extends QgsMetadataBase {
   crs?: QgsCrs;
   /** Spatial extents, each with attributes such as `crs`, `minx`, and `maxy`. */
   spatialExtents?: QgsMetadataSpatialExtentAttributes[];
+  /** Temporal extents, each an instant or a period from `start` to `end`. */
+  temporalExtents?: QgsMetadataTemporalExtent[];
 }
 
 /** Vector layer settings. Feature data and attribute values are not included. */
@@ -1326,6 +1330,8 @@ export interface QgsRasterLayer extends QgsMapLayerBase {
   providerResampling?: QgsProviderResamplingAttributes;
   /** User no-data values per band. */
   noData?: QgsRasterNoData[];
+  /** Raster attribute tables stored in files, by `band` and `path`. */
+  attributeTables?: QgsRasterAttributeTableAttributes[];
   /** Data-defined properties of the raster pipe. */
   pipeDataDefinedProperties?: QgsDataDefinedProperties;
 }
@@ -1941,6 +1947,20 @@ export interface QgsClassificationMethod {
   labelFormat?: QgsClassificationLabelFormatAttributes;
   /** Method parameters. */
   parameters?: QgsVariant;
+  /** Values the method computed, such as the standard deviation of `StdDev`. */
+  extraInformation?: QgsClassificationExtraAttributes;
+}
+
+/** Temporal extent of layer metadata, in ISO 8601. */
+export interface QgsMetadataTemporalExtent {
+  /** Instant, for an extent without duration. */
+  instant?: string;
+  /** Period start. */
+  start?: string;
+  /** Period end. */
+  end?: string;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** Heatmap of point density. */

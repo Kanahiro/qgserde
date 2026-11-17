@@ -291,6 +291,24 @@ export const layerMetadataSpec: Spec = {
       item: "spatial",
       table: metadataSpatialExtentAttributes,
     },
+    {
+      kind: "owners",
+      field: "temporalExtents",
+      at: ["extent"],
+      spec: {
+        tag: "temporal",
+        entries: [
+          text("instant", "instant"),
+          {
+            kind: "text",
+            field: "start",
+            at: ["period", "start"],
+            type: "string",
+          },
+          { kind: "text", field: "end", at: ["period", "end"], type: "string" },
+        ],
+      },
+    },
   ],
 };
 

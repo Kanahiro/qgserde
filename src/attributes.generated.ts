@@ -5007,3 +5007,33 @@ export const meshElevationAveragingAttributes = {
   "end-elevation": "number",
   "start-elevation": "number",
 } as const satisfies AttributeTable;
+
+/** File-based raster `<AttributeTable>`. */
+export interface QgsRasterAttributeTableAttributes {
+  /** `band`. */
+  band?: number;
+  /** `path`. */
+  path?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const rasterAttributeTableAttributes = {
+  band: "number",
+  path: "string",
+} as const satisfies AttributeTable;
+
+/** Classification `<extraInformation>` attributes. */
+export interface QgsClassificationExtraAttributes {
+  /** `effective_symmetry_point`. */
+  effective_symmetry_point?: number;
+  /** `std_dev`. */
+  std_dev?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const classificationExtraAttributes = {
+  effective_symmetry_point: "number",
+  std_dev: "number",
+} as const satisfies AttributeTable;
