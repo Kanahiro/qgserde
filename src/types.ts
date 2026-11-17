@@ -101,6 +101,7 @@ import type {
   QgsMeshAveragingAttributes,
   QgsMeshDatasetAttributes,
   QgsMeshDatasetGroupTreeItemAttributes,
+  QgsMeshDatasetReferenceAttributes,
   QgsMeshEdgeSettingsAttributes,
   QgsMeshElevationAveragingAttributes,
   QgsMeshFrameSettingsAttributes,
@@ -113,6 +114,7 @@ import type {
   QgsMeshSimplifyAttributes,
   QgsMeshStreamlineSettingsAttributes,
   QgsMeshStrokeWidthAttributes,
+  QgsMeshTimeSettingsAttributes,
   QgsMeshTracesSettingsAttributes,
   QgsMeshVectorSettingsAttributes,
   QgsMeshWindBarbSettingsAttributes,
@@ -1288,6 +1290,8 @@ export interface QgsTemporalProperties {
   attributes?: QgsTemporalAttributes;
   /** Fixed range (`start`, `end`) for fixed-range modes. */
   fixedRange?: QgsTemporalRangeAttributes;
+  /** Fixed instant of a raster layer, in ISO 8601. */
+  fixedInstant?: string;
 }
 
 /** Layer elevation and profile settings. */
@@ -1638,6 +1642,18 @@ export interface QgsEditForm {
   labelStyle?: QgsFormLabelStyle;
   /** Items of a drag-and-drop form. */
   items?: QgsFormNode[];
+  /** Data-defined field properties, such as an alias expression, by field `name`. */
+  fieldProperties?: QgsFormFieldProperties[];
+}
+
+/** Data-defined properties of a form field. */
+export interface QgsFormFieldProperties {
+  /** Field name. */
+  name?: string;
+  /** Property collection, as QGIS stores it. */
+  properties?: QgsVariant;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** Relation editor widget settings (`<widget>`). */
@@ -1704,6 +1720,10 @@ export interface QgsMeshLayer extends QgsMapLayerBase {
   staticActiveDataset?: QgsMeshActiveDatasetAttributes;
   /** Mesh simplification settings. */
   simplify?: QgsMeshSimplifyAttributes;
+  /** Time display formats. */
+  timeSettings?: QgsMeshTimeSettingsAttributes;
+  /** Extra dataset files loaded on top of the mesh (`<extra-datasets>`). */
+  extraDatasets?: string[];
   /** Dataset groups. */
   datasetGroups?: QgsMeshDatasetGroups;
 }
@@ -1772,6 +1792,10 @@ export interface QgsMeshRendererSettings {
 export interface QgsMeshDatasetGroupItem {
   /** Settings such as `display-name`, `is-enabled`, and `dataset-index`. */
   attributes?: QgsMeshDatasetGroupTreeItemAttributes;
+  /** Dataset group a virtual group is computed from. */
+  dependentOn?: QgsMeshDatasetReferenceAttributes[];
+  /** Virtual dataset groups computed from this group. */
+  dependencies?: QgsMeshDatasetReferenceAttributes[];
   /** Child items. */
   children?: QgsMeshDatasetGroupItem[];
   /** @internal */
@@ -1872,6 +1896,8 @@ export interface QgsPointCloudLayer extends QgsMapLayerBase {
   type: "point-cloud";
   /** Point cloud renderer. */
   renderer?: QgsPointCloudRenderer;
+  /** Subset (filter) expression. */
+  subset?: string;
 }
 
 /** Point cloud renderer; QGIS reads the parts its type uses. */
@@ -2008,6 +2034,8 @@ export interface QgsField {
   constraintExpression?: string;
   /** Description shown when the constraint expression fails. */
   constraintDescription?: string;
+  /** Field comment set in QGIS, which replaces the provider's (`<customComments>`, QGIS 3.44+). */
+  comment?: string;
   /** Behavior when a feature is split, such as `Duplicate` or `GeometryRatio`. */
   splitPolicy?: string;
   /** Behavior when a feature is duplicated, such as `Duplicate` or `UnsetField`. */

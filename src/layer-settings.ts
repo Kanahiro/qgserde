@@ -397,6 +397,7 @@ export const commonLayerEntries: Entry[] = [
           at: ["fixedRange"],
           table: temporalRangeAttributes,
         },
+        text("fixedInstant", "fixedInstant"),
       ],
     },
   },
@@ -815,6 +816,23 @@ export const vectorLayerEntries: Entry[] = [
           field: "items",
           at: ["attributeEditorForm"],
           specs: formNodes,
+        },
+        {
+          kind: "owners",
+          field: "fieldProperties",
+          at: ["dataDefinedFieldProperties"],
+          spec: {
+            tag: "field",
+            entries: [
+              {
+                kind: "attribute",
+                field: "name",
+                attribute: "name",
+                type: "string",
+              },
+              { kind: "variant", field: "properties", at: ["Option"] },
+            ],
+          },
         },
       ],
     },

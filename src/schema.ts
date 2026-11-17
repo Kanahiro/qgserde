@@ -93,6 +93,12 @@ export const fieldRecords: readonly {
     values: { policy: ["mergePolicy", "string"] },
   },
   {
+    container: "customComments",
+    tag: "customComment",
+    key: "field",
+    values: { value: ["comment", "string"] },
+  },
+  {
     container: "editable",
     tag: "field",
     key: "name",

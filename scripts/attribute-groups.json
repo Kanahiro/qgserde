@@ -1124,5 +1124,16 @@
   "MaskingSource": {
     "doc": "Selective masking `<source>`.",
     "keys": ["^qgsselectivemaskingsourceset\\.cpp\\|source$"]
+  },
+  "MeshDatasetReference": {
+    "doc": "Mesh dataset group `<dependency-item>` or `<dependent-on-item>`.",
+    "keys": [],
+    "kinds": {
+      "dataset-index": "number"
+    }
+  },
+  "MeshTimeSettings": {
+    "doc": "`<mesh-time-settings>` attributes.",
+    "keys": ["^qgsmeshtimesettings\\.cpp\\|mesh-time-settings$"]
   }
 }

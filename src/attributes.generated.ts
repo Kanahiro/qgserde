@@ -6267,3 +6267,30 @@ export const maskingSourceAttributes = {
   sourceId: "string",
   sourceType: "string",
 } as const satisfies AttributeTable;
+
+/** Mesh dataset group `<dependency-item>` or `<dependent-on-item>`. */
+export interface QgsMeshDatasetReferenceAttributes {
+  /** `dataset-index`. */
+  "dataset-index"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshDatasetReferenceAttributes = {
+  "dataset-index": "number",
+} as const satisfies AttributeTable;
+
+/** `<mesh-time-settings>` attributes. */
+export interface QgsMeshTimeSettingsAttributes {
+  /** `absolute-time-format`. */
+  "absolute-time-format"?: string;
+  /** `relative-time-format`. */
+  "relative-time-format"?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const meshTimeSettingsAttributes = {
+  "absolute-time-format": "string",
+  "relative-time-format": "string",
+} as const satisfies AttributeTable;

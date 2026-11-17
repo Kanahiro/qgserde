@@ -5,6 +5,7 @@ import {
   meshAveragingAttributes,
   meshDatasetAttributes,
   meshDatasetGroupTreeItemAttributes,
+  meshDatasetReferenceAttributes,
   meshEdgeSettingsAttributes,
   meshElevationAveragingAttributes,
   meshFrameSettingsAttributes,
@@ -17,6 +18,7 @@ import {
   meshSimplifyAttributes,
   meshStreamlineSettingsAttributes,
   meshStrokeWidthAttributes,
+  meshTimeSettingsAttributes,
   meshTracesSettingsAttributes,
   meshVectorSettingsAttributes,
   meshWindBarbSettingsAttributes,
@@ -178,6 +180,20 @@ function datasetGroupItem(): Spec {
       kind: "attributes",
       field: "attributes",
       table: meshDatasetGroupTreeItemAttributes,
+    },
+    {
+      kind: "records",
+      field: "dependentOn",
+      at: [],
+      item: "dependent-on-item",
+      table: meshDatasetReferenceAttributes,
+    },
+    {
+      kind: "records",
+      field: "dependencies",
+      at: [],
+      item: "dependency-item",
+      table: meshDatasetReferenceAttributes,
     },
   ];
   const spec: Spec = { tag: "mesh-dataset-group-tree-item", entries };
@@ -345,6 +361,13 @@ export const meshEntries: Entry[] = [
     },
   },
   attributes("simplify", meshSimplifyAttributes, "mesh-simplify-settings"),
+  attributes("timeSettings", meshTimeSettingsAttributes, "mesh-time-settings"),
+  {
+    kind: "values",
+    field: "extraDatasets",
+    at: ["extra-datasets"],
+    item: "uri",
+  },
 ];
 
 const formatWrappers = ["pointTextFormat", "lineTextFormat", "rectTextFormat"];
@@ -429,6 +452,7 @@ export const groupEntries: Entry[] = [
 ];
 
 export const pointCloudEntries: Entry[] = [
+  { kind: "text", field: "subset", at: ["subset"], type: "string" },
   {
     kind: "object",
     field: "renderer",
