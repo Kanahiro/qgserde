@@ -2,7 +2,7 @@ import { QgsError } from "./errors.ts";
 import type { QgsProject } from "./types.ts";
 
 // Kept equal to package.json by json.test.ts.
-export const VERSION = "0.1.1";
+export const VERSION = "0.2.0";
 
 function compatible(version: string): boolean {
   const [major, minor] = version.split(/[.-]/u);
