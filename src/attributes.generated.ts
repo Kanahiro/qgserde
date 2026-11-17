@@ -6177,3 +6177,93 @@ export const reportSectionAttributes = {
   headerVisibility: "number",
   type: "string",
 } as const satisfies AttributeTable;
+
+/** `<Sensor>` attributes of every sensor type. */
+export interface QgsSensorAttributes {
+  /** `baudRate`. */
+  baudRate?: number;
+  /** `delimiter`. */
+  delimiter?: string;
+  /** `hostName`. */
+  hostName?: string;
+  /** `id`. */
+  id?: string;
+  /** `name`. */
+  name?: string;
+  /** `port`. */
+  port?: number;
+  /** `portName`. */
+  portName?: string;
+  /** `type`. */
+  type?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const sensorAttributes = {
+  baudRate: "number",
+  delimiter: "string",
+  hostName: "string",
+  id: "string",
+  name: "string",
+  port: "number",
+  portName: "string",
+  type: "string",
+} as const satisfies AttributeTable;
+
+/** Project `<ElevationProfile>` attributes (QGIS 4.2+). */
+export interface QgsElevationProfileAttributes {
+  /** `distanceUnit`. */
+  distanceUnit?: string;
+  /** `lockAxisScales`, stored as 1 or 0. */
+  lockAxisScales?: boolean;
+  /** `name`. */
+  name?: string;
+  /** `tolerance`. */
+  tolerance?: number;
+  /** `useProjectLayerTree`, stored as 1 or 0. */
+  useProjectLayerTree?: boolean;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const elevationProfileAttributes = {
+  distanceUnit: "string",
+  lockAxisScales: "boolean",
+  name: "string",
+  tolerance: "number",
+  useProjectLayerTree: "boolean",
+} as const satisfies AttributeTable;
+
+/** `<selectiveMaskingSourceSet>` attributes (QGIS 4.2+). */
+export interface QgsMaskingSourceSetAttributes {
+  /** `id`. */
+  id?: string;
+  /** `name`. */
+  name?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const maskingSourceSetAttributes = {
+  id: "string",
+  name: "string",
+} as const satisfies AttributeTable;
+
+/** Selective masking `<source>`. */
+export interface QgsMaskingSourceAttributes {
+  /** `layerId`. */
+  layerId?: string;
+  /** `sourceId`. */
+  sourceId?: string;
+  /** `sourceType`. */
+  sourceType?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const maskingSourceAttributes = {
+  layerId: "string",
+  sourceId: "string",
+  sourceType: "string",
+} as const satisfies AttributeTable;

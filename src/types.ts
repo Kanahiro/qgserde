@@ -32,6 +32,7 @@ import type {
   QgsDiagramLayerSettingsAttributes,
   QgsDirectionalLight3DAttributes,
   QgsElevationAttributes,
+  QgsElevationProfileAttributes,
   QgsElevationShadingAttributes,
   QgsExpressionFieldAttributes,
   QgsEyeDome3DAttributes,
@@ -91,6 +92,8 @@ import type {
   QgsMapThemeAttributes,
   QgsMapThemeLayerAttributes,
   QgsMapView3DAttributes,
+  QgsMaskingSourceAttributes,
+  QgsMaskingSourceSetAttributes,
   QgsMaterial3DAttributes,
   QgsMesh3DAdvancedAttributes,
   QgsMeshActiveDatasetAttributes,
@@ -159,6 +162,7 @@ import type {
   QgsScene3DOriginAttributes,
   QgsScene3DTerrainAttributes,
   QgsSelectionAttributes,
+  QgsSensorAttributes,
   QgsShadow3DAttributes,
   QgsSizeLegendAttributes,
   QgsSizeLegendClassAttributes,
@@ -300,6 +304,12 @@ export interface QgsProject {
   layouts?: QgsLayout[];
   /** Reports, stored with the layouts. */
   reports?: QgsReport[];
+  /** Sensors (`<Sensors>`), such as TCP or serial port feeds. */
+  sensors?: QgsSensor[];
+  /** Elevation profiles (QGIS 4.2+). */
+  elevationProfiles?: QgsElevationProfile[];
+  /** Selective masking source sets (QGIS 4.2+). */
+  maskingSourceSets?: QgsMaskingSourceSet[];
   /** Map canvas annotations (text, SVG, HTML, and form annotations). */
   annotations?: QgsCanvasAnnotation[];
   /** The project's main annotation layer, drawn above all layers. */
@@ -563,6 +573,40 @@ export interface QgsLegendTextOnSymbol {
   format?: QgsTextFormat;
   /** Text per legend item, by legend key. */
   content?: QgsLegendTextOnSymbolItemAttributes[];
+}
+
+/** Sensor of a project. */
+export interface QgsSensor {
+  /** `id`, `type`, `name`, and settings of the sensor type, such as `hostName` and `port`. */
+  attributes?: QgsSensorAttributes;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Elevation profile of a project. */
+export interface QgsElevationProfile {
+  /** `name`, `distanceUnit`, `tolerance`, and other settings. */
+  attributes?: QgsElevationProfileAttributes;
+  /** Curve CRS. */
+  crs?: QgsCrs;
+  /** Profile curve as WKT. */
+  curve?: string;
+  /** Profile layer tree, unless it uses the project's. */
+  layerTree?: QgsLegendNode;
+  /** Symbol of subsection lines. */
+  subsectionsSymbol?: QgsSymbol;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Set of mask sources that symbol layers and labels can refer to. */
+export interface QgsMaskingSourceSet {
+  /** Set `id` and `name`. */
+  attributes?: QgsMaskingSourceSetAttributes;
+  /** Mask sources, by `layerId`, `sourceType`, and `sourceId`. */
+  sources?: QgsMaskingSourceAttributes[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** Report: nested sections, each with optional header, footer, and body layouts. */

@@ -104,7 +104,8 @@ const treeProperties: Entry = {
   field: "customProperties",
   custom: customProperties,
 };
-const legendGroup: Spec = {
+/** Layer tree of a layout legend or an elevation profile. */
+export const legendGroup: Spec = {
   tag: "layer-tree-group",
   entries: [rest(legendTreeGroupAttributes), treeProperties],
 };

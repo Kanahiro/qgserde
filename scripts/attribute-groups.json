@@ -1101,5 +1101,28 @@
       "^qgsabstractreportsection\\.cpp\\|Section$",
       "^qgsreportsection\\w+\\.cpp\\|@QgsReportSection\\w+::writePropertiesToElement:element$"
     ]
+  },
+  "Sensor": {
+    "doc": "`<Sensor>` attributes of every sensor type.",
+    "keys": [
+      "^qgsabstractsensor\\.cpp\\|Sensor$",
+      "^qgsiodevicesensor\\.cpp\\|@Qgs\\w+Sensor::writePropertiesToElement:element$"
+    ]
+  },
+  "ElevationProfile": {
+    "doc": "Project `<ElevationProfile>` attributes (QGIS 4.2+).",
+    "keys": ["^qgselevationprofile\\.cpp\\|ElevationProfile$"],
+    "kinds": {
+      "lockAxisScales": "boolean",
+      "useProjectLayerTree": "boolean"
+    }
+  },
+  "MaskingSourceSet": {
+    "doc": "`<selectiveMaskingSourceSet>` attributes (QGIS 4.2+).",
+    "keys": ["^qgsselectivemaskingsourceset\\.cpp\\|selectiveMaskingSourceSet$"]
+  },
+  "MaskingSource": {
+    "doc": "Selective masking `<source>`.",
+    "keys": ["^qgsselectivemaskingsourceset\\.cpp\\|source$"]
   }
 }

@@ -2,6 +2,7 @@ import {
   activeAttributes,
   bookmarkAttributes,
   canvasAnnotationAttributes,
+  elevationProfileAttributes,
   elevationShadingAttributes,
   formAnnotationAttributes,
   gpsTimeStampFieldAttributes,
@@ -11,6 +12,8 @@ import {
   layerTreeLayerAttributes,
   mapThemeAttributes,
   mapThemeLayerAttributes,
+  maskingSourceAttributes,
+  maskingSourceSetAttributes,
   projectAttributes,
   projectDisplaySettingsAttributes,
   projectElevationAttributes,
@@ -18,6 +21,7 @@ import {
   projectLegendAttributes,
   projectStyleSettingsAttributes,
   projectTimeSettingsAttributes,
+  sensorAttributes,
   snappingLayerSettingsAttributes,
   snappingSettingsAttributes,
   svgAnnotationAttributes,
@@ -34,7 +38,7 @@ import {
   relationSpec,
 } from "./layer-settings.ts";
 import { annotationEntries } from "./layer-types.ts";
-import { layoutSpec, reportSpec } from "./layouts.ts";
+import { layoutSpec, legendGroup, reportSpec } from "./layouts.ts";
 import { projectProperties } from "./properties.ts";
 import { mapViews3DEntry } from "./scene3d.ts";
 import type { AttributeTable, Entry, Spec } from "./spec.ts";
@@ -125,6 +129,68 @@ export const projectSpec: Spec = {
     mapViews3DEntry,
     { kind: "owners", field: "layouts", at: ["Layouts"], spec: layoutSpec },
     { kind: "owners", field: "reports", at: ["Layouts"], spec: reportSpec },
+    {
+      kind: "owners",
+      field: "sensors",
+      at: ["Sensors"],
+      spec: {
+        tag: "Sensor",
+        entries: [
+          { kind: "attributes", field: "attributes", table: sensorAttributes },
+        ],
+      },
+    },
+    {
+      kind: "owners",
+      field: "elevationProfiles",
+      at: ["ElevationProfiles"],
+      spec: {
+        tag: "ElevationProfile",
+        entries: [
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: elevationProfileAttributes,
+          },
+          { kind: "crs", field: "crs", tag: "crs" },
+          { kind: "text", field: "curve", at: ["curve"], type: "string" },
+          {
+            kind: "object",
+            field: "layerTree",
+            at: ["layer-tree-group"],
+            spec: legendGroup,
+          },
+          {
+            kind: "symbol",
+            field: "subsectionsSymbol",
+            name: "subsections",
+            at: ["subsections"],
+          },
+        ],
+      },
+    },
+    {
+      kind: "owners",
+      field: "maskingSourceSets",
+      at: ["SelectiveMaskingSourceSets"],
+      spec: {
+        tag: "selectiveMaskingSourceSet",
+        entries: [
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: maskingSourceSetAttributes,
+          },
+          {
+            kind: "records",
+            field: "sources",
+            at: [],
+            item: "source",
+            table: maskingSourceAttributes,
+          },
+        ],
+      },
+    },
     {
       kind: "nodes",
       field: "annotations",

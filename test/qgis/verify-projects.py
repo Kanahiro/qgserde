@@ -395,6 +395,13 @@ def check_project_settings(project):
         assert [layer.id() for layer in scene.layers()] == ["points_layer_0001"]
         assert scene.eyeDomeLightingEnabled()
         assert len(scene.lightSources()) == 1
+    sensors = project.sensorManager().sensors()
+    assert [s.name() for s in sensors] == ["GPS feed"], sensors
+    assert sensors[0].type() == "tcp_socket"
+    if hasattr(project, "elevationProfileManager"):  # QGIS 4.2+
+        profiles = project.elevationProfileManager().profiles()
+        assert [p.name() for p in profiles] == ["Across"], profiles
+        assert profiles[0].tolerance() == 10
     full = project.viewSettings().presetFullExtent()
     assert full.xMaximum() == 141 and full.crs().authid() == "EPSG:4326", full
     engine = project.labelingEngineSettings()

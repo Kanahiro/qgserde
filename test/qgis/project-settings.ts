@@ -128,6 +128,24 @@ export function createProjectSettingsProject(): QgsProject {
       cameraPose: { x: 140, y: 0, z: -36, dist: 5000, pitch: 30, heading: 10 },
     },
   ];
+  project.sensors = [
+    {
+      attributes: {
+        id: "{cccccccc-0000-0000-0000-000000000001}",
+        type: "tcp_socket",
+        name: "GPS feed",
+        hostName: "localhost",
+        port: 2000,
+      },
+    },
+  ];
+  project.elevationProfiles = [
+    {
+      attributes: { name: "Across", tolerance: 10, distanceUnit: "Meters" },
+      crs: { authId: "EPSG:4326" },
+      curve: "LineString (139 35, 141 37)",
+    },
+  ];
   project.loadProjectExtent = true;
   project.presetFullExtent = { xmin: 139, ymin: 35, xmax: 141, ymax: 37 };
   project.presetFullExtentCrs = { authId: "EPSG:4326" };
