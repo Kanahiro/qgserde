@@ -31,7 +31,7 @@ test("reads vector tile, mesh, annotation, and group layers written by QGIS", ()
   const tiles = layer(project, "vector-tile");
   if (tiles.renderer?.type !== "basic" || tiles.labeling?.type !== "basic")
     throw new Error("basic tiles");
-  assert.equal(tiles.renderer.styles[0]?.attributes?.["min-zoom"], "5");
+  assert.equal(tiles.renderer.styles[0]?.attributes?.["min-zoom"], 5);
   assert.equal(tiles.renderer.styles[0]?.symbol?.type, "line");
   assert.equal(tiles.labeling.styles[0]?.settings?.fieldName, "name");
   const mesh = layer(project, "mesh");
@@ -40,7 +40,7 @@ test("reads vector tile, mesh, annotation, and group layers written by QGIS", ()
     mesh.renderer?.scalarSettings?.[0]?.shader?.attributes?.colorRampType,
     "INTERPOLATED",
   );
-  assert.equal(mesh.renderer?.averaging?.method, "1");
+  assert.equal(mesh.renderer?.averaging?.method, 1);
   const notes = layer(project, "annotation");
   assert.deepEqual(
     notes.items?.map((item) => item.attributes?.type),
@@ -63,23 +63,23 @@ test("edits other layer types and keeps the edits through JSON", () => {
   const tiles = layer(project, "vector-tile");
   if (tiles.renderer?.type !== "basic") throw new Error("basic");
   tiles.renderer.styles.push({
-    attributes: { name: "water", layer: "water", geometry: "2", enabled: "1" },
+    attributes: { name: "water", layer: "water", geometry: 2, enabled: true },
     symbol: {
       type: "fill",
       layers: [{ class: "SimpleFill", properties: { color: "0,0,255,255" } }],
     },
   });
   const mesh = layer(project, "mesh");
-  mesh.renderer!.nativeMesh!.enabled = "0";
+  mesh.renderer!.nativeMesh!.enabled = false;
   const notes = layer(project, "annotation");
   const text = notes.items!.find(
     (item) => item.attributes?.type === "pointtext",
   )!;
   text.attributes!.text = "Bye";
-  text.format!.style!.fontSize = "20";
+  text.format!.style!.fontSize = 20;
   project.mainAnnotationLayer!.items = [
     {
-      attributes: { type: "marker", x: "1", y: "2", zIndex: "0" },
+      attributes: { type: "marker", x: 1, y: 2, zIndex: 0 },
       markerSymbol: {
         type: "marker",
         layers: [{ class: "SimpleMarker", properties: {} }],
@@ -95,12 +95,12 @@ test("edits other layer types and keeps the edits through JSON", () => {
       tiles2.renderer.styles.map((style) => style.attributes?.name),
     ["roads", "water"],
   );
-  assert.equal(layer(reparsed, "mesh").renderer?.nativeMesh?.enabled, "0");
+  assert.equal(layer(reparsed, "mesh").renderer?.nativeMesh?.enabled, false);
   const text2 = layer(reparsed, "annotation").items!.find(
     (item) => item.attributes?.type === "pointtext",
   )!;
   assert.equal(text2.attributes?.text, "Bye");
-  assert.equal(text2.format?.style?.fontSize, "20");
+  assert.equal(text2.format?.style?.fontSize, 20);
   assert.equal(
     reparsed.mainAnnotationLayer?.items?.[0]?.attributes?.type,
     "marker",

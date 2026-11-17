@@ -64,7 +64,7 @@ export function createProjectSettingsProject(): QgsProject {
   project.mapThemes = [
     {
       name: "Only points",
-      layers: [{ id: points, visible: "1", style: "default", expanded: "1" }],
+      layers: [{ id: points, visible: true, style: "default", expanded: true }],
     },
   ];
   project.bookmarks = [
@@ -74,7 +74,7 @@ export function createProjectSettingsProject(): QgsProject {
         name: "Home",
         group: "Places",
         extent: "POLYGON((1 2, 3 2, 3 4, 1 4, 1 2))",
-        rotation: "10",
+        rotation: 10,
       },
       crs,
     },
@@ -83,7 +83,7 @@ export function createProjectSettingsProject(): QgsProject {
     {
       attributes: {
         coordinateOp: "+proj=pipeline +step +proj=noop",
-        allowFallback: "1",
+        allowFallback: true,
       },
       source: crs,
       destination: { authId: "EPSG:3857" },
@@ -91,17 +91,17 @@ export function createProjectSettingsProject(): QgsProject {
   ];
   project.snapping = {
     attributes: {
-      enabled: "1",
-      mode: "2",
-      type: "1",
-      tolerance: "20",
-      unit: "1",
+      enabled: 1,
+      mode: 2,
+      type: 1,
+      tolerance: 20,
+      unit: 1,
     },
   };
   project.useProjectScales = true;
   project.scales = ["5000", "1000"];
   project.timeSettings = {
-    attributes: { timeStep: "2", timeStepUnit: "h", frameRate: "5" },
+    attributes: { timeStep: 2, timeStepUnit: "h", frameRate: 5 },
     range: { start: "2020-01-01T00:00:00Z", end: "2021-01-01T00:00:00Z" },
   };
   project.metadata = {

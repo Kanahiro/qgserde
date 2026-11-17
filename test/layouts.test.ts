@@ -45,7 +45,7 @@ test("reads print layouts written by QGIS", () => {
   assert.equal(table?.type, "65649");
   assert.equal(table?.columns?.[0]?.attributes?.attribute, "name");
   assert.equal(table?.frames?.length, 1);
-  assert.equal(layout?.atlas?.enabled, "1");
+  assert.equal(layout?.atlas?.enabled, true);
   assert.equal(layout?.customProperties?.["plugin/x"], "1");
 });
 
@@ -54,7 +54,7 @@ test("edits layouts, reorders items, and adds new ones", () => {
   const layout = project.layouts![0]!;
   const label = layout.items!.find((item) => item.type === "65641")!;
   label.attributes!.labelText = "Changed";
-  label.format!.style!.fontSize = "30";
+  label.format!.style!.fontSize = 30;
   layout.items!.reverse();
   layout.items!.push({
     type: "65641",
@@ -75,7 +75,7 @@ test("edits layouts, reorders items, and adds new ones", () => {
     (item) => item.attributes?.id === "title",
   )!;
   assert.equal(changed.attributes?.labelText, "Changed");
-  assert.equal(changed.format?.style?.fontSize, "30");
+  assert.equal(changed.format?.style?.fontSize, 30);
   // Unmodeled children stay with their item after reordering.
   const map = reparsed.items!.find(
     (item) => item.attributes?.id === "main map",

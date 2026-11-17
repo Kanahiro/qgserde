@@ -1,4 +1,30 @@
 import {
+  activeAttributes,
+  bookmarkAttributes,
+  canvasAnnotationAttributes,
+  elevationShadingAttributes,
+  formAnnotationAttributes,
+  gpsTimeStampFieldAttributes,
+  htmlAnnotationAttributes,
+  layerTreeGroupAttributes,
+  layerTreeLayerAttributes,
+  mapThemeAttributes,
+  mapThemeLayerAttributes,
+  projectAttributes,
+  projectDisplaySettingsAttributes,
+  projectElevationAttributes,
+  projectGpsSettingsAttributes,
+  projectLegendAttributes,
+  projectStyleSettingsAttributes,
+  projectTimeSettingsAttributes,
+  snappingLayerSettingsAttributes,
+  snappingSettingsAttributes,
+  svgAnnotationAttributes,
+  terrainProviderAttributes,
+  textAnnotationAttributes,
+  transformPairAttributes,
+} from "./attributes.generated.ts";
+import {
   commonLayerEntries,
   customProperties,
   metadataBase,
@@ -7,13 +33,13 @@ import {
 import { annotationEntries } from "./layer-types.ts";
 import { layoutSpec } from "./layouts.ts";
 import { projectProperties } from "./properties.ts";
-import type { Entry, Spec } from "./spec.ts";
+import type { AttributeTable, Entry, Spec } from "./spec.ts";
 
-const attributes = (field: string, ...at: string[]): Entry => ({
-  kind: "attributes",
-  field,
-  at,
-});
+const attributes = (
+  field: string,
+  table: AttributeTable | undefined,
+  ...at: string[]
+): Entry => ({ kind: "attributes", field, at, ...(table ? { table } : {}) });
 
 const legendNodes = (container: string, item: string): Spec => ({
   tag: container,
@@ -39,7 +65,11 @@ const numericFormat = (field: string, tag: string): Entry => ({
 const annotationItem: Spec = {
   tag: "AnnotationItem",
   entries: [
-    { kind: "attributes", field: "attributes" },
+    {
+      kind: "attributes",
+      field: "attributes",
+      table: canvasAnnotationAttributes,
+    },
     { kind: "crs", field: "crs", tag: "" },
     { kind: "symbol", field: "markerSymbol", name: "marker symbol" },
     {
@@ -50,10 +80,10 @@ const annotationItem: Spec = {
     },
   ],
 };
-const canvasAnnotation = (tag: string): Spec => ({
+const canvasAnnotation = (tag: string, table: AttributeTable): Spec => ({
   tag,
   entries: [
-    { kind: "attributes", field: "attributes" },
+    { kind: "attributes", field: "attributes", table },
     {
       kind: "object",
       field: "item",
@@ -74,7 +104,7 @@ const legacyLegendLayer: Spec = {
   tag: "legendlayer",
   entries: [
     { kind: "attributes", field: "attributes" },
-    attributes("fileGroup", "filegroup"),
+    attributes("fileGroup", undefined, "filegroup"),
     {
       kind: "records",
       field: "files",
@@ -97,6 +127,7 @@ export const projectSpec: Spec = {
     {
       kind: "attributes",
       field: "attributes",
+      table: projectAttributes,
       exclude: ["version", "projectname"],
     },
     { kind: "custom", field: "properties", custom: projectProperties },
@@ -106,10 +137,10 @@ export const projectSpec: Spec = {
       field: "annotations",
       at: ["Annotations"],
       specs: {
-        text: canvasAnnotation("TextAnnotationItem"),
-        svg: canvasAnnotation("SVGAnnotationItem"),
-        html: canvasAnnotation("HtmlAnnotationItem"),
-        form: canvasAnnotation("FormAnnotationItem"),
+        text: canvasAnnotation("TextAnnotationItem", textAnnotationAttributes),
+        svg: canvasAnnotation("SVGAnnotationItem", svgAnnotationAttributes),
+        html: canvasAnnotation("HtmlAnnotationItem", htmlAnnotationAttributes),
+        form: canvasAnnotation("FormAnnotationItem", formAnnotationAttributes),
       },
     },
     {
@@ -172,8 +203,18 @@ export const projectSpec: Spec = {
             attribute: "name",
             type: "string",
           },
-          { kind: "attributes", field: "attributes" },
-          { kind: "records", field: "layers", at: [], item: "layer" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: mapThemeAttributes,
+          },
+          {
+            kind: "records",
+            field: "layers",
+            at: [],
+            item: "layer",
+            table: mapThemeLayerAttributes,
+          },
           {
             kind: "owners",
             field: "checkedLegendNodes",
@@ -209,7 +250,11 @@ export const projectSpec: Spec = {
       spec: {
         tag: "Bookmark",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: bookmarkAttributes,
+          },
           { kind: "crs", field: "crs", tag: "" },
         ],
       },
@@ -221,7 +266,11 @@ export const projectSpec: Spec = {
       spec: {
         tag: "srcDest",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: transformPairAttributes,
+          },
           { kind: "crs", field: "source", tag: "src" },
           { kind: "crs", field: "destination", tag: "dest" },
         ],
@@ -234,12 +283,17 @@ export const projectSpec: Spec = {
       spec: {
         tag: "snapping-settings",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: snappingSettingsAttributes,
+          },
           {
             kind: "records",
             field: "layers",
             at: ["individual-layer-settings"],
             item: "layer-setting",
+            table: snappingLayerSettingsAttributes,
           },
         ],
       },
@@ -249,7 +303,11 @@ export const projectSpec: Spec = {
       field: "dataDefinedServerProperties",
       tag: "dataDefinedServerProperties",
     },
-    attributes("elevationShading", "elevation-shading-renderer"),
+    attributes(
+      "elevationShading",
+      elevationShadingAttributes,
+      "elevation-shading-renderer",
+    ),
     {
       kind: "object",
       field: "legacyLegend",
@@ -257,14 +315,22 @@ export const projectSpec: Spec = {
       spec: {
         tag: "legend",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: projectLegendAttributes,
+          },
           legacyLegendNodes,
         ],
       },
     },
-    attributes("autoTransaction", "autotransaction"),
-    attributes("evaluateDefaultValues", "evaluateDefaultValues"),
-    attributes("trust", "trust"),
+    attributes("autoTransaction", activeAttributes, "autotransaction"),
+    attributes(
+      "evaluateDefaultValues",
+      activeAttributes,
+      "evaluateDefaultValues",
+    ),
+    attributes("trust", activeAttributes, "trust"),
     {
       kind: "text",
       field: "canvasUnits",
@@ -292,7 +358,11 @@ export const projectSpec: Spec = {
       spec: {
         tag: "ProjectStyleSettings",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: projectStyleSettingsAttributes,
+          },
           {
             kind: "values",
             field: "databases",
@@ -310,7 +380,11 @@ export const projectSpec: Spec = {
       spec: {
         tag: "ProjectTimeSettings",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: projectTimeSettingsAttributes,
+          },
           { kind: "texts", field: "range", at: ["TemporalRange"] },
         ],
       },
@@ -322,7 +396,11 @@ export const projectSpec: Spec = {
       spec: {
         tag: "ElevationProperties",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: projectElevationAttributes,
+          },
           {
             kind: "attribute",
             field: "terrainProviderType",
@@ -330,7 +408,12 @@ export const projectSpec: Spec = {
             type: "string",
             at: ["terrainProvider"],
           },
-          attributes("terrainProvider", "terrainProvider", "TerrainProvider"),
+          attributes(
+            "terrainProvider",
+            terrainProviderAttributes,
+            "terrainProvider",
+            "TerrainProvider",
+          ),
         ],
       },
     },
@@ -341,7 +424,11 @@ export const projectSpec: Spec = {
       spec: {
         tag: "ProjectDisplaySettings",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: projectDisplaySettingsAttributes,
+          },
           numericFormat("bearingFormat", "BearingFormat"),
           numericFormat(
             "geographicCoordinateFormat",
@@ -358,12 +445,17 @@ export const projectSpec: Spec = {
       spec: {
         tag: "ProjectGpsSettings",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: projectGpsSettingsAttributes,
+          },
           {
             kind: "records",
             field: "timeStampFields",
             at: ["timeStampFields"],
             item: "field",
+            table: gpsTimeStampFieldAttributes,
           },
         ],
       },
@@ -385,6 +477,7 @@ export function treeNodeSpec(group: boolean): Spec {
       {
         kind: "attributes",
         field: "attributes",
+        table: group ? layerTreeGroupAttributes : layerTreeLayerAttributes,
         exclude: group
           ? ["name", "checked", "expanded"]
           : ["id", "name", "source", "providerKey", "checked", "expanded"],

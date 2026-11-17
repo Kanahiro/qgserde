@@ -1,15 +1,39 @@
+import {
+  fontAttributes,
+  layoutAtlasAttributes,
+  layoutAtlasMapAttributes,
+  layoutAttributes,
+  layoutChildFrameAttributes,
+  layoutClippingAttributes,
+  layoutColorAttributes,
+  layoutGridAttributes,
+  layoutGuideAttributes,
+  layoutItemAttributes,
+  layoutMapLayerAttributes,
+  layoutMapOverviewAttributes,
+  layoutMultiFrameAttributes,
+  layoutNodeAttributes,
+  layoutSnapperAttributes,
+  layoutTableCellStyleAttributes,
+  layoutTableColumnAttributes,
+  legendStyleAttributes,
+  legendTreeGroupAttributes,
+  legendTreeLayerAttributes,
+  mapGridAttributes,
+} from "./attributes.generated.ts";
 import { textFormatSpec } from "./labeling.ts";
 import { customProperties } from "./layer-settings.ts";
-import type { Entry, Spec } from "./spec.ts";
+import type { AttributeTable, Entry, Spec } from "./spec.ts";
 
-const attributes = (field: string, ...at: string[]): Entry => ({
-  kind: "attributes",
-  field,
-  at,
-});
-const rest = (exclude: string[] = []): Entry => ({
+const attributes = (
+  field: string,
+  table: AttributeTable,
+  ...at: string[]
+): Entry => ({ kind: "attributes", field, table, at });
+const rest = (table: AttributeTable, exclude: string[] = []): Entry => ({
   kind: "attributes",
   field: "attributes",
+  table,
   exclude,
 });
 const format = (field: string, ...at: string[]): Entry => ({
@@ -46,29 +70,37 @@ const layoutObject: Entry = {
 const mapGrid: Spec = {
   tag: "ComposerMapGrid",
   entries: [
-    rest(),
+    rest(mapGridAttributes),
     symbolIn("lineSymbol", "lineStyle"),
     symbolIn("markerSymbol", "markerStyle"),
     format("format"),
-    attributes("annotationFont", "annotationFontProperties"),
+    attributes("annotationFont", fontAttributes, "annotationFontProperties"),
     layoutObject,
   ],
 };
 
 const mapOverview: Spec = {
   tag: "ComposerMapOverview",
-  entries: [rest(), symbolIn("symbol"), layoutObject],
+  entries: [
+    rest(layoutMapOverviewAttributes),
+    symbolIn("symbol"),
+    layoutObject,
+  ],
 };
 
-const treeEntries: Entry[] = [
-  rest(),
-  { kind: "custom", field: "customProperties", custom: customProperties },
-];
+const treeProperties: Entry = {
+  kind: "custom",
+  field: "customProperties",
+  custom: customProperties,
+};
 const legendGroup: Spec = {
   tag: "layer-tree-group",
-  entries: [...treeEntries],
+  entries: [rest(legendTreeGroupAttributes), treeProperties],
 };
-const legendLayer: Spec = { tag: "layer-tree-layer", entries: treeEntries };
+const legendLayer: Spec = {
+  tag: "layer-tree-layer",
+  entries: [rest(legendTreeLayerAttributes), treeProperties],
+};
 (legendGroup.entries as Entry[]).push({
   kind: "nodes",
   field: "children",
@@ -80,9 +112,9 @@ export const layoutItemSpec: Spec = {
   tag: "LayoutItem",
   entries: [
     { kind: "attribute", field: "type", attribute: "type", type: "string" },
-    rest(["type"]),
-    attributes("frameColor", "FrameColor"),
-    attributes("backgroundColor", "BackgroundColor"),
+    rest(layoutItemAttributes, ["type"]),
+    attributes("frameColor", layoutColorAttributes, "FrameColor"),
+    attributes("backgroundColor", layoutColorAttributes, "BackgroundColor"),
     layoutObject,
     symbolIn("symbol"),
     format("format"),
@@ -94,18 +126,25 @@ export const layoutItemSpec: Spec = {
       at: ["LayerSet"],
       item: "Layer",
       text: "id",
+      table: layoutMapLayerAttributes,
     },
     { kind: "owners", field: "grids", spec: mapGrid },
     { kind: "owners", field: "overviews", spec: mapOverview },
-    attributes("atlasMap", "AtlasMap"),
-    { kind: "records", field: "nodes", at: ["nodes"], item: "node" },
+    attributes("atlasMap", layoutAtlasMapAttributes, "AtlasMap"),
+    {
+      kind: "records",
+      field: "nodes",
+      at: ["nodes"],
+      item: "node",
+      table: layoutNodeAttributes,
+    },
     {
       kind: "owners",
       field: "legendStyles",
       at: ["styles"],
       spec: {
         tag: "style",
-        entries: [rest(), format("format")],
+        entries: [rest(legendStyleAttributes), format("format")],
       },
     },
     symbolIn("lineSymbol", "lineSymbol"),
@@ -119,11 +158,19 @@ export const layoutItemSpec: Spec = {
       at: ["layer-tree-group"],
       spec: legendGroup,
     },
-    attributes("strokeColor", "strokeColor"),
-    attributes("fillColor", "fillColor"),
-    attributes("fillColor2", "fillColor2"),
-    attributes("itemClipping", "itemClippingSettings"),
-    attributes("atlasClipping", "atlasClippingSettings"),
+    attributes("strokeColor", layoutColorAttributes, "strokeColor"),
+    attributes("fillColor", layoutColorAttributes, "fillColor"),
+    attributes("fillColor2", layoutColorAttributes, "fillColor2"),
+    attributes(
+      "itemClipping",
+      layoutClippingAttributes,
+      "itemClippingSettings",
+    ),
+    attributes(
+      "atlasClipping",
+      layoutClippingAttributes,
+      "atlasClippingSettings",
+    ),
     {
       kind: "values",
       field: "atlasClippingLayers",
@@ -135,7 +182,10 @@ export const layoutItemSpec: Spec = {
 
 const tableColumn = (tag: string): Spec => ({
   tag,
-  entries: [rest(), attributes("backgroundColor", "backgroundColor")],
+  entries: [
+    rest(layoutTableColumnAttributes),
+    attributes("backgroundColor", layoutColorAttributes, "backgroundColor"),
+  ],
 });
 
 /** `<LayoutMultiFrame>`, such as attribute tables and HTML frames. */
@@ -143,9 +193,15 @@ export const layoutMultiFrameSpec: Spec = {
   tag: "LayoutMultiFrame",
   entries: [
     { kind: "attribute", field: "type", attribute: "type", type: "string" },
-    rest(["type"]),
+    rest(layoutMultiFrameAttributes, ["type"]),
     layoutObject,
-    { kind: "records", field: "frames", at: [], item: "childFrame" },
+    {
+      kind: "records",
+      field: "frames",
+      at: [],
+      item: "childFrame",
+      table: layoutChildFrameAttributes,
+    },
     format("headerFormat", "headerTextFormat"),
     format("contentFormat", "contentTextFormat"),
     {
@@ -176,7 +232,7 @@ export const layoutMultiFrameSpec: Spec = {
           "headerRow",
           "firstRow",
           "lastRow",
-        ].map((tag) => attributes(tag, tag)),
+        ].map((tag) => attributes(tag, layoutTableCellStyleAttributes, tag)),
       },
     },
   ],
@@ -187,9 +243,9 @@ export const layoutSpec: Spec = {
   tag: "Layout",
   entries: [
     { kind: "attribute", field: "name", attribute: "name", type: "string" },
-    rest(["name"]),
-    attributes("snapper", "Snapper"),
-    attributes("grid", "Grid"),
+    rest(layoutAttributes, ["name"]),
+    attributes("snapper", layoutSnapperAttributes, "Snapper"),
+    attributes("grid", layoutGridAttributes, "Grid"),
     {
       kind: "owners",
       field: "pages",
@@ -202,10 +258,11 @@ export const layoutSpec: Spec = {
       field: "guides",
       at: ["PageCollection", "GuideCollection"],
       item: "Guide",
+      table: layoutGuideAttributes,
     },
     { kind: "owners", field: "items", spec: layoutItemSpec },
     { kind: "owners", field: "multiFrames", spec: layoutMultiFrameSpec },
-    attributes("atlas", "Atlas"),
+    attributes("atlas", layoutAtlasAttributes, "Atlas"),
     { kind: "custom", field: "customProperties", custom: customProperties },
   ],
 };

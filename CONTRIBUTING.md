@@ -157,6 +157,26 @@ test is skipped. `QGIS_VERSION` defaults to `4.2`. The local test and CI share
 the fixture generator and Python verifier; a QGIS version mismatch fails the
 test.
 
+## Attribute groups
+
+`src/attributes.generated.ts` holds the typed attribute groups. Do not edit it
+by hand. `scripts/attribute-groups.json` names each group, the QGIS writers it
+comes from, attributes that other entries type, and kinds the scan gets wrong.
+To regenerate, check out the QGIS 3.44 and 4.2 sources and run:
+
+```sh
+git clone --depth 1 --branch release-3_44 https://github.com/qgis/QGIS.git /tmp/qgis-3.44
+git clone --depth 1 --branch release-4_2 https://github.com/qgis/QGIS.git /tmp/qgis-4.2
+python3 scripts/generate-attributes.py /tmp/qgis-3.44/src /tmp/qgis-4.2/src
+pnpm format
+```
+
+The scan reads `setAttribute` calls. A kind other than string is used only
+when the writer expression shows it, such as `QString::number`, a numeric or
+enum member, or `? "1" : "0"`. Writers that disagree fall back to string. A
+wrong kind loses nothing, because values that do not parse are kept in
+`other`, but the integration tests should not leave typed values there.
+
 ## Format references
 
 - [QGIS project file format](https://documentation.qgis.org/3.44/en/docs/user_manual/appendices/qgis_file_formats.html)

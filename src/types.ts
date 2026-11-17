@@ -1,3 +1,132 @@
+import type {
+  QgsActionAttributes,
+  QgsActiveAttributes,
+  QgsAnnotationLayerItemAttributes,
+  QgsAttributeTableColumnAttributes,
+  QgsAttributeTableConfigAttributes,
+  QgsAuxiliaryLayerAttributes,
+  QgsBookmarkAttributes,
+  QgsBrightnessContrastAttributes,
+  QgsCanvasAnnotationAttributes,
+  QgsClassificationLabelFormatAttributes,
+  QgsColorAttributes,
+  QgsColorRampItemAttributes,
+  QgsColorRampShaderAttributes,
+  QgsConditionalStyleAttributes,
+  QgsDefaultActionAttributes,
+  QgsDiagramAttributeAttributes,
+  QgsDiagramCategoryAttributes,
+  QgsDiagramLayerSettingsAttributes,
+  QgsDiagramRendererAttributes,
+  QgsElevationAttributes,
+  QgsElevationShadingAttributes,
+  QgsExpressionFieldAttributes,
+  QgsFontAttributes,
+  QgsFormActionAttributes,
+  QgsFormAnnotationAttributes,
+  QgsFormContainerAttributes,
+  QgsFormElementAttributes,
+  QgsFormFieldAttributes,
+  QgsFormLabelStyleAttributes,
+  QgsFormRelationAttributes,
+  QgsFormSpacerAttributes,
+  QgsGeometryOptionsAttributes,
+  QgsGpsTimeStampFieldAttributes,
+  QgsHeatmapRendererAttributes,
+  QgsHtmlAnnotationAttributes,
+  QgsHueSaturationAttributes,
+  QgsInvertedPolygonRendererAttributes,
+  QgsJoinAttributes,
+  QgsLabelFormattingAttributes,
+  QgsLabelPlacementAttributes,
+  QgsLabelRenderingAttributes,
+  QgsLayerLegendAttributes,
+  QgsLayerTreeGroupAttributes,
+  QgsLayerTreeLayerAttributes,
+  QgsLayoutAtlasAttributes,
+  QgsLayoutAtlasMapAttributes,
+  QgsLayoutAttributes,
+  QgsLayoutChildFrameAttributes,
+  QgsLayoutClippingAttributes,
+  QgsLayoutColorAttributes,
+  QgsLayoutGridAttributes,
+  QgsLayoutGuideAttributes,
+  QgsLayoutItemAttributes,
+  QgsLayoutMapLayerAttributes,
+  QgsLayoutMapOverviewAttributes,
+  QgsLayoutMultiFrameAttributes,
+  QgsLayoutNodeAttributes,
+  QgsLayoutSnapperAttributes,
+  QgsLayoutTableCellStyleAttributes,
+  QgsLayoutTableColumnAttributes,
+  QgsLegendStyleAttributes,
+  QgsLegendTreeGroupAttributes,
+  QgsLegendTreeLayerAttributes,
+  QgsLinearDiagramRendererAttributes,
+  QgsMapGridAttributes,
+  QgsMapLayerAttributes,
+  QgsMapThemeAttributes,
+  QgsMapThemeLayerAttributes,
+  QgsMeshActiveDatasetAttributes,
+  QgsMeshAveragingAttributes,
+  QgsMeshDatasetAttributes,
+  QgsMeshDatasetGroupTreeItemAttributes,
+  QgsMeshEdgeSettingsAttributes,
+  QgsMeshFrameSettingsAttributes,
+  QgsMeshNameIndexAttributes,
+  QgsMeshScalarSettingsAttributes,
+  QgsMeshSigmaAveragingAttributes,
+  QgsMeshSimplifyAttributes,
+  QgsMeshStrokeWidthAttributes,
+  QgsMeshVectorSettingsAttributes,
+  QgsMetadataConstraintAttributes,
+  QgsMetadataDateAttributes,
+  QgsMetadataLinkAttributes,
+  QgsMetadataSpatialExtentAttributes,
+  QgsMetadataUrlAttributes,
+  QgsNoDataRangeAttributes,
+  QgsOrderByClauseAttributes,
+  QgsPaletteEntryAttributes,
+  QgsPixelListEntryAttributes,
+  QgsPointCloudCategoryAttributes,
+  QgsPointCloudRendererAttributes,
+  QgsPointClusterRendererAttributes,
+  QgsPointDisplacementRendererAttributes,
+  QgsProjectAttributes,
+  QgsProjectDisplaySettingsAttributes,
+  QgsProjectElevationAttributes,
+  QgsProjectGpsSettingsAttributes,
+  QgsProjectStyleSettingsAttributes,
+  QgsProjectTimeSettingsAttributes,
+  QgsProviderResamplingAttributes,
+  QgsRampLegendSettingsAttributes,
+  QgsRasterRendererAttributes,
+  QgsRasterResamplerAttributes,
+  QgsRelationAttributes,
+  QgsRelationFieldRefAttributes,
+  QgsRenderer3DAttributes,
+  QgsSelectionAttributes,
+  QgsSnappingLayerSettingsAttributes,
+  QgsSnappingSettingsAttributes,
+  QgsStoredExpressionAttributes,
+  QgsSvgAnnotationAttributes,
+  QgsSymmetricModeAttributes,
+  QgsTemporalAttributes,
+  QgsTerrainProviderAttributes,
+  QgsTextAnnotationAttributes,
+  QgsTextBackgroundAttributes,
+  QgsTextBufferAttributes,
+  QgsTextMaskAttributes,
+  QgsTextShadowAttributes,
+  QgsTextStyleAttributes,
+  QgsTextTabAttributes,
+  QgsTiledSceneRendererAttributes,
+  QgsTileMatrixAttributes,
+  QgsTileMatrixSetAttributes,
+  QgsTransformPairAttributes,
+  QgsVectorTileLabelingAttributes,
+  QgsVectorTileStyleAttributes,
+} from "./attributes.generated.ts";
 import type { QgsExtensions } from "./extensions.ts";
 
 /** Values stay strings: coercing IDs, expressions, or coordinates loses information. */
@@ -94,7 +223,7 @@ export interface QgsProject {
   /** Drawing order as layer IDs. Removed project layers are excluded on serialization. */
   layerOrder?: string[];
   /** Other root attributes, such as `saveUser` and `saveDateTime`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsProjectAttributes;
   /**
    * Project property tree, such as `Variables`, `Measurement`, `Measure`, or
    * `WMSServiceTitle`. `SpatialRefSys/ProjectionsEnabled` follows {@link QgsProject.crs}.
@@ -125,13 +254,13 @@ export interface QgsProject {
   /** Data-defined properties for QGIS Server. */
   dataDefinedServerProperties?: QgsDataDefinedProperties;
   /** Elevation shading (eye-dome lighting and hillshading) settings. */
-  elevationShading?: QgsAttributes;
+  elevationShading?: QgsElevationShadingAttributes;
   /** Automatic transaction groups of older projects (`active`). */
-  autoTransaction?: QgsAttributes;
+  autoTransaction?: QgsActiveAttributes;
   /** Provider-side default values of older projects (`active`). */
-  evaluateDefaultValues?: QgsAttributes;
+  evaluateDefaultValues?: QgsActiveAttributes;
   /** Trusted layer metadata of older projects (`active`). */
-  trust?: QgsAttributes;
+  trust?: QgsActiveAttributes;
   /** Map canvas units of older projects, such as `degrees` or `meters`. */
   canvasUnits?: string;
   /** QGIS 2 legend of older projects; QGIS uses it only without a layer tree. */
@@ -212,7 +341,7 @@ export interface QgsLayoutObject {
 /** Map grid of a layout map item. */
 export interface QgsLayoutMapGrid {
   /** Settings such as `name`, `show`, `intervalX`, `intervalY`, and `gridStyle`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsMapGridAttributes;
   /** Grid line symbol. */
   lineSymbol?: QgsSymbol;
   /** Grid marker symbol. */
@@ -220,7 +349,7 @@ export interface QgsLayoutMapGrid {
   /** Annotation text format. */
   format?: QgsTextFormat;
   /** Annotation font settings of older projects. */
-  annotationFont?: QgsAttributes;
+  annotationFont?: QgsFontAttributes;
   /** Data-defined and custom properties. */
   layoutObject?: QgsLayoutObject;
   /** @internal */
@@ -230,7 +359,7 @@ export interface QgsLayoutMapGrid {
 /** Overview of a layout map item. */
 export interface QgsLayoutMapOverview {
   /** Settings such as `name`, `show`, `frameMap`, and `inverted`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsLayoutMapOverviewAttributes;
   /** Overview frame symbol. */
   symbol?: QgsSymbol;
   /** Data-defined and custom properties. */
@@ -242,7 +371,7 @@ export interface QgsLayoutMapOverview {
 /** Text style of a legend component, such as `title` or `symbolLabel`. */
 export interface QgsLayoutLegendStyle {
   /** Settings such as `name`, `alignment`, and `marginTop`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsLegendStyleAttributes;
   /** Text format. */
   format?: QgsTextFormat;
   /** @internal */
@@ -259,11 +388,11 @@ export interface QgsLayoutItem {
   /** QGIS item type number. */
   type: string;
   /** Item settings, such as `id`, `uuid`, `position`, `size`, `labelText`, or `file`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsLayoutItemAttributes;
   /** Frame color (`red`, `green`, `blue`, `alpha`). */
-  frameColor?: QgsAttributes;
+  frameColor?: QgsLayoutColorAttributes;
   /** Background color (`red`, `green`, `blue`, `alpha`). */
-  backgroundColor?: QgsAttributes;
+  backgroundColor?: QgsLayoutColorAttributes;
   /** Data-defined and custom properties. */
   layoutObject?: QgsLayoutObject;
   /** Shape, polyline, polygon, or page symbol. */
@@ -275,15 +404,18 @@ export interface QgsLayoutItem {
   /** Map CRS. */
   crs?: QgsCrs;
   /** Locked map layers, each with `source`, `provider`, `name`, and the layer `id`. */
-  layers?: QgsAttributes[];
+  layers?: (QgsLayoutMapLayerAttributes & {
+    /** Layer ID, stored as the element text. */
+    id?: string;
+  })[];
   /** Map grids. */
   grids?: QgsLayoutMapGrid[];
   /** Map overviews. */
   overviews?: QgsLayoutMapOverview[];
   /** Map atlas settings (`atlasDriven`, `scalingMode`, `margin`). */
-  atlasMap?: QgsAttributes;
+  atlasMap?: QgsLayoutAtlasMapAttributes;
   /** Polyline or polygon nodes, each with `x` and `y`. */
-  nodes?: QgsAttributes[];
+  nodes?: QgsLayoutNodeAttributes[];
   /** Legend text styles. */
   legendStyles?: QgsLayoutLegendStyle[];
   /** Customized legend tree; QGIS uses the project tree when absent. */
@@ -299,15 +431,15 @@ export interface QgsLayoutItem {
   /** Scale bar second fill symbol. */
   fillSymbol2?: QgsSymbol;
   /** Scale bar stroke color. */
-  strokeColor?: QgsAttributes;
+  strokeColor?: QgsLayoutColorAttributes;
   /** Scale bar first fill color. */
-  fillColor?: QgsAttributes;
+  fillColor?: QgsLayoutColorAttributes;
   /** Scale bar second fill color. */
-  fillColor2?: QgsAttributes;
+  fillColor2?: QgsLayoutColorAttributes;
   /** Map item clipping settings. */
-  itemClipping?: QgsAttributes;
+  itemClipping?: QgsLayoutClippingAttributes;
   /** Map atlas clipping settings. */
-  atlasClipping?: QgsAttributes;
+  atlasClipping?: QgsLayoutClippingAttributes;
   /** Layers clipped to the atlas feature. */
   atlasClippingLayers?: string[];
   /** @internal */
@@ -319,7 +451,7 @@ export interface QgsLegendNode {
   /** Node kind. */
   kind: "group" | "layer";
   /** Settings such as `name`, `id`, `checked`, and `legend_exp`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsLegendTreeGroupAttributes & QgsLegendTreeLayerAttributes;
   /** Custom properties, such as legend node overrides. */
   customProperties?: QgsVariantMap;
   /** Children of a group. */
@@ -331,9 +463,9 @@ export interface QgsLegendNode {
 /** Column of a layout table. */
 export interface QgsLayoutTableColumn {
   /** Settings such as `attribute`, `heading`, `width`, and `hAlignment`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsLayoutTableColumnAttributes;
   /** Background color. */
-  backgroundColor?: QgsAttributes;
+  backgroundColor?: QgsLayoutColorAttributes;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -343,11 +475,11 @@ export interface QgsLayoutMultiFrame {
   /** QGIS multi-frame type number. */
   type: string;
   /** Settings such as `uuid`, `vectorLayer`, and `maxFeatures`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsLayoutMultiFrameAttributes;
   /** Data-defined and custom properties. */
   layoutObject?: QgsLayoutObject;
   /** Frames, each with the `uuid` of a frame item. */
-  frames?: QgsAttributes[];
+  frames?: QgsLayoutChildFrameAttributes[];
   /** Table header text format. */
   headerFormat?: QgsTextFormat;
   /** Table content text format. */
@@ -357,7 +489,7 @@ export interface QgsLayoutMultiFrame {
   /** Sort columns. */
   sortColumns?: QgsLayoutTableColumn[];
   /** Table cell styles by part, such as `oddRows` or `headerRow`, each with `enabled` and `cellBackgroundColor`. */
-  cellStyles?: Record<string, QgsAttributes>;
+  cellStyles?: Record<string, QgsLayoutTableCellStyleAttributes>;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -367,23 +499,23 @@ export interface QgsLayout {
   /** Layout name. */
   name: string;
   /** Other settings, such as `units` and `printResolution`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsLayoutAttributes;
   /** Snapping settings. */
-  snapper?: QgsAttributes;
+  snapper?: QgsLayoutSnapperAttributes;
   /** Grid settings. */
-  grid?: QgsAttributes;
+  grid?: QgsLayoutGridAttributes;
   /** Pages, as layout items of type `65638`. */
   pages?: QgsLayoutItem[];
   /** Default page symbol. */
   pageSymbol?: QgsSymbol;
   /** Guides, each with attributes. */
-  guides?: QgsAttributes[];
+  guides?: QgsLayoutGuideAttributes[];
   /** Items, excluding pages. */
   items?: QgsLayoutItem[];
   /** Multi-frames. */
   multiFrames?: QgsLayoutMultiFrame[];
   /** Atlas settings, such as `enabled`, `coverageLayer`, and `filenamePattern`. */
-  atlas?: QgsAttributes;
+  atlas?: QgsLayoutAtlasAttributes;
   /** Plugin and application properties. */
   customProperties?: QgsVariantMap;
   /** @internal */
@@ -426,7 +558,10 @@ export interface QgsCanvasAnnotation {
   /** Annotation kind. */
   kind: "text" | "svg" | "html" | "form";
   /** Content settings, such as `document` (text), `file` (SVG), or `htmlfile`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsTextAnnotationAttributes &
+    QgsSvgAnnotationAttributes &
+    QgsHtmlAnnotationAttributes &
+    QgsFormAnnotationAttributes;
   /** Placement and frame. */
   item?: QgsCanvasAnnotationItem;
   /** @internal */
@@ -436,7 +571,7 @@ export interface QgsCanvasAnnotation {
 /** Placement and frame of a map canvas annotation (`<AnnotationItem>`). */
 export interface QgsCanvasAnnotationItem {
   /** Settings such as `mapPosX`, `mapPosY`, `visible`, and `frameWidthMM`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsCanvasAnnotationAttributes;
   /** CRS of the map position. */
   crs?: QgsCrs;
   /** Marker symbol at the anchor point. */
@@ -468,9 +603,9 @@ export interface QgsMapTheme {
   /** Theme name. */
   name: string;
   /** Other theme attributes, such as `has-expanded-info`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsMapThemeAttributes;
   /** Visible layers, each with `id`, `visible`, `style`, and `expanded`. */
-  layers?: QgsAttributes[];
+  layers?: QgsMapThemeLayerAttributes[];
   /** Checked legend nodes by layer. */
   checkedLegendNodes?: QgsMapThemeLegendNodes[];
   /** Expanded legend nodes by layer. */
@@ -486,7 +621,7 @@ export interface QgsMapTheme {
 /** Spatial bookmark. */
 export interface QgsBookmark {
   /** Settings such as `id`, `name`, `group`, `extent` (WKT), and `rotation`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsBookmarkAttributes;
   /** Extent CRS. */
   crs?: QgsCrs;
   /** @internal */
@@ -496,7 +631,7 @@ export interface QgsBookmark {
 /** Preferred coordinate operation between two CRS. */
 export interface QgsCoordinateOperation {
   /** Settings such as `coordinateOp` (PROJ pipeline) and `allowFallback`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsTransformPairAttributes;
   /** Source CRS. */
   source?: QgsCrs;
   /** Destination CRS. */
@@ -508,15 +643,15 @@ export interface QgsCoordinateOperation {
 /** Snapping settings. */
 export interface QgsSnappingSettings {
   /** Settings such as `enabled`, `mode`, `type`, `tolerance`, and `unit`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsSnappingSettingsAttributes;
   /** Per-layer settings, each with `id`, `enabled`, `type`, `tolerance`, and `units`. */
-  layers?: QgsAttributes[];
+  layers?: QgsSnappingLayerSettingsAttributes[];
 }
 
 /** Default symbol and style database settings. */
 export interface QgsProjectStyleSettings {
   /** Settings such as `DefaultSymbolOpacity` and `RandomizeDefaultSymbolColor`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsProjectStyleSettingsAttributes;
   /** Style database paths. */
   databases?: string[];
 }
@@ -524,7 +659,7 @@ export interface QgsProjectStyleSettings {
 /** Temporal navigation settings. */
 export interface QgsProjectTimeSettings {
   /** Settings such as `timeStep`, `timeStepUnit`, and `frameRate`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsProjectTimeSettingsAttributes;
   /** Temporal range (`start`, `end`) in ISO 8601. */
   range?: QgsAttributes;
 }
@@ -532,11 +667,11 @@ export interface QgsProjectTimeSettings {
 /** Terrain settings. */
 export interface QgsProjectElevationProperties {
   /** Other elevation settings. */
-  attributes?: QgsAttributes;
+  attributes?: QgsProjectElevationAttributes;
   /** Terrain provider type, such as `flat`, `raster`, or `mesh`. */
   terrainProviderType?: string;
   /** Terrain provider settings, such as `offset`, `scale`, and `layer`. */
-  terrainProvider?: QgsAttributes;
+  terrainProvider?: QgsTerrainProviderAttributes;
 }
 
 /** Numeric format, such as a bearing or coordinate format. */
@@ -550,7 +685,7 @@ export interface QgsNumericFormat {
 /** Coordinate and bearing display settings. */
 export interface QgsProjectDisplaySettings {
   /** Settings such as `CoordinateType` and `CoordinateAxisOrder`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsProjectDisplaySettingsAttributes;
   /** Bearing format. */
   bearingFormat?: QgsNumericFormat;
   /** Geographic coordinate format. */
@@ -562,9 +697,9 @@ export interface QgsProjectDisplaySettings {
 /** GPS digitizing settings. */
 export interface QgsProjectGpsSettings {
   /** Settings such as `destinationLayer` and `autoAddTrackVertices`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsProjectGpsSettingsAttributes;
   /** Timestamp fields by layer, each with attributes. */
-  timeStampFields?: QgsAttributes[];
+  timeStampFields?: QgsGpsTimeStampFieldAttributes[];
 }
 
 /** Descriptive metadata. The title is stored in {@link QgsProject.title}. */
@@ -601,7 +736,7 @@ export interface QgsLayerTreeGroup {
   /** Children in display order. A layer may be referenced more than once. */
   children: QgsLayerTreeNode[];
   /** Other attributes, such as `mutually-exclusive` and `groupLayer`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsLayerTreeGroupAttributes;
   /** Plugin and application properties stored with the node. */
   customProperties?: QgsVariantMap;
   /** Custom drawing order, independent of the tree order. */
@@ -632,7 +767,7 @@ export interface QgsLayerTreeLayer {
   /** Layer reference check state. Parent group states also affect visibility. */
   checked: QgsCheckState;
   /** Other attributes, such as `patch_size`, `legend_exp`, and `legend_split_behavior`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsLayerTreeLayerAttributes;
   /** Plugin and application properties stored with the node. */
   customProperties?: QgsVariantMap;
   /** @internal */
@@ -667,7 +802,7 @@ export interface QgsMapLayerBase {
   /** Whether scale-based visibility limits are enabled. */
   scaleBasedVisibility?: boolean;
   /** Other `<maplayer>` attributes, such as `autoRefreshMode`, `styleCategories`, or `simplifyDrawingTol`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsMapLayerAttributes;
   /** Layer extent in WGS 84, as stored by QGIS. */
   wgs84Extent?: QgsRectangle;
   /** Named style variants. */
@@ -685,7 +820,7 @@ export interface QgsMapLayerBase {
   /** Whether the map tip is enabled. */
   mapTipEnabled?: boolean;
   /** Legend settings (`<legend>`), such as `type` and `showLabelLegend`. */
-  legend?: QgsAttributes;
+  legend?: QgsLayerLegendAttributes;
   /** Time settings (`<temporal>`). */
   temporal?: QgsTemporalProperties;
   /** Elevation and profile settings (`<elevation>`). */
@@ -725,13 +860,13 @@ export interface QgsRenderer3d {
   /** Renderer type, such as `vector`, `rulebased`, `mesh`, or `pointcloud`. */
   type?: string;
   /** Other settings. */
-  attributes?: QgsAttributes;
+  attributes?: QgsRenderer3DAttributes;
 }
 
 /** Layer time settings. */
 export interface QgsTemporalProperties {
   /** Settings such as `enabled`, `mode`, `startField`, and `durationUnit`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsTemporalAttributes;
   /** Fixed range (`start`, `end`) for fixed-range modes. */
   fixedRange?: QgsAttributes;
 }
@@ -739,7 +874,7 @@ export interface QgsTemporalProperties {
 /** Layer elevation and profile settings. */
 export interface QgsElevationProperties {
   /** Settings such as `zoffset`, `zscale`, `clamping`, and `binding`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsElevationAttributes;
   /** Elevation data-defined properties, such as `ZOffset`. */
   dataDefinedProperties?: QgsDataDefinedProperties;
   /** Symbol for line profiles. */
@@ -773,7 +908,10 @@ export interface QgsLayerServerProperties {
   /** Format of {@link QgsLayerServerProperties.legendUrl}. */
   legendUrlFormat?: string;
   /** Metadata URLs, each with attributes such as `type` and `format` and the URL in `url`. */
-  metadataUrls?: QgsAttributes[];
+  metadataUrls?: (QgsMetadataUrlAttributes & {
+    /** URL, stored as the element text. */
+    url?: string;
+  })[];
 }
 
 /** Contact in metadata. */
@@ -803,11 +941,11 @@ export interface QgsMetadataBase {
   /** Contacts. */
   contacts?: QgsMetadataContact[];
   /** Links, each with `name`, `type`, `url`, and other attributes. */
-  links?: QgsAttributes[];
+  links?: QgsMetadataLinkAttributes[];
   /** History entries. */
   history?: string[];
   /** Dates, each with `type` and `value`. */
-  dates?: QgsAttributes[];
+  dates?: QgsMetadataDateAttributes[];
 }
 
 /** Layer metadata (`<resourceMetadata>`). */
@@ -833,11 +971,14 @@ export interface QgsLayerMetadata extends QgsMetadataBase {
   /** Licenses. */
   licenses?: string[];
   /** Access constraints, each with a `type` and the constraint text in `value`. */
-  constraints?: QgsAttributes[];
+  constraints?: (QgsMetadataConstraintAttributes & {
+    /** Constraint text, stored as the element text. */
+    value?: string;
+  })[];
   /** Metadata CRS. */
   crs?: QgsCrs;
   /** Spatial extents, each with attributes such as `crs`, `minx`, and `maxy`. */
-  spatialExtents?: QgsAttributes[];
+  spatialExtents?: QgsMetadataSpatialExtentAttributes[];
 }
 
 /** Vector layer settings. Feature data and attribute values are not included. */
@@ -863,7 +1004,7 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   /** Display expression, used for feature titles (`<previewExpression>`). */
   displayExpression?: string;
   /** Virtual fields, each with `name`, `expression`, `type`, and other attributes. */
-  expressionFields?: QgsAttributes[];
+  expressionFields?: QgsExpressionFieldAttributes[];
   /** Joins to other layers. */
   joins?: QgsVectorJoin[];
   /** IDs of layers whose data this layer depends on. */
@@ -873,13 +1014,13 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   /** Feature actions. */
   actions?: QgsAction[];
   /** Default actions, each with `key` and `value`. */
-  defaultActions?: QgsAttributes[];
+  defaultActions?: QgsDefaultActionAttributes[];
   /** Attribute table settings. */
   attributeTable?: QgsAttributeTableConfig;
   /** Conditional formatting of the attribute table. */
   conditionalStyles?: QgsConditionalStyles;
   /** Stored expressions, each with `name`, `expression`, and `tag`. */
-  storedExpressions?: QgsAttributes[];
+  storedExpressions?: QgsStoredExpressionAttributes[];
   /** Attribute form settings. */
   form?: QgsEditForm;
   /** Relation editor widget settings by relation. */
@@ -887,9 +1028,9 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   /** Geometry validation and precision settings. */
   geometryOptions?: QgsGeometryOptions;
   /** Selection settings (`<selection>`), such as `mode`. */
-  selection?: QgsAttributes;
+  selection?: QgsSelectionAttributes;
   /** Layer-specific selection color: `spec` (such as `rgb`) and components from 0 to 1, or `invalid`. */
-  selectionColor?: QgsAttributes;
+  selectionColor?: QgsColorAttributes;
   /** Symbol for selected features, when the selection uses a custom symbol. */
   selectionSymbol?: QgsSymbol;
   /** Diagram renderer. */
@@ -897,7 +1038,7 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
   /** Diagram placement settings. */
   diagramSettings?: QgsDiagramSettings;
   /** Auxiliary storage settings (`<auxiliaryLayer>`). */
-  auxiliaryLayer?: QgsAttributes;
+  auxiliaryLayer?: QgsAuxiliaryLayerAttributes;
   /** Relations to referenced layers, kept with the layer for portable styles. */
   referencedLayers?: QgsRelation[];
   /** Relations from referencing layers, kept with the layer for portable styles. */
@@ -907,11 +1048,11 @@ export interface QgsVectorLayer extends QgsMapLayerBase {
 /** Category of a diagram renderer (`<DiagramCategory>`). */
 export interface QgsDiagramCategory {
   /** Settings such as `width`, `height`, `opacity`, `penColor`, and `sizeType`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsDiagramCategoryAttributes;
   /** Font settings. */
-  font?: QgsAttributes;
+  font?: QgsFontAttributes;
   /** Diagram attributes, each with `field` (an expression), `color`, and `label`. */
-  fields?: QgsAttributes[];
+  fields?: QgsDiagramAttributeAttributes[];
   /** Histogram axis symbol. */
   axisSymbol?: QgsSymbol;
   /** @internal */
@@ -926,7 +1067,9 @@ export interface QgsDiagramRenderer {
    */
   renderer: string;
   /** Settings such as `diagramType` (`Pie`, `Histogram`, `Text`) and interpolation bounds. */
-  attributes?: QgsAttributes;
+  attributes?:
+    | QgsDiagramRendererAttributes
+    | QgsLinearDiagramRendererAttributes;
   /** Categories. */
   categories?: QgsDiagramCategory[];
   /** @internal */
@@ -936,7 +1079,7 @@ export interface QgsDiagramRenderer {
 /** Diagram placement settings (`<DiagramLayerSettings>`). */
 export interface QgsDiagramSettings {
   /** Settings such as `placement`, `dist`, `priority`, `zIndex`, and `showAll`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsDiagramLayerSettingsAttributes;
   /** Diagram data-defined properties. */
   dataDefinedProperties?: QgsDataDefinedProperties;
 }
@@ -944,7 +1087,7 @@ export interface QgsDiagramSettings {
 /** Join to another vector layer. */
 export interface QgsVectorJoin {
   /** Join settings, such as `joinLayerId`, `joinFieldName`, `targetFieldName`, and `customPrefix`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsJoinAttributes;
   /** Joined field names; all fields when absent. */
   fields?: string[];
   /** @internal */
@@ -954,7 +1097,7 @@ export interface QgsVectorJoin {
 /** Feature action. */
 export interface QgsAction {
   /** Action settings, such as `name`, `type`, `action`, and `capture`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsActionAttributes;
   /** Scopes where the action is shown, such as `Feature` or `Canvas`. */
   scopes?: string[];
   /** @internal */
@@ -964,17 +1107,17 @@ export interface QgsAction {
 /** Attribute table settings. */
 export interface QgsAttributeTableConfig {
   /** Settings such as `sortExpression`, `sortOrder`, and `actionWidgetStyle`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsAttributeTableConfigAttributes;
   /** Columns, each with `type`, `name`, `width`, and `hidden`. */
-  columns?: QgsAttributes[];
+  columns?: QgsAttributeTableColumnAttributes[];
 }
 
 /** Conditional formatting rule. */
 export interface QgsConditionalStyle {
   /** Rule and colors, such as `rule`, `name`, `background_color`, and `text_color`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsConditionalStyleAttributes;
   /** Font settings. */
-  font?: QgsAttributes;
+  font?: QgsFontAttributes;
   /** Icon symbol. */
   symbol?: QgsSymbol;
   /** @internal */
@@ -1002,9 +1145,9 @@ export interface QgsConditionalStyles {
 /** Label appearance of a form item. */
 export interface QgsFormLabelStyle {
   /** Settings such as `labelColor`, `overrideLabelColor`, and `overrideLabelFont`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsFormLabelStyleAttributes;
   /** Font settings. */
-  font?: QgsAttributes;
+  font?: QgsFontAttributes;
 }
 
 /** Item of a drag-and-drop attribute form. */
@@ -1020,7 +1163,12 @@ export interface QgsFormNode {
     | "text"
     | "spacer";
   /** Item settings, such as `name`, `showLabel`, or a container's `type` and `columnCount`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsFormContainerAttributes &
+    QgsFormFieldAttributes &
+    QgsFormRelationAttributes &
+    QgsFormActionAttributes &
+    QgsFormSpacerAttributes &
+    QgsFormElementAttributes;
   /** Label appearance. */
   labelStyle?: QgsFormLabelStyle;
   /** Items of a container. */
@@ -1064,7 +1212,7 @@ export interface QgsFormWidget {
 /** Geometry validation and precision settings. */
 export interface QgsGeometryOptions {
   /** Settings such as `geometryPrecision` and `removeDuplicateNodes`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsGeometryOptionsAttributes;
   /** Active geometry checks. */
   activeChecks?: QgsVariant;
   /** Geometry check settings. */
@@ -1074,9 +1222,9 @@ export interface QgsGeometryOptions {
 /** Relation between a referencing (child) and a referenced (parent) layer. */
 export interface QgsRelation {
   /** Settings such as `id`, `name`, `referencingLayer`, `referencedLayer`, and `strength`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsRelationAttributes;
   /** Field pairs, each with `referencingField` and `referencedField`. */
-  fieldRefs?: QgsAttributes[];
+  fieldRefs?: QgsRelationFieldRefAttributes[];
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -1088,15 +1236,15 @@ export interface QgsRasterLayer extends QgsMapLayerBase {
   /** Renderer and its type-specific settings. */
   renderer?: QgsRasterRenderer;
   /** Brightness, contrast, and gamma (`<brightnesscontrast>`). */
-  brightnessContrast?: QgsAttributes;
+  brightnessContrast?: QgsBrightnessContrastAttributes;
   /** Saturation, grayscale, colorize, and inversion (`<huesaturation>`). */
-  hueSaturation?: QgsAttributes;
+  hueSaturation?: QgsHueSaturationAttributes;
   /** Resampling filter settings (`<rasterresampler>`), such as `zoomedInResampler`. */
-  resampler?: QgsAttributes;
+  resampler?: QgsRasterResamplerAttributes;
   /** Pipe stage that resamples: `resamplingFilter` or `provider`. */
   resamplingStage?: string;
   /** Provider resampling settings (`<provider><resampling>`). */
-  providerResampling?: QgsAttributes;
+  providerResampling?: QgsProviderResamplingAttributes;
   /** User no-data values per band. */
   noData?: QgsRasterNoData[];
   /** Data-defined properties of the raster pipe. */
@@ -1110,9 +1258,9 @@ export interface QgsMeshLayer extends QgsMapLayerBase {
   /** Mesh rendering settings. */
   renderer?: QgsMeshRendererSettings;
   /** Active static datasets (`scalar`, `vector`). */
-  staticActiveDataset?: QgsAttributes;
+  staticActiveDataset?: QgsMeshActiveDatasetAttributes;
   /** Mesh simplification settings. */
-  simplify?: QgsAttributes;
+  simplify?: QgsMeshSimplifyAttributes;
   /** Dataset groups. */
   datasetGroups?: QgsMeshDatasetGroups;
 }
@@ -1120,13 +1268,13 @@ export interface QgsMeshLayer extends QgsMapLayerBase {
 /** Scalar dataset rendering of a mesh dataset group. */
 export interface QgsMeshScalarSettings {
   /** Settings such as `group`, `min-val`, `max-val`, `opacity`, and `interpolation-method`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsMeshScalarSettingsAttributes;
   /** Color ramp shader. */
   shader?: QgsColorRampShader;
   /** Edge settings, such as `stroke-width-unit`. */
-  edge?: QgsAttributes;
+  edge?: QgsMeshEdgeSettingsAttributes;
   /** Edge stroke width settings. */
-  edgeStrokeWidth?: QgsAttributes;
+  edgeStrokeWidth?: QgsMeshStrokeWidthAttributes;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -1134,7 +1282,7 @@ export interface QgsMeshScalarSettings {
 /** Vector dataset rendering of a mesh dataset group. */
 export interface QgsMeshVectorSettings {
   /** Settings such as `group`, `symbology`, and `color`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsMeshVectorSettingsAttributes;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -1142,27 +1290,27 @@ export interface QgsMeshVectorSettings {
 /** Mesh rendering settings. */
 export interface QgsMeshRendererSettings {
   /** Active dataset groups (`scalar`, `vector`). */
-  activeDatasetGroup?: QgsAttributes;
+  activeDatasetGroup?: QgsMeshActiveDatasetAttributes;
   /** Scalar rendering per dataset group. */
   scalarSettings?: QgsMeshScalarSettings[];
   /** Vector rendering per dataset group. */
   vectorSettings?: QgsMeshVectorSettings[];
   /** Native mesh frame, such as `enabled`, `color`, and `line-width`. */
-  nativeMesh?: QgsAttributes;
+  nativeMesh?: QgsMeshFrameSettingsAttributes;
   /** Triangular mesh frame. */
-  triangularMesh?: QgsAttributes;
+  triangularMesh?: QgsMeshFrameSettingsAttributes;
   /** Edge mesh frame. */
-  edgeMesh?: QgsAttributes;
+  edgeMesh?: QgsMeshFrameSettingsAttributes;
   /** 3D averaging method. */
-  averaging?: QgsAttributes;
+  averaging?: QgsMeshAveragingAttributes;
   /** Sigma averaging settings. */
-  averagingSigma?: QgsAttributes;
+  averagingSigma?: QgsMeshSigmaAveragingAttributes;
 }
 
 /** Item of the mesh dataset group tree. */
 export interface QgsMeshDatasetGroupItem {
   /** Settings such as `display-name`, `is-enabled`, and `dataset-index`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsMeshDatasetGroupTreeItemAttributes;
   /** Child items. */
   children?: QgsMeshDatasetGroupItem[];
   /** @internal */
@@ -1174,9 +1322,9 @@ export interface QgsMeshDatasetGroups {
   /** Dataset group tree. */
   tree?: QgsMeshDatasetGroupItem[];
   /** Dataset sources, each with `source-type`, `source-index`, and `global-index`. */
-  datasets?: QgsAttributes[];
+  datasets?: QgsMeshDatasetAttributes[];
   /** Group names by global index. */
-  nameToGlobalIndex?: QgsAttributes[];
+  nameToGlobalIndex?: QgsMeshNameIndexAttributes[];
 }
 
 /** Vector tile layer. */
@@ -1194,7 +1342,7 @@ export interface QgsVectorTileLayer extends QgsMapLayerBase {
 /** Tile matrix of a vector tile layer. */
 export interface QgsTileMatrix {
   /** Settings such as `zoomLevel`, `matrixWidth`, `scale`, and bounds. */
-  attributes?: QgsAttributes;
+  attributes?: QgsTileMatrixAttributes;
   /** Matrix CRS. */
   crs?: QgsCrs;
   /** @internal */
@@ -1204,7 +1352,7 @@ export interface QgsTileMatrix {
 /** Tile matrix set of a vector tile layer. */
 export interface QgsTileMatrixSet {
   /** Settings such as `scaleToZoomMethod`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsTileMatrixSetAttributes;
   /** Root matrix. */
   rootMatrix?: QgsTileMatrix;
   /** Matrices by zoom level. */
@@ -1214,7 +1362,7 @@ export interface QgsTileMatrixSet {
 /** Style of a vector tile renderer. */
 export interface QgsVectorTileStyle {
   /** Settings such as `name`, `layer`, `geometry`, `enabled`, `min-zoom`, `max-zoom`, and `expression`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsVectorTileStyleAttributes;
   /** Symbol. */
   symbol?: QgsSymbol;
   /** @internal */
@@ -1236,7 +1384,7 @@ export type QgsVectorTileRenderer =
 /** Labeling style of a vector tile layer. */
 export interface QgsVectorTileLabelStyle {
   /** Settings such as `name`, `layer`, `geometry`, `min-zoom`, and `expression`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsVectorTileStyleAttributes;
   /** Label settings. */
   settings?: QgsLabelSettings;
   /** @internal */
@@ -1249,7 +1397,7 @@ export type QgsVectorTileLabeling =
       /** Basic labeling. */
       type: "basic";
       /** Other settings, such as `labelsEnabled`. */
-      attributes?: QgsAttributes;
+      attributes?: QgsVectorTileLabelingAttributes;
       /** Styles. */
       styles: QgsVectorTileLabelStyle[];
       /** @internal */
@@ -1270,9 +1418,9 @@ export interface QgsPointCloudRenderer {
   /** Renderer type, such as `rgb`, `ramp`, `classified`, `extent`, or `single-color`. */
   type: string;
   /** Settings such as `attribute`, `pointSize`, `pointSizeUnit`, and `drawOrder2d`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsPointCloudRendererAttributes;
   /** Classified categories, each with `value`, `color`, `label`, and `render`. */
-  categories?: QgsAttributes[];
+  categories?: QgsPointCloudCategoryAttributes[];
   /** Ramp shader. */
   shader?: QgsColorRampShader;
   /** Red contrast enhancement. */
@@ -1300,7 +1448,7 @@ export interface QgsAnnotationLayer extends QgsMapLayerBase {
 /** Annotation item; QGIS stores only the parts its item type uses. */
 export interface QgsAnnotationItem {
   /** Settings such as `type`, `id`, `wkt`, `zIndex`, and `text`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsAnnotationLayerItemAttributes;
   /** Marker symbol. */
   markerSymbol?: QgsSymbol;
   /** Line symbol. */
@@ -1334,7 +1482,7 @@ export interface QgsTiledSceneRenderer {
   /** Renderer type, such as `texture` or `wireframe`. */
   type: string;
   /** Settings such as `maximumScreenError` and `tileBorderRendering`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsTiledSceneRendererAttributes;
   /** Fill symbol. */
   fillSymbol?: QgsSymbol;
   /** Line symbol. */
@@ -1562,7 +1710,10 @@ export interface QgsFeatureRendererBase {
   /** Paint effect applied to the whole layer. */
   effect?: QgsPaintEffect;
   /** Feature rendering order, each clause with `expression`, `asc`, and `nullsFirst`. */
-  orderBy?: QgsAttributes[];
+  orderBy?: (QgsOrderByClauseAttributes & {
+    /** Sort expression, stored as the element text. */
+    expression?: string;
+  })[];
   /** Renderer data-defined properties. */
   dataDefinedProperties?: QgsDataDefinedProperties;
   /** Whether symbol levels are enabled. */
@@ -1664,9 +1815,9 @@ export interface QgsClassificationMethod {
   /** Method ID, such as `EqualInterval`, `Quantile`, `Jenks`, `StdDev`, or `Pretty`. */
   id?: string;
   /** Symmetric classification settings (`enabled`, `symmetrypoint`, `astride`). */
-  symmetricMode?: QgsAttributes;
+  symmetricMode?: QgsSymmetricModeAttributes;
   /** Range label format (`format`, `labelprecision`, `trimtrailingzeroes`). */
-  labelFormat?: QgsAttributes;
+  labelFormat?: QgsClassificationLabelFormatAttributes;
   /** Method parameters. */
   parameters?: QgsVariant;
 }
@@ -1676,7 +1827,7 @@ export interface QgsHeatmapRenderer extends QgsFeatureRendererBase {
   /** Discriminant, matching the QGIS renderer name. */
   type: "heatmapRenderer";
   /** Settings such as `radius`, `radius_unit`, `weight_expression`, `max_value`, and `quality`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsHeatmapRendererAttributes;
   /** Color ramp from low to high density. */
   colorRamp?: QgsColorRamp;
 }
@@ -1686,9 +1837,9 @@ export interface QgsPointDisplacementRenderer extends QgsFeatureRendererBase {
   /** Discriminant, matching the QGIS renderer name. */
   type: "pointDisplacement";
   /** Settings such as `tolerance`, `placement`, `circleColor`, and `labelAttributeName`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsPointDisplacementRendererAttributes;
   /** Label font settings. */
-  labelFont?: QgsAttributes;
+  labelFont?: QgsFontAttributes;
   /** Renderer for the displaced points. */
   renderer?: QgsVectorRenderer;
   /** Symbol drawn at the center of each group. */
@@ -1700,7 +1851,7 @@ export interface QgsPointClusterRenderer extends QgsFeatureRendererBase {
   /** Discriminant, matching the QGIS renderer name. */
   type: "pointCluster";
   /** Settings such as `tolerance` and `toleranceUnit`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsPointClusterRendererAttributes;
   /** Renderer for single points. */
   renderer?: QgsVectorRenderer;
   /** Symbol drawn for each cluster. */
@@ -1712,7 +1863,7 @@ export interface QgsInvertedPolygonRenderer extends QgsFeatureRendererBase {
   /** Discriminant, matching the QGIS renderer name. */
   type: "invertedPolygonRenderer";
   /** Settings such as `preprocessing`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsInvertedPolygonRendererAttributes;
   /** Renderer for the inverted polygons. */
   renderer?: QgsVectorRenderer;
 }
@@ -1722,7 +1873,10 @@ export interface QgsMergedFeatureRenderer extends QgsFeatureRendererBase {
   /** Discriminant, matching the QGIS renderer name. */
   type: "mergedFeatureRenderer";
   /** Other settings. */
-  attributes?: QgsAttributes;
+  attributes?: {
+    /** Attributes as stored by QGIS. */
+    other?: Record<string, string>;
+  };
   /** Renderer for the merged features. */
   renderer?: QgsVectorRenderer;
 }
@@ -1732,7 +1886,10 @@ export interface Qgs25DRenderer extends QgsFeatureRendererBase {
   /** Discriminant, matching the QGIS renderer name. */
   type: "25dRenderer";
   /** Other settings. */
-  attributes?: QgsAttributes;
+  attributes?: {
+    /** Attributes as stored by QGIS. */
+    other?: Record<string, string>;
+  };
   /** Generated symbol for the walls and roofs. */
   symbol?: QgsSymbol;
 }
@@ -1817,7 +1974,7 @@ export type QgsAttributes = Record<string, string>;
 /** Text background shape (`<background>`). */
 export interface QgsTextBackground {
   /** Shape settings, such as `shapeDraw`, `shapeType`, and `shapeFillColor`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsTextBackgroundAttributes;
   /** Marker symbol for marker-type shapes. */
   markerSymbol?: QgsSymbol;
   /** Fill symbol for the shape. */
@@ -1827,17 +1984,17 @@ export interface QgsTextBackground {
 /** Text format shared by labels, annotations, and layout items (`<text-style>`). */
 export interface QgsTextFormat {
   /** Font and color settings, such as `fontFamily`, `fontSize`, `fontSizeUnit`, and `textColor`. */
-  style?: QgsAttributes;
+  style?: QgsTextStyleAttributes;
   /** Font families in priority order. */
   families?: string[];
   /** Tab stops, each with attributes such as `position`. */
-  tabPositions?: QgsAttributes[];
+  tabPositions?: QgsTextTabAttributes[];
   /** Text buffer (halo), such as `bufferDraw`, `bufferSize`, and `bufferColor`. */
-  buffer?: QgsAttributes;
+  buffer?: QgsTextBufferAttributes;
   /** Paint effect of the buffer. */
   bufferEffect?: QgsPaintEffect;
   /** Selective masking settings, such as `maskEnabled` and `maskSize`. */
-  mask?: QgsAttributes;
+  mask?: QgsTextMaskAttributes;
   /** Paint effect of the mask. */
   maskEffect?: QgsPaintEffect;
   /** Background shape. */
@@ -1845,7 +2002,7 @@ export interface QgsTextFormat {
   /** Paint effect of the background shape. */
   backgroundEffect?: QgsPaintEffect;
   /** Drop shadow, such as `shadowDraw` and `shadowOffsetDist`. */
-  shadow?: QgsAttributes;
+  shadow?: QgsTextShadowAttributes;
   /** Text-format data-defined properties. */
   dataDefinedProperties?: QgsDataDefinedProperties;
 }
@@ -1869,11 +2026,11 @@ export interface QgsLabelSettings {
   /** Text substitutions, each with `match`, `replace`, `caseSensitive`, and `wholeWord`. */
   substitutions?: QgsAttributes[];
   /** Wrapping and number formatting (`<text-format>`), such as `wrapChar` and `multilineAlign`. */
-  formatting?: QgsAttributes;
+  formatting?: QgsLabelFormattingAttributes;
   /** Placement (`<placement>`), such as `placement`, `dist`, and `priority`. */
-  placement?: QgsAttributes;
+  placement?: QgsLabelPlacementAttributes;
   /** Rendering (`<rendering>`), such as `scaleVisibility`, `obstacle`, and `zIndex`. */
-  rendering?: QgsAttributes;
+  rendering?: QgsLabelRenderingAttributes;
   /** Label data-defined properties, such as `Size` or `Color`. */
   dataDefinedProperties?: QgsDataDefinedProperties;
   /** Callout drawn between the label and its feature. */
@@ -1941,21 +2098,21 @@ export type QgsVectorLabeling =
 /** Color ramp shader of a pseudocolor renderer (`<colorrampshader>`). */
 export interface QgsColorRampShader {
   /** Shader settings, such as `colorRampType`, `classificationMode`, `minimumValue`, and `clip`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsColorRampShaderAttributes;
   /** Source color ramp used to create the items. */
   colorRamp?: QgsColorRamp;
   /** Color stops, each with `value`, `color`, `alpha`, and `label`. */
-  items?: QgsAttributes[];
+  items?: QgsColorRampItemAttributes[];
   /** Legend settings (`<rampLegendSettings>`). */
-  legend?: QgsAttributes;
+  legend?: QgsRampLegendSettingsAttributes;
 }
 
 /** Pixel transparency of a raster renderer. */
 export interface QgsRasterTransparency {
   /** Single-band ranges, each with `min`, `max`, and `percentTransparent`. */
-  singleValuePixelList?: QgsAttributes[];
+  singleValuePixelList?: QgsPixelListEntryAttributes[];
   /** RGB values, each with `red`, `green`, `blue`, and `percentTransparent`. */
-  threeValuePixelList?: QgsAttributes[];
+  threeValuePixelList?: QgsPixelListEntryAttributes[];
 }
 
 /**
@@ -1978,7 +2135,7 @@ export interface QgsRasterRenderer {
   /** Blue band, usually numbered from 1. */
   blueBand?: number;
   /** Other renderer settings, such as `grayBand`, `gradient`, `classificationMin`, or `azimuth`. */
-  attributes?: QgsAttributes;
+  attributes?: QgsRasterRendererAttributes;
   /** How minimum and maximum values are computed, such as `limits` and `extent`. */
   minMaxOrigin?: QgsAttributes;
   /** Single-band contrast enhancement, such as `minValue`, `maxValue`, and `algorithm`. */
@@ -1994,11 +2151,11 @@ export interface QgsRasterRenderer {
   /** Pseudocolor shader. */
   shader?: QgsColorRampShader;
   /** Paletted classes, each with `value`, `color`, `alpha`, and `label`. */
-  palette?: QgsAttributes[];
+  palette?: QgsPaletteEntryAttributes[];
   /** Source color ramp of a paletted renderer. */
   colorRamp?: QgsColorRamp;
   /** Legend settings of a single-band gray renderer. */
-  legend?: QgsAttributes;
+  legend?: QgsRampLegendSettingsAttributes;
 }
 
 /** No-data values of a raster band. */
@@ -2008,7 +2165,7 @@ export interface QgsRasterNoData {
   /** Whether the provider's own no-data value is used. */
   useSourceNoData?: boolean;
   /** Additional no-data ranges, each with `min` and `max`. */
-  ranges?: QgsAttributes[];
+  ranges?: QgsNoDataRangeAttributes[];
 }
 
 /** Numeric version parts and an optional release name returned by {@link parseQgisVersion}. */

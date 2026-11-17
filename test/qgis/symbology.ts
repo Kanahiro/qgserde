@@ -30,15 +30,15 @@ export function createSymbologyProject(): QgsProject {
           fieldName: "upper(kind)",
           isExpression: true,
           format: {
-            style: { fontSize: "11", textColor: "200,0,0,255" },
-            buffer: { bufferDraw: "1", bufferSize: "2" },
+            style: { fontSize: 11, textColor: "200,0,0,255" },
+            buffer: { bufferDraw: true, bufferSize: 2 },
             bufferEffect: {
               type: "effectStack",
               enabled: true,
               effects: [{ type: "dropShadow" }, { type: "drawSource" }],
             },
             background: {
-              attributes: { shapeDraw: "1", shapeType: "5" },
+              attributes: { shapeDraw: true, shapeType: 5 },
               markerSymbol: {
                 type: "marker",
                 layers: [
@@ -47,7 +47,7 @@ export function createSymbologyProject(): QgsProject {
               },
             },
           },
-          placement: { placement: "1", dist: "3" },
+          placement: { placement: 1, dist: 3 },
           dataDefinedProperties: {
             Size: { active: true, type: 3, expression: "12" },
           },
@@ -214,7 +214,7 @@ export function createSymbologyProject(): QgsProject {
       source: "Point?crs=EPSG:4326&field=v:double",
       renderer: {
         type: "heatmapRenderer",
-        attributes: { radius: "15", weight_expression: '"v"', quality: "3" },
+        attributes: { radius: 15, weight_expression: '"v"', quality: 3 },
         colorRamp: {
           type: "gradient",
           properties: { color1: "0,0,0,255", color2: "255,0,0,255" },
@@ -229,7 +229,7 @@ export function createSymbologyProject(): QgsProject {
       source: "Point?crs=EPSG:4326",
       renderer: {
         type: "pointCluster",
-        attributes: { tolerance: "5", toleranceUnit: "MM" },
+        attributes: { tolerance: 5, toleranceUnit: "MM" },
         renderer: {
           type: "singleSymbol",
           symbol: {
@@ -258,7 +258,7 @@ export function createSymbologyProject(): QgsProject {
       source: "Polygon?crs=EPSG:4326",
       renderer: {
         type: "invertedPolygonRenderer",
-        attributes: { preprocessing: "1" },
+        attributes: { preprocessing: true },
         renderer: { type: "singleSymbol", symbol: fill("0,0,0,128") },
       },
     },
@@ -271,7 +271,7 @@ export function createSymbologyProject(): QgsProject {
       renderer: {
         type: "singleSymbol",
         orderByEnabled: true,
-        orderBy: [{ expression: '"v"', asc: "0", nullsFirst: "1" }],
+        orderBy: [{ expression: '"v"', asc: false, nullsFirst: true }],
         effect: {
           type: "effectStack",
           enabled: true,

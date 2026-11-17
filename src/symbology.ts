@@ -1,4 +1,14 @@
 import {
+  classificationLabelFormatAttributes,
+  fontAttributes,
+  heatmapRendererAttributes,
+  invertedPolygonRendererAttributes,
+  orderByClauseAttributes,
+  pointClusterRendererAttributes,
+  pointDisplacementRendererAttributes,
+  symmetricModeAttributes,
+} from "./attributes.generated.ts";
+import {
   boolean,
   ensure,
   number,
@@ -10,6 +20,7 @@ import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
 import { colorRampSpec } from "./raster.ts";
 import {
+  type AttributeTable,
   type Custom,
   captureSpec,
   type Entry,
@@ -293,6 +304,7 @@ const commonRenderer: Entry[] = [
     field: "orderBy",
     at: ["orderby"],
     item: "orderByClause",
+    table: orderByClauseAttributes,
     text: "expression",
   },
   {
@@ -301,9 +313,10 @@ const commonRenderer: Entry[] = [
     tag: "data-defined-properties",
   },
 ];
-const rendererAttributeEntry: Entry = {
+const rendererAttributeEntry = (table: AttributeTable): Entry => ({
   kind: "attributes",
   field: "attributes",
+  table,
   exclude: [
     "type",
     "symbollevels",
@@ -311,7 +324,7 @@ const rendererAttributeEntry: Entry = {
     "referencescale",
     "enableorderby",
   ],
-};
+});
 const embedded: Entry = {
   kind: "custom",
   field: "renderer",
@@ -328,8 +341,18 @@ const rendererExtrasByType: Record<string, Entry[]> = {
         tag: "classificationMethod",
         entries: [
           { kind: "attribute", field: "id", attribute: "id", type: "string" },
-          { kind: "attributes", field: "symmetricMode", at: ["symmetricMode"] },
-          { kind: "attributes", field: "labelFormat", at: ["labelFormat"] },
+          {
+            kind: "attributes",
+            field: "symmetricMode",
+            table: symmetricModeAttributes,
+            at: ["symmetricMode"],
+          },
+          {
+            kind: "attributes",
+            field: "labelFormat",
+            table: classificationLabelFormatAttributes,
+            at: ["labelFormat"],
+          },
           {
             kind: "variant",
             field: "parameters",
@@ -340,7 +363,7 @@ const rendererExtrasByType: Record<string, Entry[]> = {
     },
   ],
   heatmapRenderer: [
-    rendererAttributeEntry,
+    rendererAttributeEntry(heatmapRendererAttributes),
     {
       kind: "object",
       field: "colorRamp",
@@ -349,20 +372,28 @@ const rendererExtrasByType: Record<string, Entry[]> = {
     },
   ],
   pointDisplacement: [
-    rendererAttributeEntry,
-    { kind: "attributes", field: "labelFont", at: ["labelFontProperties"] },
+    rendererAttributeEntry(pointDisplacementRendererAttributes),
+    {
+      kind: "attributes",
+      field: "labelFont",
+      table: fontAttributes,
+      at: ["labelFontProperties"],
+    },
     embedded,
     { kind: "symbol", field: "centerSymbol", name: "centerSymbol" },
   ],
   pointCluster: [
-    rendererAttributeEntry,
+    rendererAttributeEntry(pointClusterRendererAttributes),
     embedded,
     { kind: "symbol", field: "clusterSymbol", name: "centerSymbol" },
   ],
-  invertedPolygonRenderer: [rendererAttributeEntry, embedded],
-  mergedFeatureRenderer: [rendererAttributeEntry, embedded],
+  invertedPolygonRenderer: [
+    rendererAttributeEntry(invertedPolygonRendererAttributes),
+    embedded,
+  ],
+  mergedFeatureRenderer: [rendererAttributeEntry({}), embedded],
   "25dRenderer": [
-    rendererAttributeEntry,
+    rendererAttributeEntry({}),
     { kind: "symbol", field: "symbol", name: "symbol" },
   ],
 };

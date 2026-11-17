@@ -1,0 +1,720 @@
+{
+  "$comment": "Typed attribute groups. keys are regular expressions over extractor keys (file|element tag, or file|@Class::function:variable for elements a function receives). kinds override or add attribute kinds; exclude drops attributes another entry already types.",
+  "MapLayer": {
+    "doc": "`<maplayer>` attributes.",
+    "keys": [
+      "^qgsproject\\.cpp\\|maplayer$",
+      "^qgsmaplayer\\.cpp\\|@QgsMapLayer::write(LayerXml|CommonStyle):layerElement$",
+      "^qgsvectorlayer\\.cpp\\|@QgsVectorLayer::writeStyle:mapLayerNode$"
+    ],
+    "exclude": [
+      "type",
+      "id",
+      "minScale",
+      "maxScale",
+      "hasScaleBasedVisibilityFlag",
+      "geometry",
+      "wkbType",
+      "readOnly",
+      "labelsEnabled"
+    ],
+    "kinds": {
+      "autoRefreshEnabled": "boolean"
+    }
+  },
+  "StyleRoot": {
+    "doc": "Root `<qgis>` attributes of a layer style document.",
+    "keys": [
+      "^qgsmaplayer\\.cpp\\|@QgsMapLayer::writeCommonStyle:layerElement$",
+      "^qgsvectorlayer\\.cpp\\|@QgsVectorLayer::writeStyle:mapLayerNode$"
+    ],
+    "exclude": [
+      "version",
+      "minScale",
+      "maxScale",
+      "hasScaleBasedVisibilityFlag",
+      "labelsEnabled",
+      "readOnly"
+    ]
+  },
+  "LayerLegend": {
+    "doc": "Layer `<legend>` settings.",
+    "keys": ["^qgsmaplayerlegend\\.cpp\\|legend$"]
+  },
+  "MetadataLink": {
+    "doc": "Metadata `<link>`.",
+    "keys": ["^qgsabstractmetadatabase\\.cpp\\|link$"]
+  },
+  "MetadataDate": {
+    "doc": "Metadata `<date>`.",
+    "keys": ["^qgsabstractmetadatabase\\.cpp\\|date$"]
+  },
+  "MetadataConstraint": {
+    "doc": "Metadata `<constraints>`.",
+    "keys": ["^qgslayermetadata\\.cpp\\|constraints$"]
+  },
+  "MetadataSpatialExtent": {
+    "doc": "Metadata spatial extent `<spatial>`.",
+    "keys": ["^qgslayermetadata\\.cpp\\|spatial$"]
+  },
+  "ExpressionField": {
+    "doc": "Virtual field `<field>` in `<expressionfields>`.",
+    "keys": ["^qgsexpressionfieldbuffer\\.cpp\\|field$"]
+  },
+  "DefaultAction": {
+    "doc": "`<defaultAction>` in `<attributeactions>`.",
+    "keys": [
+      "^qgsactionmanager\\.cpp\\|@QgsActionManager::writeXml:defaultActionElement$"
+    ]
+  },
+  "AttributeTableConfig": {
+    "doc": "`<attributetableconfig>` attributes.",
+    "keys": ["^qgsattributetableconfig\\.cpp\\|attributetableconfig$"]
+  },
+  "AttributeTableColumn": {
+    "doc": "Attribute table `<column>`.",
+    "keys": ["^qgsattributetableconfig\\.cpp\\|column$"]
+  },
+  "GeometryOptions": {
+    "doc": "`<geometryOptions>` attributes.",
+    "keys": ["^qgsgeometryoptions\\.cpp\\|geometryOptions$"]
+  },
+  "DiagramRenderer": {
+    "doc": "Diagram renderer attributes.",
+    "keys": [
+      "^qgsdiagramrenderer\\.cpp\\|@QgsDiagramRenderer::_writeXml:rendererElem$"
+    ]
+  },
+  "LinearDiagramRenderer": {
+    "doc": "`<LinearlyInterpolatedDiagramRenderer>` attributes.",
+    "keys": [
+      "^qgsdiagramrenderer\\.cpp\\|LinearlyInterpolatedDiagramRenderer$",
+      "^qgsdiagramrenderer\\.cpp\\|@QgsDiagramRenderer::_writeXml:rendererElem$"
+    ]
+  },
+  "DiagramCategory": {
+    "doc": "`<DiagramCategory>` attributes.",
+    "keys": ["^qgsdiagramrenderer\\.cpp\\|DiagramCategory$"]
+  },
+  "DiagramAttribute": {
+    "doc": "Diagram `<attribute>`.",
+    "keys": ["^qgsdiagramrenderer\\.cpp\\|attribute$"]
+  },
+  "DiagramLayerSettings": {
+    "doc": "`<DiagramLayerSettings>` attributes.",
+    "keys": ["^qgsdiagramrenderer\\.cpp\\|DiagramLayerSettings$"]
+  },
+  "Font": {
+    "doc": "Font element written by QgsFontUtils.",
+    "keys": ["^qgsfontutils\\.cpp\\|@QgsFontUtils::toXmlElement:fontElem$"]
+  },
+  "AuxiliaryLayer": {
+    "doc": "`<auxiliaryLayer>` attributes.",
+    "keys": ["^qgsvectorlayer\\.cpp\\|auxiliaryLayer$"]
+  },
+  "LayerTreeLayer": {
+    "doc": "`<layer-tree-layer>` attributes.",
+    "keys": ["^qgslayertreelayer\\.cpp\\|layer-tree-layer$"],
+    "exclude": ["id", "name", "source", "providerKey", "checked", "expanded"]
+  },
+  "LayerTreeGroup": {
+    "doc": "`<layer-tree-group>` attributes.",
+    "keys": ["^qgslayertreegroup\\.cpp\\|layer-tree-group$"],
+    "exclude": ["name", "checked", "expanded"]
+  },
+  "Layout": {
+    "doc": "`<Layout>` attributes.",
+    "keys": ["^qgslayout\\.cpp\\|@QgsLayout::writeXmlLayoutSettings:element$"],
+    "exclude": ["name"]
+  },
+  "LayoutSnapper": {
+    "doc": "Layout `<Snapper>`.",
+    "keys": ["^qgslayoutsnapper\\.cpp\\|Snapper$"]
+  },
+  "LayoutGrid": {
+    "doc": "Layout `<Grid>`.",
+    "keys": ["^qgslayoutgridsettings\\.cpp\\|Grid$"]
+  },
+  "LayoutColor": {
+    "doc": "Layout color element with red, green, blue and alpha.",
+    "keys": [
+      "^qgslayoutitem\\.cpp\\|(FrameColor|BackgroundColor)$",
+      "^qgslayoutitemscalebar\\.cpp\\|(strokeColor|fillColor2?)$",
+      "^qgslayouttablecolumn\\.cpp\\|backgroundColor$"
+    ]
+  },
+  "LayoutGuide": {
+    "doc": "Layout `<Guide>`.",
+    "keys": ["^qgslayoutguidecollection\\.cpp\\|Guide$"]
+  },
+  "LayoutMapLayer": {
+    "doc": "Map item `<Layer>` in `<LayerSet>`.",
+    "keys": ["^qgslayoutitemmap\\.cpp\\|Layer$"]
+  },
+  "LayoutAtlasMap": {
+    "doc": "Map item `<AtlasMap>`.",
+    "keys": ["^qgslayoutitemmap\\.cpp\\|AtlasMap$"]
+  },
+  "LayoutAtlas": {
+    "doc": "Layout `<Atlas>`.",
+    "keys": ["^qgslayoutatlas\\.cpp\\|Atlas$"]
+  },
+  "LayoutClipping": {
+    "doc": "Map item clipping settings.",
+    "keys": [
+      "^qgslayoutitemmap\\.cpp\\|(itemClippingSettings|atlasClippingSettings)$"
+    ]
+  },
+  "LayoutItem": {
+    "doc": "`<LayoutItem>` attributes of every item type.",
+    "keys": [
+      "^qgslayoutitem\\.cpp\\|LayoutItem$",
+      "^qgslayoutitem\\w*\\.cpp\\|@QgsLayoutItem(Label|Legend|Map|Marker|Picture|Polyline|Polygon|ScaleBar|Shape|Page|Group|ElevationProfile|3DMap)::writePropertiesToElement:\\w+$",
+      "^qgslayoutframe\\.cpp\\|@QgsLayoutFrame::writePropertiesToElement:\\w+$"
+    ],
+    "exclude": ["type"]
+  },
+  "LayoutMultiFrame": {
+    "doc": "`<LayoutMultiFrame>` attributes of every multi-frame type.",
+    "keys": [
+      "^qgslayoutmultiframe\\.cpp\\|LayoutMultiFrame$",
+      "^qgslayout\\w*\\.cpp\\|@QgsLayout(Table|ItemAttributeTable|ItemTextTable|ItemManualTable|ItemHtml|ItemChart)::writePropertiesToElement:\\w+$"
+    ],
+    "exclude": ["type"]
+  },
+  "LayoutChildFrame": {
+    "doc": "Multi-frame `<childFrame>`.",
+    "keys": ["^qgslayoutmultiframe\\.cpp\\|childFrame$"]
+  },
+  "LayoutNode": {
+    "doc": "Node item `<node>`.",
+    "keys": ["^qgslayoutitemnodeitem\\.cpp\\|node$"]
+  },
+  "LayoutTableColumn": {
+    "doc": "Layout table `<column>`.",
+    "keys": [
+      "^qgslayouttablecolumn\\.cpp\\|@QgsLayoutTableColumn::writeXml:columnElem$"
+    ]
+  },
+  "LayoutTableCellStyle": {
+    "doc": "Layout table cell style.",
+    "keys": [
+      "^qgslayouttable\\.cpp\\|@QgsLayoutTableStyle::writeXml:styleElem$"
+    ]
+  },
+  "MapGrid": {
+    "doc": "Map item `<ComposerMapGrid>` attributes.",
+    "keys": [
+      "^qgslayoutitemmapgrid\\.cpp\\|ComposerMapGrid$",
+      "^qgslayoutitemmapitem\\.cpp\\|@QgsLayoutItemMapItem::writeXml:element$"
+    ],
+    "kinds": {
+      "annotationFontColor": "string"
+    }
+  },
+  "SnappingSettings": {
+    "doc": "`<snapping-settings>` attributes.",
+    "keys": ["^qgssnappingconfig\\.cpp\\|snapping-settings$"]
+  },
+  "SnappingLayerSettings": {
+    "doc": "Snapping `<layer-setting>`.",
+    "keys": ["^qgssnappingconfig\\.cpp\\|layer-setting$"]
+  },
+  "ProjectLegend": {
+    "doc": "Project `<legend>` attributes.",
+    "keys": ["^qgslayertreeutils\\.cpp\\|legend$"]
+  },
+  "Active": {
+    "doc": "Project flag element with an `active` attribute.",
+    "keys": [],
+    "kinds": {
+      "active": "boolean"
+    }
+  },
+  "Temporal": {
+    "doc": "Layer `<temporal>` properties.",
+    "keys": ["^qgs\\w+temporalproperties\\.cpp\\|temporal$"]
+  },
+  "Elevation": {
+    "doc": "Layer `<elevation>` properties.",
+    "keys": [
+      "^qgs\\w+elevationproperties\\.cpp\\|elevation$",
+      "^qgsmaplayerelevationproperties\\.cpp\\|@QgsMapLayerElevationProperties::writeCommonProperties:element$"
+    ]
+  },
+  "MetadataUrl": {
+    "doc": "Server `<metadataUrl>`.",
+    "keys": ["^qgsmaplayerserverproperties\\.cpp\\|metadataUrl$"]
+  },
+  "TextStyle": {
+    "doc": "`<text-style>` attributes.",
+    "keys": [
+      "^qgstextformat\\.cpp\\|text-style$",
+      "^qgspallabeling\\.cpp\\|@QgsPalLayerSettings::writeXml:textStyleElem$"
+    ],
+    "exclude": ["fieldName", "isExpression"]
+  },
+  "TextBuffer": {
+    "doc": "`<text-buffer>` attributes.",
+    "keys": ["^qgstextbuffersettings\\.cpp\\|text-buffer$"]
+  },
+  "TextMask": {
+    "doc": "`<text-mask>` attributes.",
+    "keys": ["^qgstextmasksettings\\.cpp\\|text-mask$"]
+  },
+  "TextBackground": {
+    "doc": "Text `<background>` attributes.",
+    "keys": ["^qgstextbackgroundsettings\\.cpp\\|background$"],
+    "kinds": {
+      "shapeSVGFile": "string"
+    }
+  },
+  "TextShadow": {
+    "doc": "Text `<shadow>` attributes.",
+    "keys": ["^qgstextshadowsettings\\.cpp\\|shadow$"]
+  },
+  "LabelFormatting": {
+    "doc": "Label `<text-format>` attributes.",
+    "keys": ["^qgspallabeling\\.cpp\\|text-format$"]
+  },
+  "LabelPlacement": {
+    "doc": "Label `<placement>` attributes.",
+    "keys": ["^qgspallabeling\\.cpp\\|placement$"]
+  },
+  "LabelRendering": {
+    "doc": "Label `<rendering>` attributes.",
+    "keys": ["^qgspallabeling\\.cpp\\|rendering$"]
+  },
+  "StoredExpression": {
+    "doc": "`<storedexpression>`.",
+    "keys": [
+      "^qgsstoredexpressionmanager\\.cpp\\|@QgsStoredExpressionManager::writeXml:aStoredExpression$"
+    ]
+  },
+  "Selection": {
+    "doc": "Layer `<selection>` attributes.",
+    "keys": ["^qgsvectorlayerselectionproperties\\.cpp\\|selection$"]
+  },
+  "Color": {
+    "doc": "Color element written by QgsColorUtils.",
+    "keys": ["^qgscolorutils\\.cpp\\|@QgsColorUtils::writeXml:colorElement$"]
+  },
+  "ElevationShading": {
+    "doc": "`<elevation-shading-renderer>` attributes.",
+    "keys": [
+      "^qgselevationshadingrenderer\\.cpp\\|@QgsElevationShadingRenderer::writeXml:elem$"
+    ]
+  },
+  "ProjectStyleSettings": {
+    "doc": "`<ProjectStyleSettings>` attributes.",
+    "keys": ["^qgsprojectstylesettings\\.cpp\\|ProjectStyleSettings$"]
+  },
+  "ProjectTimeSettings": {
+    "doc": "`<ProjectTimeSettings>` attributes.",
+    "keys": ["^qgsprojecttimesettings\\.cpp\\|ProjectTimeSettings$"]
+  },
+  "ProjectElevation": {
+    "doc": "Project `<ElevationProperties>` attributes.",
+    "keys": ["^qgsprojectelevationproperties\\.cpp\\|ElevationProperties$"]
+  },
+  "TerrainProvider": {
+    "doc": "`<TerrainProvider>` attributes.",
+    "keys": [
+      "^qgsterrainprovider\\.cpp\\|TerrainProvider$",
+      "^qgsterrainprovider\\.cpp\\|@QgsAbstractTerrainProvider::writeCommonProperties:element$"
+    ]
+  },
+  "ProjectDisplaySettings": {
+    "doc": "`<ProjectDisplaySettings>` attributes.",
+    "keys": ["^qgsprojectdisplaysettings\\.cpp\\|ProjectDisplaySettings$"]
+  },
+  "ProjectGpsSettings": {
+    "doc": "`<ProjectGpsSettings>` attributes.",
+    "keys": ["^qgsprojectgpssettings\\.cpp\\|ProjectGpsSettings$"]
+  },
+  "GpsTimeStampField": {
+    "doc": "GPS time stamp `<field>`.",
+    "keys": ["^qgsprojectgpssettings\\.cpp\\|field$"]
+  },
+  "AnnotationLayerItem": {
+    "doc": "Annotation layer `<item>` attributes of every item type.",
+    "keys": [
+      "^qgsannotationlayer\\.cpp\\|item$",
+      "^qgsannotation\\w+\\.cpp\\|@QgsAnnotation\\w*Item::write(Xml|CommonProperties):element$"
+    ]
+  },
+  "MeshActiveDataset": {
+    "doc": "Mesh active dataset group indices.",
+    "keys": [
+      "^qgsmeshrenderersettings\\.cpp\\|active-dataset-group$",
+      "^qgsmeshlayer\\.cpp\\|static-active-dataset$"
+    ]
+  },
+  "MeshScalarSettings": {
+    "doc": "Mesh `<scalar-settings>` attributes.",
+    "keys": [
+      "^qgsmeshrenderersettings\\.cpp\\|scalar-settings$",
+      "^qgsmeshrenderersettings\\.cpp\\|@QgsMeshRendererSettings::writeXml:elemScalar$"
+    ]
+  },
+  "MeshVectorSettings": {
+    "doc": "Mesh `<vector-settings>` attributes.",
+    "keys": [
+      "^qgsmeshrenderersettings\\.cpp\\|vector-settings$",
+      "^qgsmeshrenderersettings\\.cpp\\|@QgsMeshRendererSettings::writeXml:elemVector$"
+    ]
+  },
+  "MeshEdgeSettings": {
+    "doc": "Mesh `<edge-settings>` attributes.",
+    "keys": ["^qgsmeshrenderersettings\\.cpp\\|edge-settings$"]
+  },
+  "MeshStrokeWidth": {
+    "doc": "`<mesh-stroke-width>` attributes.",
+    "keys": ["^qgsinterpolatedlinerenderer\\.cpp\\|mesh-stroke-width$"]
+  },
+  "MeshFrameSettings": {
+    "doc": "Mesh frame settings.",
+    "keys": ["^qgsmeshrenderersettings\\.cpp\\|mesh-settings$"]
+  },
+  "MeshAveraging": {
+    "doc": "`<averaging-3d>` attributes.",
+    "keys": ["^qgsmeshrenderersettings\\.cpp\\|averaging-3d$"]
+  },
+  "MeshSigmaAveraging": {
+    "doc": "`<sigma-settings>` attributes.",
+    "keys": ["^qgsmesh3daveraging\\.cpp\\|sigma-settings$"]
+  },
+  "MeshDatasetGroupTreeItem": {
+    "doc": "`<mesh-dataset-group-tree-item>` attributes.",
+    "keys": ["^qgsmeshdataset\\.cpp\\|mesh-dataset-group-tree-item$"]
+  },
+  "MeshDataset": {
+    "doc": "`<mesh-dataset>` in the dataset group store.",
+    "keys": ["^qgsmeshdatasetgroupstore\\.cpp\\|mesh-dataset$"],
+    "kinds": {
+      "global-index": "number"
+    }
+  },
+  "MeshNameIndex": {
+    "doc": "`<name-to-global-index>`.",
+    "keys": ["^qgsmesh(datasetgroupstore|layer)\\.cpp\\|name-to-global-index$"],
+    "kinds": {
+      "global-index": "number"
+    }
+  },
+  "MeshSimplify": {
+    "doc": "`<mesh-simplify-settings>` attributes.",
+    "keys": ["^qgsmeshsimplificationsettings\\.cpp\\|mesh-simplify-settings$"]
+  },
+  "TileMatrixSet": {
+    "doc": "Tile `<matrixSet>` attributes.",
+    "keys": ["^qgstiles\\.cpp\\|matrixSet$"]
+  },
+  "TileMatrix": {
+    "doc": "Tile matrix attributes.",
+    "keys": ["^qgstiles\\.cpp\\|matrix$"]
+  },
+  "VectorTileStyle": {
+    "doc": "Vector tile `<style>` attributes.",
+    "keys": [
+      "^qgsvectortilebasic(labeling|renderer)\\.cpp\\|@QgsVectorTileBasic(Labeling|Renderer)Style::writeXml:elem$"
+    ]
+  },
+  "VectorTileLabeling": {
+    "doc": "Vector tile `<labeling>` attributes.",
+    "keys": ["^qgsvectortilelayer\\.cpp\\|labeling$"],
+    "exclude": ["type"]
+  },
+  "ColorRampShader": {
+    "doc": "`<colorrampshader>` attributes.",
+    "keys": ["^qgscolorrampshader\\.cpp\\|colorrampshader$"]
+  },
+  "ColorRampItem": {
+    "doc": "Color ramp shader `<item>`.",
+    "keys": ["^qgscolorrampshader\\.cpp\\|item$"]
+  },
+  "RampLegendSettings": {
+    "doc": "`<rampLegendSettings>` attributes.",
+    "keys": ["^qgscolorramplegendnodesettings\\.cpp\\|rampLegendSettings$"]
+  },
+  "Relation": {
+    "doc": "`<relation>` attributes.",
+    "keys": [
+      "^qgs(polymorphic)?relation\\.cpp\\|relation$",
+      "^qgsweakrelation\\.cpp\\|@QgsWeakRelation::writeXml:relationElement$"
+    ]
+  },
+  "RelationFieldRef": {
+    "doc": "Relation `<fieldRef>`.",
+    "keys": ["^qgs(polymorphic)?relation\\.cpp\\|fieldRef$"]
+  },
+  "MapTheme": {
+    "doc": "`<visibility-preset>` attributes.",
+    "keys": [
+      "^qgsmapthemecollection\\.cpp\\|visibility-preset$",
+      "^qgsmapthemecollection\\.cpp\\|@MapThemeRecord::writeXml:element$"
+    ],
+    "exclude": ["name"]
+  },
+  "MapThemeLayer": {
+    "doc": "Map theme `<layer>`.",
+    "keys": ["^qgsmapthemecollection\\.cpp\\|layer$"]
+  },
+  "Bookmark": {
+    "doc": "`<Bookmark>` attributes.",
+    "keys": ["^qgsbookmarkmanager\\.cpp\\|Bookmark$"]
+  },
+  "TransformPair": {
+    "doc": "Transform context `<srcDest>`.",
+    "keys": ["^qgscoordinatetransformcontext\\.cpp\\|srcDest$"]
+  },
+  "RasterRenderer": {
+    "doc": "`<rasterrenderer>` attributes of every renderer type.",
+    "keys": [
+      "^qgs\\w+renderer\\.cpp\\|rasterrenderer$",
+      "^qgsrasterrenderer\\.cpp\\|@QgsRasterRenderer::_writeXml:rasterRendererElem$"
+    ],
+    "exclude": [
+      "type",
+      "opacity",
+      "alphaBand",
+      "band",
+      "redBand",
+      "greenBand",
+      "blueBand"
+    ],
+    "kinds": {
+      "gradient": "string"
+    }
+  },
+  "BrightnessContrast": {
+    "doc": "`<brightnesscontrast>` attributes.",
+    "keys": ["^qgsbrightnesscontrastfilter\\.cpp\\|brightnesscontrast$"]
+  },
+  "HueSaturation": {
+    "doc": "`<huesaturation>` attributes.",
+    "keys": ["^qgshuesaturationfilter\\.cpp\\|huesaturation$"]
+  },
+  "RasterResampler": {
+    "doc": "`<rasterresampler>` attributes.",
+    "keys": ["^qgsrasterresamplefilter\\.cpp\\|rasterresampler$"]
+  },
+  "ProviderResampling": {
+    "doc": "Provider `<resampling>` attributes.",
+    "keys": ["^qgsrasterdataprovider\\.cpp\\|resampling$"]
+  },
+  "NoDataRange": {
+    "doc": "`<noDataRange>`.",
+    "keys": ["^qgsrasterlayer\\.cpp\\|noDataRange$"]
+  },
+  "PaletteEntry": {
+    "doc": "`<paletteEntry>`.",
+    "keys": ["^qgspalettedrasterrenderer\\.cpp\\|paletteEntry$"]
+  },
+  "PixelListEntry": {
+    "doc": "`<pixelListEntry>`.",
+    "keys": ["^qgsrastertransparency\\.cpp\\|pixelListEntry$"]
+  },
+  "OrderByClause": {
+    "doc": "`<orderByClause>`.",
+    "keys": ["^qgsfeaturerequest\\.cpp\\|orderByClause$"]
+  },
+  "TextAnnotation": {
+    "doc": "`<TextAnnotationItem>` attributes.",
+    "keys": ["^qgstextannotation\\.cpp\\|TextAnnotationItem$"]
+  },
+  "CanvasAnnotation": {
+    "doc": "Canvas `<AnnotationItem>` attributes.",
+    "keys": ["^qgsannotation\\.cpp\\|AnnotationItem$"]
+  },
+  "Join": {
+    "doc": "Vector `<join>` attributes.",
+    "keys": ["^qgsvectorlayerjoinbuffer\\.cpp\\|join$"]
+  },
+  "Action": {
+    "doc": "`<actionsetting>` attributes.",
+    "keys": ["^qgsaction\\.cpp\\|@QgsAction::writeXml:actionSetting$"]
+  },
+  "FormLabelStyle": {
+    "doc": "Form `<labelStyle>` attributes.",
+    "keys": ["^qgsattributeeditorelement\\.cpp\\|@LabelStyle::writeXml:elem$"]
+  },
+  "FormContainer": {
+    "doc": "`<attributeEditorContainer>` attributes.",
+    "keys": [
+      "^qgsattributeeditorelement\\.cpp\\|@QgsAttributeEditorElement::toDomElement:elem$",
+      "^qgsattributeeditorcontainer\\.cpp\\|@QgsAttributeEditorContainer::saveConfiguration:elem$"
+    ]
+  },
+  "FormField": {
+    "doc": "`<attributeEditorField>` attributes.",
+    "keys": [
+      "^qgsattributeeditorelement\\.cpp\\|@QgsAttributeEditorElement::toDomElement:elem$",
+      "^qgsattributeeditorfield\\.cpp\\|@QgsAttributeEditorField::saveConfiguration:elem$"
+    ]
+  },
+  "SymmetricMode": {
+    "doc": "Classification `<symmetricMode>`.",
+    "keys": ["^qgsclassificationmethod\\.cpp\\|symmetricMode$"]
+  },
+  "ClassificationLabelFormat": {
+    "doc": "Classification `<labelFormat>`.",
+    "keys": ["^qgsclassificationmethod\\.cpp\\|labelFormat$"]
+  },
+  "LegendStyle": {
+    "doc": "Legend `<style>` attributes.",
+    "keys": ["^qgslegendstyle\\.cpp\\|style$"]
+  },
+  "HeatmapRenderer": {
+    "doc": "Heatmap `<renderer-v2>` attributes.",
+    "keys": [
+      "^qgsheatmaprenderer\\.cpp\\|@QgsHeatmapRenderer::save:rendererElem$"
+    ],
+    "exclude": [
+      "type",
+      "symbollevels",
+      "forceraster",
+      "referencescale",
+      "enableorderby"
+    ]
+  },
+  "PointDisplacementRenderer": {
+    "doc": "Point displacement `<renderer-v2>` attributes.",
+    "keys": [
+      "^qgspointdisplacementrenderer\\.cpp\\|@QgsPointDisplacementRenderer::save:rendererElement$"
+    ],
+    "exclude": [
+      "type",
+      "symbollevels",
+      "forceraster",
+      "referencescale",
+      "enableorderby"
+    ]
+  },
+  "PointClusterRenderer": {
+    "doc": "Point cluster `<renderer-v2>` attributes.",
+    "keys": [
+      "^qgspointclusterrenderer\\.cpp\\|@QgsPointClusterRenderer::save:rendererElement$"
+    ],
+    "exclude": [
+      "type",
+      "symbollevels",
+      "forceraster",
+      "referencescale",
+      "enableorderby"
+    ]
+  },
+  "InvertedPolygonRenderer": {
+    "doc": "Inverted polygon `<renderer-v2>` attributes.",
+    "keys": [
+      "^qgsinvertedpolygonrenderer\\.cpp\\|@QgsInvertedPolygonRenderer::save:rendererElem$"
+    ],
+    "exclude": [
+      "type",
+      "symbollevels",
+      "forceraster",
+      "referencescale",
+      "enableorderby"
+    ]
+  },
+  "TextTab": {
+    "doc": "Text format tab stop `<tab>`.",
+    "keys": ["^qgstextformat\\.cpp\\|tab$"]
+  },
+  "LayoutMapOverview": {
+    "doc": "Map item `<ComposerMapOverview>` attributes.",
+    "keys": [
+      "^qgslayoutitemmapoverview\\.cpp\\|ComposerMapOverview$",
+      "^qgslayoutitemmapitem\\.cpp\\|@QgsLayoutItemMapItem::writeXml:element$"
+    ]
+  },
+  "PointCloudRenderer": {
+    "doc": "Point cloud `<renderer>` attributes of every renderer type.",
+    "keys": [
+      "^qgspointcloud\\w*renderer\\.cpp\\|renderer$",
+      "^qgspointcloudrenderer\\.cpp\\|@QgsPointCloudRenderer::saveCommonProperties:element$"
+    ],
+    "exclude": ["type"]
+  },
+  "PointCloudCategory": {
+    "doc": "Point cloud classified renderer `<category>`.",
+    "keys": ["^qgspointcloudclassifiedrenderer\\.cpp\\|category$"]
+  },
+  "TiledSceneRenderer": {
+    "doc": "Tiled scene `<renderer>` attributes of every renderer type.",
+    "keys": [
+      "^qgstiledscene\\w*renderer\\.cpp\\|renderer$",
+      "^qgstiledscenerenderer\\.cpp\\|@QgsTiledSceneRenderer::saveCommonProperties:element$"
+    ],
+    "exclude": ["type"]
+  },
+  "Renderer3D": {
+    "doc": "`<renderer-3d>` attributes of every renderer type.",
+    "keys": [
+      "^qgs\\w+3drenderer\\.cpp\\|@Qgs\\w+3DRenderer::(writeXml|writeXmlBaseProperties):elem$"
+    ],
+    "exclude": ["type"]
+  },
+  "ConditionalStyle": {
+    "doc": "Conditional `<style>` attributes.",
+    "keys": ["^qgsconditionalstyle\\.cpp\\|style$"]
+  },
+  "FormRelation": {
+    "doc": "`<attributeEditorRelation>` attributes.",
+    "keys": [
+      "^qgsattributeeditorelement\\.cpp\\|@QgsAttributeEditorElement::toDomElement:elem$",
+      "^qgsattributeeditorrelation\\.cpp\\|@QgsAttributeEditorRelation::saveConfiguration:elem$"
+    ]
+  },
+  "FormAction": {
+    "doc": "`<attributeEditorAction>` attributes.",
+    "keys": [
+      "^qgsattributeeditorelement\\.cpp\\|@QgsAttributeEditorElement::toDomElement:elem$",
+      "^qgsattributeeditoraction\\.cpp\\|@QgsAttributeEditorAction::saveConfiguration:elem$"
+    ]
+  },
+  "FormSpacer": {
+    "doc": "`<attributeEditorSpacerElement>` attributes.",
+    "keys": [
+      "^qgsattributeeditorelement\\.cpp\\|@QgsAttributeEditorElement::toDomElement:elem$",
+      "^qgsattributeeditorspacerelement\\.cpp\\|@QgsAttributeEditorSpacerElement::saveConfiguration:elem$"
+    ]
+  },
+  "FormElement": {
+    "doc": "Attributes of other form elements, such as `<attributeEditorHtmlElement>`.",
+    "keys": [
+      "^qgsattributeeditorelement\\.cpp\\|@QgsAttributeEditorElement::toDomElement:elem$"
+    ]
+  },
+  "LegendTreeLayer": {
+    "doc": "Layout legend `<layer-tree-layer>` attributes.",
+    "keys": ["^qgslayertreelayer\\.cpp\\|layer-tree-layer$"]
+  },
+  "LegendTreeGroup": {
+    "doc": "Layout legend `<layer-tree-group>` attributes.",
+    "keys": ["^qgslayertreegroup\\.cpp\\|layer-tree-group$"]
+  },
+  "Project": {
+    "doc": "Root `<qgis>` attributes of a project.",
+    "keys": [
+      "^qgsproject\\.cpp\\|qgis$",
+      "^qgsproject\\.cpp\\|@QDomImplementation::setInvalidDataPolicy:qgisNode$"
+    ],
+    "exclude": ["version", "projectname"]
+  },
+  "SvgAnnotation": {
+    "doc": "`<SVGAnnotationItem>` attributes.",
+    "keys": ["^qgssvgannotation\\.cpp\\|SVGAnnotationItem$"]
+  },
+  "HtmlAnnotation": {
+    "doc": "`<HtmlAnnotationItem>` attributes.",
+    "keys": ["^qgshtmlannotation\\.cpp\\|HtmlAnnotationItem$"]
+  },
+  "FormAnnotation": {
+    "doc": "`<FormAnnotationItem>` attributes.",
+    "keys": [],
+    "kinds": {
+      "designerForm": "string"
+    }
+  }
+}

@@ -103,6 +103,7 @@ test("edits relations, themes, bookmarks, and tree node settings", () => {
   project.mapThemes![0]!.name = "Renamed theme";
   project.bookmarks![0]!.crs = { authId: "EPSG:3857" };
   const group = project.layerTree!.children[2]!;
+  if (group.type !== "group") throw new Error("group");
   group.customProperties = { "plugin/flag": "y" };
   group.attributes!["mutually-exclusive"] = "0";
   project.timeSettings!.range!.end = "2022-01-01T00:00:00Z";
@@ -113,6 +114,7 @@ test("edits relations, themes, bookmarks, and tree node settings", () => {
   assert.equal(reparsed.bookmarks?.[0]?.crs?.authId, "EPSG:3857");
   assert.equal(reparsed.bookmarks?.[0]?.crs?.wkt, undefined);
   const node = reparsed.layerTree!.children[2]!;
+  if (node.type !== "group") throw new Error("group");
   assert.deepEqual(node.customProperties, { "plugin/flag": "y" });
   assert.equal(node.attributes?.["mutually-exclusive"], "0");
   assert.equal(reparsed.timeSettings?.range?.end, "2022-01-01T00:00:00Z");

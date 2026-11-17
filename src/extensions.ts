@@ -28,6 +28,8 @@ type Property = {
   origin?: true;
   field?: string;
   format?: "boolean" | "checkState" | "pointcloud";
+  /** Stored spelling of a number, such as `1.0`, kept while the value is unchanged. */
+  text?: string;
 };
 type Value = string | Property;
 type Layout = {
@@ -99,10 +101,12 @@ export class ExtensionCodec {
     name: string,
     path: string[],
     format?: "boolean",
+    text?: string,
   ): void {
     this.attribute(element, name, {
       property: path,
       ...(format ? { format } : {}),
+      ...(text === undefined ? {} : { text }),
     });
   }
 
@@ -513,6 +517,12 @@ export class ExtensionCodec {
       current = (current as Record<string, unknown>)[key];
     }
     if (current === undefined) return undefined;
+    if (
+      typeof current === "number" &&
+      value.text !== undefined &&
+      Number(value.text) === current
+    )
+      return value.text;
     if (typeof current === "boolean")
       return value.format === "boolean" ? String(current) : current ? "1" : "0";
     if (value.format === "checkState") {

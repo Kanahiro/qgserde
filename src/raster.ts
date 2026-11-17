@@ -1,3 +1,16 @@
+import {
+  brightnessContrastAttributes,
+  colorRampItemAttributes,
+  colorRampShaderAttributes,
+  hueSaturationAttributes,
+  noDataRangeAttributes,
+  paletteEntryAttributes,
+  pixelListEntryAttributes,
+  providerResamplingAttributes,
+  rampLegendSettingsAttributes,
+  rasterRendererAttributes,
+  rasterResamplerAttributes,
+} from "./attributes.generated.ts";
 import type { Entry, Spec } from "./spec.ts";
 
 const attribute = (
@@ -20,15 +33,30 @@ export const colorRampSpec: Spec = {
 export const colorRampShaderSpec: Spec = {
   tag: "colorrampshader",
   entries: [
-    { kind: "attributes", field: "attributes" },
+    {
+      kind: "attributes",
+      field: "attributes",
+      table: colorRampShaderAttributes,
+    },
     {
       kind: "object",
       field: "colorRamp",
       at: ["colorramp"],
       spec: colorRampSpec,
     },
-    { kind: "records", field: "items", at: [], item: "item" },
-    { kind: "attributes", field: "legend", at: ["rampLegendSettings"] },
+    {
+      kind: "records",
+      field: "items",
+      table: colorRampItemAttributes,
+      at: [],
+      item: "item",
+    },
+    {
+      kind: "attributes",
+      field: "legend",
+      table: rampLegendSettingsAttributes,
+      at: ["rampLegendSettings"],
+    },
   ],
 };
 
@@ -48,7 +76,11 @@ const rendererSpec: Spec = {
     attribute("redBand", "redBand"),
     attribute("greenBand", "greenBand"),
     attribute("blueBand", "blueBand"),
-    { kind: "attributes", field: "attributes" },
+    {
+      kind: "attributes",
+      field: "attributes",
+      table: rasterRendererAttributes,
+    },
     { kind: "texts", field: "minMaxOrigin", at: ["minMaxOrigin"] },
     contrast("contrastEnhancement"),
     contrast("redContrastEnhancement"),
@@ -64,12 +96,14 @@ const rendererSpec: Spec = {
           {
             kind: "records",
             field: "singleValuePixelList",
+            table: pixelListEntryAttributes,
             at: ["singleValuePixelList"],
             item: "pixelListEntry",
           },
           {
             kind: "records",
             field: "threeValuePixelList",
+            table: pixelListEntryAttributes,
             at: ["threeValuePixelList"],
             item: "pixelListEntry",
           },
@@ -85,6 +119,7 @@ const rendererSpec: Spec = {
     {
       kind: "records",
       field: "palette",
+      table: paletteEntryAttributes,
       at: ["colorPalette"],
       item: "paletteEntry",
     },
@@ -94,7 +129,12 @@ const rendererSpec: Spec = {
       at: ["colorramp"],
       spec: colorRampSpec,
     },
-    { kind: "attributes", field: "legend", at: ["rampLegendSettings"] },
+    {
+      kind: "attributes",
+      field: "legend",
+      table: rampLegendSettingsAttributes,
+      at: ["rampLegendSettings"],
+    },
   ],
 };
 
@@ -116,14 +156,21 @@ export const rasterLayerSpec: Spec = {
     {
       kind: "attributes",
       field: "brightnessContrast",
+      table: brightnessContrastAttributes,
       at: ["pipe", "brightnesscontrast"],
     },
     {
       kind: "attributes",
       field: "hueSaturation",
+      table: hueSaturationAttributes,
       at: ["pipe", "huesaturation"],
     },
-    { kind: "attributes", field: "resampler", at: ["pipe", "rasterresampler"] },
+    {
+      kind: "attributes",
+      field: "resampler",
+      table: rasterResamplerAttributes,
+      at: ["pipe", "rasterresampler"],
+    },
     {
       kind: "text",
       field: "resamplingStage",
@@ -133,6 +180,7 @@ export const rasterLayerSpec: Spec = {
     {
       kind: "attributes",
       field: "providerResampling",
+      table: providerResamplingAttributes,
       at: ["pipe", "provider", "resampling"],
     },
     {
@@ -144,7 +192,13 @@ export const rasterLayerSpec: Spec = {
         entries: [
           attribute("band", "bandNo"),
           attribute("useSourceNoData", "useSrcNoData", "boolean"),
-          { kind: "records", field: "ranges", at: [], item: "noDataRange" },
+          {
+            kind: "records",
+            field: "ranges",
+            table: noDataRangeAttributes,
+            at: [],
+            item: "noDataRange",
+          },
         ],
       },
     },

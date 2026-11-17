@@ -177,21 +177,19 @@ if (layer.type === "vector") {
     settings: {
       fieldName: "name",
       format: {
-        style: { fontSize: "10", textColor: "0,0,0,255" },
-        buffer: { bufferDraw: "1", bufferSize: "1" },
+        style: { fontSize: 10, textColor: "0,0,0,255" },
+        buffer: { bufferDraw: true, bufferSize: 1 },
       },
-      placement: { placement: "1" },
+      placement: { placement: 1 },
     },
   };
 }
 ```
 
 QGIS label settings have well over a hundred options. Groups that QGIS stores
-as element attributes are modeled as `QgsAttributes` maps named after the
-QGIS attributes, such as `fontSize` in `format.style` or `dist` in `placement`.
-Values are strings as stored by QGIS, and absent keys take QGIS defaults.
-Namespace declarations (`xmlns:*`) are never part of these maps.
-Font families, tab positions, substitutions, background symbols, callouts, and
+as element attributes are typed attribute groups (see
+[Attribute groups](#attribute-groups)), such as `fontSize` in `format.style` or
+`dist` in `placement`. Font families, tab positions, substitutions, background symbols, callouts, and
 data-defined properties have their own structure. Effects and other unmodeled
 children stay with the element that contains them.
 
@@ -200,8 +198,9 @@ children stay with the element that contains them.
 `QgsRasterRenderer` keeps band numbers and opacity typed, and models the parts
 each renderer type uses: contrast enhancements, min/max origin, a pseudocolor
 `shader` with color `items`, a paletted `palette`, pixel `transparency`, and
-legend settings. Settings QGIS stores as attributes or as child text, such as
-`classificationMin` or `minValue`, are `QgsAttributes` maps. The layer's
+legend settings. Settings QGIS stores as attributes, such as
+`classificationMin`, are typed attribute groups; settings stored as child text,
+such as `minValue`, are string maps. The layer's
 `brightnessContrast`, `hueSaturation`, `resampler`, `resamplingStage`,
 `providerResampling`, and per-band `noData` hold the other pipe stages.
 
@@ -324,6 +323,32 @@ extents, CRS, locked layers, grids and overviews, polyline nodes, legend
 styles, and scale bar symbols. QGIS reads only the parts an item type uses.
 Legend trees and other unmodeled item children stay with their item.
 
+## Attribute groups
+
+Settings that QGIS stores as attributes of one element, such as a text
+buffer's `bufferSize` or a layout item's `positionLock`, are attribute groups.
+Each group has a generated interface, such as `QgsTextBufferAttributes`, keyed
+by the QGIS attribute name. Values are numbers, booleans, or strings, according
+to how QGIS writes them; absent keys take QGIS defaults.
+
+```ts
+const buffer = settings.format.buffer;
+if (buffer) {
+  buffer.bufferDraw = true; // stored as 1
+  buffer.bufferSize = 1.5;
+}
+```
+
+Attributes a group does not type, and values that do not parse as their kind,
+such as `nan`, are kept as text in `other`; they are written back unchanged.
+A boolean keeps its stored `1`/`0` or `true`/`false` spelling, and an unchanged
+number keeps its stored spelling, such as `1.0`. A key that is not part of the
+group must go in `other`; anything else fails with `INVALID_EDIT`.
+Namespace declarations (`xmlns:*`) are never part of a group.
+
+The interfaces and their attribute kinds are generated from the QGIS 3.44 and
+4.2 writers by `scripts/generate-attributes.py`; see CONTRIBUTING.md.
+
 ## Preserve data and order
 
 The model separates known properties from unknown values, attributes,
@@ -338,7 +363,8 @@ the same validation and normalization rules. Unknown elements and their
 parent–child relationships and order are preserved. Comments, CDATA, and processing instructions
 are retained. Byte-for-byte reproduction is not guaranteed: numeric and boolean
 spelling, quotes, empty-element syntax, entity notation, and XML line-ending
-normalization may differ. Unknown strings, including leading zeros, remain
+normalization may differ, though unchanged typed values keep their spelling.
+Unknown strings, including leading zeros, remain
 strings. Existing whitespace is kept; output is not automatically formatted.
 
 Legacy aliases and defaults without field configuration become typed fields.

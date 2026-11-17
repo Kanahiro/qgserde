@@ -1,7 +1,30 @@
+import {
+  annotationLayerItemAttributes,
+  meshActiveDatasetAttributes,
+  meshAveragingAttributes,
+  meshDatasetAttributes,
+  meshDatasetGroupTreeItemAttributes,
+  meshEdgeSettingsAttributes,
+  meshFrameSettingsAttributes,
+  meshNameIndexAttributes,
+  meshScalarSettingsAttributes,
+  meshSigmaAveragingAttributes,
+  meshSimplifyAttributes,
+  meshStrokeWidthAttributes,
+  meshVectorSettingsAttributes,
+  pointCloudCategoryAttributes,
+  pointCloudRendererAttributes,
+  tiledSceneRendererAttributes,
+  tileMatrixAttributes,
+  tileMatrixSetAttributes,
+  vectorTileLabelingAttributes,
+  vectorTileStyleAttributes,
+} from "./attributes.generated.ts";
 import { ensure, remove } from "./codec.ts";
 import { labelSettingsSpec, textFormatSpec } from "./labeling.ts";
 import { colorRampShaderSpec, contrast } from "./raster.ts";
 import {
+  type AttributeTable,
   type Custom,
   captureSpec,
   type Entry,
@@ -14,22 +37,23 @@ import {
 import type { XmlElement } from "./types.ts";
 import { findChild } from "./xml.ts";
 
-const attributes = (field: string, ...at: string[]): Entry => ({
-  kind: "attributes",
-  field,
-  at,
-});
+const attributes = (
+  field: string,
+  table: AttributeTable,
+  ...at: string[]
+): Entry => ({ kind: "attributes", field, table, at });
 const type: Entry = {
   kind: "attribute",
   field: "type",
   attribute: "type",
   type: "string",
 };
-const otherAttributes: Entry = {
+const otherAttributes = (table: AttributeTable): Entry => ({
   kind: "attributes",
   field: "attributes",
+  table,
   exclude: ["type"],
-};
+});
 const symbolIn = (field: string, wrapper: string): Entry => ({
   kind: "symbol",
   field,
@@ -48,7 +72,7 @@ export const paintEffectEntry = (
 const tileMatrix = (tag: string): Spec => ({
   tag,
   entries: [
-    { kind: "attributes", field: "attributes" },
+    { kind: "attributes", field: "attributes", table: tileMatrixAttributes },
     { kind: "crs", field: "crs", tag: "" },
   ],
 });
@@ -61,7 +85,11 @@ export const vectorTileEntries: Entry[] = [
     spec: {
       tag: "matrixSet",
       entries: [
-        { kind: "attributes", field: "attributes" },
+        {
+          kind: "attributes",
+          field: "attributes",
+          table: tileMatrixSetAttributes,
+        },
         {
           kind: "object",
           field: "rootMatrix",
@@ -87,7 +115,11 @@ export const vectorTileEntries: Entry[] = [
             spec: {
               tag: "style",
               entries: [
-                { kind: "attributes", field: "attributes" },
+                {
+                  kind: "attributes",
+                  field: "attributes",
+                  table: vectorTileStyleAttributes,
+                },
                 { kind: "symbol", field: "symbol", name: "0", at: ["symbols"] },
               ],
             },
@@ -104,7 +136,7 @@ export const vectorTileEntries: Entry[] = [
         tag: "labeling",
         entries: [
           type,
-          otherAttributes,
+          otherAttributes(vectorTileLabelingAttributes),
           {
             kind: "owners",
             field: "styles",
@@ -112,7 +144,11 @@ export const vectorTileEntries: Entry[] = [
             spec: {
               tag: "style",
               entries: [
-                { kind: "attributes", field: "attributes" },
+                {
+                  kind: "attributes",
+                  field: "attributes",
+                  table: vectorTileStyleAttributes,
+                },
                 {
                   kind: "object",
                   field: "settings",
@@ -129,7 +165,13 @@ export const vectorTileEntries: Entry[] = [
 ];
 
 function datasetGroupItem(): Spec {
-  const entries: Entry[] = [{ kind: "attributes", field: "attributes" }];
+  const entries: Entry[] = [
+    {
+      kind: "attributes",
+      field: "attributes",
+      table: meshDatasetGroupTreeItemAttributes,
+    },
+  ];
   const spec: Spec = { tag: "mesh-dataset-group-tree-item", entries };
   entries.push({ kind: "owners", field: "children", spec });
   return spec;
@@ -143,23 +185,32 @@ export const meshEntries: Entry[] = [
     spec: {
       tag: "mesh-renderer-settings",
       entries: [
-        attributes("activeDatasetGroup", "active-dataset-group"),
+        attributes(
+          "activeDatasetGroup",
+          meshActiveDatasetAttributes,
+          "active-dataset-group",
+        ),
         {
           kind: "owners",
           field: "scalarSettings",
           spec: {
             tag: "scalar-settings",
             entries: [
-              { kind: "attributes", field: "attributes" },
+              {
+                kind: "attributes",
+                field: "attributes",
+                table: meshScalarSettingsAttributes,
+              },
               {
                 kind: "object",
                 field: "shader",
                 at: ["colorrampshader"],
                 spec: colorRampShaderSpec,
               },
-              attributes("edge", "edge-settings"),
+              attributes("edge", meshEdgeSettingsAttributes, "edge-settings"),
               attributes(
                 "edgeStrokeWidth",
+                meshStrokeWidthAttributes,
                 "edge-settings",
                 "mesh-stroke-width",
               ),
@@ -171,18 +222,45 @@ export const meshEntries: Entry[] = [
           field: "vectorSettings",
           spec: {
             tag: "vector-settings",
-            entries: [{ kind: "attributes", field: "attributes" }],
+            entries: [
+              {
+                kind: "attributes",
+                field: "attributes",
+                table: meshVectorSettingsAttributes,
+              },
+            ],
           },
         },
-        attributes("nativeMesh", "mesh-settings-native"),
-        attributes("triangularMesh", "mesh-settings-triangular"),
-        attributes("edgeMesh", "mesh-settings-edge"),
-        attributes("averaging", "averaging-3d"),
-        attributes("averagingSigma", "averaging-3d", "sigma-settings"),
+        attributes(
+          "nativeMesh",
+          meshFrameSettingsAttributes,
+          "mesh-settings-native",
+        ),
+        attributes(
+          "triangularMesh",
+          meshFrameSettingsAttributes,
+          "mesh-settings-triangular",
+        ),
+        attributes(
+          "edgeMesh",
+          meshFrameSettingsAttributes,
+          "mesh-settings-edge",
+        ),
+        attributes("averaging", meshAveragingAttributes, "averaging-3d"),
+        attributes(
+          "averagingSigma",
+          meshSigmaAveragingAttributes,
+          "averaging-3d",
+          "sigma-settings",
+        ),
       ],
     },
   },
-  attributes("staticActiveDataset", "static-active-dataset"),
+  attributes(
+    "staticActiveDataset",
+    meshActiveDatasetAttributes,
+    "static-active-dataset",
+  ),
   {
     kind: "object",
     field: "datasetGroups",
@@ -191,17 +269,24 @@ export const meshEntries: Entry[] = [
       tag: "mesh-dataset-groups-store",
       entries: [
         { kind: "owners", field: "tree", spec: datasetGroupItem() },
-        { kind: "records", field: "datasets", at: [], item: "mesh-dataset" },
+        {
+          kind: "records",
+          field: "datasets",
+          at: [],
+          item: "mesh-dataset",
+          table: meshDatasetAttributes,
+        },
         {
           kind: "records",
           field: "nameToGlobalIndex",
           at: [],
           item: "name-to-global-index",
+          table: meshNameIndexAttributes,
         },
       ],
     },
   },
-  attributes("simplify", "mesh-simplify-settings"),
+  attributes("simplify", meshSimplifyAttributes, "mesh-simplify-settings"),
 ];
 
 const formatWrappers = ["pointTextFormat", "lineTextFormat", "rectTextFormat"];
@@ -259,7 +344,11 @@ const annotationFormat: Custom = {
 export const annotationItemSpec: Spec = {
   tag: "item",
   entries: [
-    { kind: "attributes", field: "attributes" },
+    {
+      kind: "attributes",
+      field: "attributes",
+      table: annotationLayerItemAttributes,
+    },
     { kind: "symbol", field: "markerSymbol", name: "markerSymbol" },
     { kind: "symbol", field: "lineSymbol", name: "lineSymbol" },
     { kind: "symbol", field: "fillSymbol", name: "fillSymbol" },
@@ -290,12 +379,13 @@ export const pointCloudEntries: Entry[] = [
       tag: "renderer",
       entries: [
         type,
-        otherAttributes,
+        otherAttributes(pointCloudRendererAttributes),
         {
           kind: "records",
           field: "categories",
           at: ["categories"],
           item: "category",
+          table: pointCloudCategoryAttributes,
         },
         {
           kind: "object",
@@ -320,7 +410,7 @@ export const tiledSceneEntries: Entry[] = [
       tag: "renderer",
       entries: [
         type,
-        otherAttributes,
+        otherAttributes(tiledSceneRendererAttributes),
         symbolIn("fillSymbol", "fillSymbol"),
         symbolIn("lineSymbol", "lineSymbol"),
       ],

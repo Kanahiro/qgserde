@@ -40,21 +40,21 @@ export function createRasterProject(): QgsProject {
       ...base("gray_raster_0001", "gray"),
       renderer: {
         type: "singlebandgray",
-        attributes: { grayBand: "1", gradient: "WhiteToBlack" },
+        attributes: { grayBand: 1, gradient: "WhiteToBlack" },
         contrastEnhancement: {
           minValue: "1",
           maxValue: "4",
           algorithm: "StretchToMinimumMaximum",
         },
       },
-      brightnessContrast: { brightness: "10", contrast: "20", gamma: "1.5" },
-      hueSaturation: { saturation: "-50", grayscaleMode: "2" },
+      brightnessContrast: { brightness: 10, contrast: 20, gamma: 1.5 },
+      hueSaturation: { saturation: -50, grayscaleMode: 2 },
       providerResampling: {
-        enabled: "true",
+        enabled: true,
         zoomedInResamplingMethod: "bilinear",
       },
       noData: [
-        { band: 1, useSourceNoData: false, ranges: [{ min: "1", max: "1" }] },
+        { band: 1, useSourceNoData: false, ranges: [{ min: 1, max: 1 }] },
       ],
     },
     {
@@ -62,17 +62,17 @@ export function createRasterProject(): QgsProject {
       renderer: {
         type: "singlebandpseudocolor",
         band: 1,
-        attributes: { classificationMin: "1", classificationMax: "4" },
+        attributes: { classificationMin: 1, classificationMax: 4 },
         shader: {
           attributes: {
             colorRampType: "DISCRETE",
-            minimumValue: "1",
-            maximumValue: "4",
+            minimumValue: 1,
+            maximumValue: 4,
           },
           colorRamp: ramp,
           items: [
-            { value: "2", color: "#0000ff", alpha: "255", label: "low" },
-            { value: "4", color: "#ff0000", alpha: "128", label: "high" },
+            { value: 2, color: "#0000ff", alpha: 255, label: "low" },
+            { value: 4, color: "#ff0000", alpha: 128, label: "high" },
           ],
         },
       },
@@ -83,8 +83,8 @@ export function createRasterProject(): QgsProject {
         type: "paletted",
         band: 1,
         palette: [
-          { value: "1", color: "#0a141e", alpha: "255", label: "one" },
-          { value: "2", color: "#28323c", alpha: "255", label: "two" },
+          { value: 1, color: "#0a141e", alpha: 255, label: "one" },
+          { value: 2, color: "#28323c", alpha: 255, label: "two" },
         ],
         colorRamp: ramp,
       },
@@ -99,7 +99,7 @@ export function createRasterProject(): QgsProject {
         blueBand: 1,
         transparency: {
           threeValuePixelList: [
-            { red: "1", green: "1", blue: "1", percentTransparent: "100" },
+            { red: 1, green: 1, blue: 1, percentTransparent: 100 },
           ],
         },
         redContrastEnhancement: {
@@ -114,7 +114,7 @@ export function createRasterProject(): QgsProject {
       renderer: {
         type: "hillshade",
         band: 1,
-        attributes: { azimuth: "300", angle: "40", zfactor: "2" },
+        attributes: { azimuth: 300, angle: 40, zfactor: 2 },
       },
     },
   );

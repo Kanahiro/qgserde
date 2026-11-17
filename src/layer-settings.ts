@@ -1,7 +1,47 @@
+import {
+  actionAttributes,
+  attributeTableColumnAttributes,
+  attributeTableConfigAttributes,
+  auxiliaryLayerAttributes,
+  colorAttributes,
+  conditionalStyleAttributes,
+  defaultActionAttributes,
+  diagramAttributeAttributes,
+  diagramCategoryAttributes,
+  diagramLayerSettingsAttributes,
+  diagramRendererAttributes,
+  elevationAttributes,
+  expressionFieldAttributes,
+  fontAttributes,
+  formActionAttributes,
+  formContainerAttributes,
+  formElementAttributes,
+  formFieldAttributes,
+  formLabelStyleAttributes,
+  formRelationAttributes,
+  formSpacerAttributes,
+  geometryOptionsAttributes,
+  joinAttributes,
+  layerLegendAttributes,
+  linearDiagramRendererAttributes,
+  mapLayerAttributes,
+  metadataConstraintAttributes,
+  metadataDateAttributes,
+  metadataLinkAttributes,
+  metadataSpatialExtentAttributes,
+  metadataUrlAttributes,
+  relationAttributes,
+  relationFieldRefAttributes,
+  renderer3DAttributes,
+  selectionAttributes,
+  storedExpressionAttributes,
+  temporalAttributes,
+} from "./attributes.generated.ts";
 import { putElementText, remove, replaceChildren } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import { labeling } from "./labeling.ts";
 import {
+  type AttributeTable,
   type Custom,
   captureOwned,
   type Entry,
@@ -19,11 +59,11 @@ const text = (
   tag: string,
   type: "string" | "number" = "string",
 ): Entry => ({ kind: "text", field, at: [tag], type });
-const attributes = (field: string, ...at: string[]): Entry => ({
-  kind: "attributes",
-  field,
-  at,
-});
+const attributes = (
+  field: string,
+  table: AttributeTable,
+  ...at: string[]
+): Entry => ({ kind: "attributes", field, table, at });
 
 /** `<customproperties>`: an <Option> map since QGIS 3.20, `<property>` elements before. */
 export const customProperties: Custom = {
@@ -176,9 +216,21 @@ const metadataBase: Entry[] = [
       ],
     },
   },
-  { kind: "records", field: "links", at: ["links"], item: "link" },
+  {
+    kind: "records",
+    field: "links",
+    at: ["links"],
+    item: "link",
+    table: metadataLinkAttributes,
+  },
   { kind: "values", field: "history", at: [], item: "history" },
-  { kind: "records", field: "dates", at: ["dates"], item: "date" },
+  {
+    kind: "records",
+    field: "dates",
+    at: ["dates"],
+    item: "date",
+    table: metadataDateAttributes,
+  },
 ];
 
 /** QgsLayerMetadata (`<resourceMetadata>`). */
@@ -201,6 +253,7 @@ export const layerMetadataSpec: Spec = {
       at: [],
       item: "constraints",
       text: "value",
+      table: metadataConstraintAttributes,
     },
     text("encoding", "encoding"),
     { kind: "crs", field: "crs", tag: "crs" },
@@ -209,6 +262,7 @@ export const layerMetadataSpec: Spec = {
       field: "spatialExtents",
       at: ["extent"],
       item: "spatial",
+      table: metadataSpatialExtentAttributes,
     },
   ],
 };
@@ -221,6 +275,7 @@ export const commonLayerEntries: Entry[] = [
   {
     kind: "attributes",
     field: "attributes",
+    table: mapLayerAttributes,
     exclude: [
       "type",
       "id",
@@ -242,7 +297,12 @@ export const commonLayerEntries: Entry[] = [
       tag: "renderer-3d",
       entries: [
         { kind: "attribute", field: "type", attribute: "type", type: "string" },
-        { kind: "attributes", field: "attributes", exclude: ["type"] },
+        {
+          kind: "attributes",
+          field: "attributes",
+          table: renderer3DAttributes,
+          exclude: ["type"],
+        },
       ],
     },
   },
@@ -257,7 +317,7 @@ export const commonLayerEntries: Entry[] = [
     type: "boolean",
     at: ["mapTip"],
   },
-  attributes("legend", "legend"),
+  attributes("legend", layerLegendAttributes, "legend"),
   {
     kind: "object",
     field: "temporal",
@@ -265,7 +325,7 @@ export const commonLayerEntries: Entry[] = [
     spec: {
       tag: "temporal",
       entries: [
-        { kind: "attributes", field: "attributes" },
+        { kind: "attributes", field: "attributes", table: temporalAttributes },
         { kind: "texts", field: "fixedRange", at: ["fixedRange"] },
       ],
     },
@@ -277,7 +337,7 @@ export const commonLayerEntries: Entry[] = [
     spec: {
       tag: "elevation",
       entries: [
-        { kind: "attributes", field: "attributes" },
+        { kind: "attributes", field: "attributes", table: elevationAttributes },
         {
           kind: "dataDefined",
           field: "dataDefinedProperties",
@@ -340,6 +400,7 @@ export const commonLayerEntries: Entry[] = [
           field: "metadataUrls",
           at: ["metadataUrls"],
           item: "metadataUrl",
+          table: metadataUrlAttributes,
           text: "url",
         },
       ],
@@ -354,26 +415,30 @@ const labelStyle: Entry = {
   spec: {
     tag: "labelStyle",
     entries: [
-      { kind: "attributes", field: "attributes" },
-      attributes("font", "labelFont"),
+      {
+        kind: "attributes",
+        field: "attributes",
+        table: formLabelStyleAttributes,
+      },
+      attributes("font", fontAttributes, "labelFont"),
     ],
   },
 };
 
-const formItem = (tag: string): Spec => ({
+const formItem = (tag: string, table: AttributeTable): Spec => ({
   tag,
-  entries: [{ kind: "attributes", field: "attributes" }, labelStyle],
+  entries: [{ kind: "attributes", field: "attributes", table }, labelStyle],
 });
-const container = formItem("attributeEditorContainer");
+const container = formItem("attributeEditorContainer", formContainerAttributes);
 const formNodes: Record<string, Spec> = {
   container,
-  field: formItem("attributeEditorField"),
-  relation: formItem("attributeEditorRelation"),
-  action: formItem("attributeEditorAction"),
-  qml: formItem("attributeEditorQmlElement"),
-  html: formItem("attributeEditorHtmlElement"),
-  text: formItem("attributeEditorTextElement"),
-  spacer: formItem("attributeEditorSpacerElement"),
+  field: formItem("attributeEditorField", formFieldAttributes),
+  relation: formItem("attributeEditorRelation", formRelationAttributes),
+  action: formItem("attributeEditorAction", formActionAttributes),
+  qml: formItem("attributeEditorQmlElement", formElementAttributes),
+  html: formItem("attributeEditorHtmlElement", formElementAttributes),
+  text: formItem("attributeEditorTextElement", formElementAttributes),
+  spacer: formItem("attributeEditorSpacerElement", formSpacerAttributes),
 };
 (container.entries as Entry[]).push({
   kind: "nodes",
@@ -384,8 +449,12 @@ const formNodes: Record<string, Spec> = {
 const conditionalStyle: Spec = {
   tag: "style",
   entries: [
-    { kind: "attributes", field: "attributes" },
-    attributes("font", "font"),
+    {
+      kind: "attributes",
+      field: "attributes",
+      table: conditionalStyleAttributes,
+    },
+    attributes("font", fontAttributes, "font"),
     { kind: "symbol", field: "symbol", name: "icon" },
   ],
 };
@@ -393,17 +462,33 @@ const conditionalStyle: Spec = {
 const relation: Spec = {
   tag: "relation",
   entries: [
-    { kind: "attributes", field: "attributes" },
-    { kind: "records", field: "fieldRefs", at: [], item: "fieldRef" },
+    { kind: "attributes", field: "attributes", table: relationAttributes },
+    {
+      kind: "records",
+      field: "fieldRefs",
+      at: [],
+      item: "fieldRef",
+      table: relationFieldRefAttributes,
+    },
   ],
 };
 
 const diagramCategory: Spec = {
   tag: "DiagramCategory",
   entries: [
-    { kind: "attributes", field: "attributes" },
-    attributes("font", "fontProperties"),
-    { kind: "records", field: "fields", at: [], item: "attribute" },
+    {
+      kind: "attributes",
+      field: "attributes",
+      table: diagramCategoryAttributes,
+    },
+    attributes("font", fontAttributes, "fontProperties"),
+    {
+      kind: "records",
+      field: "fields",
+      at: [],
+      item: "attribute",
+      table: diagramAttributeAttributes,
+    },
     symbolIn("axisSymbol", "axisSymbol"),
   ],
 };
@@ -412,6 +497,9 @@ const diagramTags = [
   "LinearlyInterpolatedDiagramRenderer",
   "StackedDiagramRenderer",
 ];
+const diagramTables: Record<string, AttributeTable> = {
+  LinearlyInterpolatedDiagramRenderer: linearDiagramRendererAttributes,
+};
 const diagramSpecs = new Map(
   diagramTags.map((tag) => [
     tag,
@@ -419,7 +507,11 @@ const diagramSpecs = new Map(
       tag,
       aliases: diagramTags,
       entries: [
-        { kind: "attributes", field: "attributes" },
+        {
+          kind: "attributes",
+          field: "attributes",
+          table: diagramTables[tag] ?? diagramRendererAttributes,
+        },
         { kind: "owners", field: "categories", spec: diagramCategory },
       ],
     } satisfies Spec,
@@ -478,6 +570,7 @@ export const vectorLayerEntries: Entry[] = [
     field: "expressionFields",
     at: ["expressionfields"],
     item: "field",
+    table: expressionFieldAttributes,
     mirror: true,
   },
   {
@@ -487,7 +580,7 @@ export const vectorLayerEntries: Entry[] = [
     spec: {
       tag: "join",
       entries: [
-        { kind: "attributes", field: "attributes" },
+        { kind: "attributes", field: "attributes", table: joinAttributes },
         {
           kind: "values",
           field: "fields",
@@ -519,7 +612,7 @@ export const vectorLayerEntries: Entry[] = [
     spec: {
       tag: "actionsetting",
       entries: [
-        { kind: "attributes", field: "attributes" },
+        { kind: "attributes", field: "attributes", table: actionAttributes },
         {
           kind: "values",
           field: "scopes",
@@ -534,6 +627,7 @@ export const vectorLayerEntries: Entry[] = [
     kind: "records",
     field: "defaultActions",
     at: ["attributeactions"],
+    table: defaultActionAttributes,
     item: "defaultAction",
   },
   {
@@ -543,8 +637,18 @@ export const vectorLayerEntries: Entry[] = [
     spec: {
       tag: "attributetableconfig",
       entries: [
-        { kind: "attributes", field: "attributes" },
-        { kind: "records", field: "columns", at: ["columns"], item: "column" },
+        {
+          kind: "attributes",
+          field: "attributes",
+          table: attributeTableConfigAttributes,
+        },
+        {
+          kind: "records",
+          field: "columns",
+          at: ["columns"],
+          item: "column",
+          table: attributeTableColumnAttributes,
+        },
       ],
     },
   },
@@ -585,6 +689,7 @@ export const vectorLayerEntries: Entry[] = [
     kind: "records",
     field: "storedExpressions",
     at: ["storedexpressions"],
+    table: storedExpressionAttributes,
     item: "storedexpression",
   },
   {
@@ -635,7 +740,11 @@ export const vectorLayerEntries: Entry[] = [
     spec: {
       tag: "geometryOptions",
       entries: [
-        { kind: "attributes", field: "attributes" },
+        {
+          kind: "attributes",
+          field: "attributes",
+          table: geometryOptionsAttributes,
+        },
         { kind: "variant", field: "activeChecks", at: ["activeChecks"] },
         {
           kind: "variant",
@@ -645,8 +754,8 @@ export const vectorLayerEntries: Entry[] = [
       ],
     },
   },
-  attributes("selection", "selection"),
-  attributes("selectionColor", "selection", "selectionColor"),
+  attributes("selection", selectionAttributes, "selection"),
+  attributes("selectionColor", colorAttributes, "selection", "selectionColor"),
   {
     kind: "symbol",
     field: "selectionSymbol",
@@ -661,7 +770,11 @@ export const vectorLayerEntries: Entry[] = [
     spec: {
       tag: "DiagramLayerSettings",
       entries: [
-        { kind: "attributes", field: "attributes" },
+        {
+          kind: "attributes",
+          field: "attributes",
+          table: diagramLayerSettingsAttributes,
+        },
         {
           kind: "dataDefined",
           field: "dataDefinedProperties",
@@ -670,7 +783,7 @@ export const vectorLayerEntries: Entry[] = [
       ],
     },
   },
-  attributes("auxiliaryLayer", "auxiliaryLayer"),
+  attributes("auxiliaryLayer", auxiliaryLayerAttributes, "auxiliaryLayer"),
   {
     kind: "owners",
     field: "referencedLayers",

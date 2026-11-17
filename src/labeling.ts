@@ -1,3 +1,14 @@
+import {
+  labelFormattingAttributes,
+  labelPlacementAttributes,
+  labelRenderingAttributes,
+  textBackgroundAttributes,
+  textBufferAttributes,
+  textMaskAttributes,
+  textShadowAttributes,
+  textStyleAttributes,
+  textTabAttributes,
+} from "./attributes.generated.ts";
 import { type Entry, type Spec, union } from "./spec.ts";
 import { effectSpec } from "./symbology.ts";
 
@@ -22,6 +33,7 @@ export const textFormatSpec: Spec = {
     {
       kind: "attributes",
       field: "style",
+      table: textStyleAttributes,
       exclude: ["fieldName", "isExpression"],
     },
     {
@@ -34,12 +46,23 @@ export const textFormatSpec: Spec = {
     {
       kind: "records",
       field: "tabPositions",
+      table: textTabAttributes,
       at: ["tabPositions"],
       item: "tab",
     },
-    { kind: "attributes", field: "buffer", at: ["text-buffer"] },
+    {
+      kind: "attributes",
+      field: "buffer",
+      table: textBufferAttributes,
+      at: ["text-buffer"],
+    },
     effectIn("bufferEffect", "text-buffer"),
-    { kind: "attributes", field: "mask", at: ["text-mask"] },
+    {
+      kind: "attributes",
+      field: "mask",
+      table: textMaskAttributes,
+      at: ["text-mask"],
+    },
     effectIn("maskEffect", "text-mask"),
     {
       kind: "object",
@@ -48,14 +71,23 @@ export const textFormatSpec: Spec = {
       spec: {
         tag: "background",
         entries: [
-          { kind: "attributes", field: "attributes" },
+          {
+            kind: "attributes",
+            field: "attributes",
+            table: textBackgroundAttributes,
+          },
           { kind: "symbol", field: "markerSymbol", name: "markerSymbol" },
           { kind: "symbol", field: "fillSymbol", name: "fillSymbol" },
         ],
       },
     },
     effectIn("backgroundEffect", "background"),
-    { kind: "attributes", field: "shadow", at: ["shadow"] },
+    {
+      kind: "attributes",
+      field: "shadow",
+      table: textShadowAttributes,
+      at: ["shadow"],
+    },
     {
       kind: "dataDefined",
       field: "dataDefinedProperties",
@@ -94,9 +126,24 @@ export const labelSettingsSpec: Spec = {
       at: ["text-style", "substitutions"],
       item: "replacement",
     },
-    { kind: "attributes", field: "formatting", at: ["text-format"] },
-    { kind: "attributes", field: "placement", at: ["placement"] },
-    { kind: "attributes", field: "rendering", at: ["rendering"] },
+    {
+      kind: "attributes",
+      field: "formatting",
+      table: labelFormattingAttributes,
+      at: ["text-format"],
+    },
+    {
+      kind: "attributes",
+      field: "placement",
+      table: labelPlacementAttributes,
+      at: ["placement"],
+    },
+    {
+      kind: "attributes",
+      field: "rendering",
+      table: labelRenderingAttributes,
+      at: ["rendering"],
+    },
     {
       kind: "dataDefined",
       field: "dataDefinedProperties",

@@ -36,10 +36,10 @@ export function createLayerTypesProject(): QgsProject {
             attributes: {
               name: "roads",
               layer: "roads",
-              geometry: "1",
-              enabled: "1",
-              "min-zoom": "5",
-              "max-zoom": "-1",
+              geometry: 1,
+              enabled: true,
+              "min-zoom": 5,
+              "max-zoom": -1,
               expression: "\"class\" = 'major'",
             },
             symbol: {
@@ -61,12 +61,12 @@ export function createLayerTypesProject(): QgsProject {
             attributes: {
               name: "names",
               layer: "places",
-              geometry: "0",
-              enabled: "1",
+              geometry: 0,
+              enabled: true,
             },
             settings: {
               fieldName: "name",
-              format: { style: { fontSize: "9" } },
+              format: { style: { fontSize: 9 } },
             },
           },
         ],
@@ -80,31 +80,31 @@ export function createLayerTypesProject(): QgsProject {
       source: "./mesh.2dm",
       crs,
       renderer: {
-        activeDatasetGroup: { scalar: "0", vector: "-1" },
+        activeDatasetGroup: { scalar: 0, vector: -1 },
         nativeMesh: {
-          enabled: "1",
+          enabled: true,
           color: "255,0,0,255",
-          "line-width": "0.5",
+          "line-width": 0.5,
           "line-width-unit": "MM",
         },
         scalarSettings: [
           {
             attributes: {
-              group: "0",
-              "min-val": "1",
-              "max-val": "4",
-              opacity: "0.8",
+              group: 0,
+              "min-val": 1,
+              "max-val": 4,
+              opacity: 0.8,
               "interpolation-method": "none",
             },
             shader: {
               attributes: {
                 colorRampType: "DISCRETE",
-                minimumValue: "1",
-                maximumValue: "4",
+                minimumValue: 1,
+                maximumValue: 4,
               },
               items: [
-                { value: "2", color: "#0000ff", alpha: "255", label: "low" },
-                { value: "4", color: "#ff0000", alpha: "255", label: "high" },
+                { value: 2, color: "#0000ff", alpha: 255, label: "low" },
+                { value: 4, color: "#ff0000", alpha: 255, label: "high" },
               ],
             },
           },
@@ -123,9 +123,9 @@ export function createLayerTypesProject(): QgsProject {
           attributes: {
             type: "marker",
             id: "{11111111-1111-1111-1111-111111111111}",
-            x: "140.5",
-            y: "40.5",
-            zIndex: "1",
+            x: 140.5,
+            y: 40.5,
+            zIndex: 1,
           },
           markerSymbol: marker("0,0,255,255"),
         },
@@ -134,10 +134,10 @@ export function createLayerTypesProject(): QgsProject {
             type: "pointtext",
             id: "{22222222-2222-2222-2222-222222222222}",
             text: "Hello",
-            x: "140",
-            y: "40",
+            x: 140,
+            y: 40,
           },
-          format: { style: { fontSize: "14", textColor: "255,0,0,255" } },
+          format: { style: { fontSize: 14, textColor: "255,0,0,255" } },
         },
       ],
     },
@@ -176,10 +176,10 @@ export function editLayerTypesFixture(): QgsProject {
     if (layer.type === "mesh") {
       const scalar = layer.renderer?.scalarSettings?.[0];
       if (!scalar?.attributes || !scalar.shader) throw new Error("mesh");
-      scalar.attributes.opacity = "0.8";
+      scalar.attributes.opacity = 0.8;
       scalar.shader.items = [
-        { value: "2", color: "#0000ff", alpha: "255", label: "low" },
-        { value: "4", color: "#ff0000", alpha: "255", label: "high" },
+        { value: 2, color: "#0000ff", alpha: 255, label: "low" },
+        { value: 4, color: "#ff0000", alpha: 255, label: "high" },
       ];
     }
     if (layer.type === "annotation" && layer.items) {
@@ -189,7 +189,7 @@ export function editLayerTypesFixture(): QgsProject {
       for (const item of layer.items) {
         if (item.markerSymbol)
           item.markerSymbol.layers[0]!.properties.color = "0,0,255,255";
-        if (item.format?.style) item.format.style.fontSize = "14";
+        if (item.format?.style) item.format.style.fontSize = 14;
       }
     }
   }

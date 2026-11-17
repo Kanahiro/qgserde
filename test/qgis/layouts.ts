@@ -22,7 +22,7 @@ export function createLayoutsProject(): QgsProject {
   byId(layout.items, "title").attributes!.labelText = "Edited title";
   const map = byId(layout.items, "main map");
   map.extent = { xmin: 135, ymin: 35, xmax: 145, ymax: 42 };
-  map.grids![0]!.attributes!.intervalX = "2";
+  map.grids![0]!.attributes!.intervalX = 2;
   const shape = layout.items?.find((item) => item.type === "65643");
   shape!.symbol!.layers[0]!.properties.color = "0,128,0,255";
   layout.atlas!.filenamePattern = "'atlas_' || @atlas_featurenumber";
@@ -32,7 +32,7 @@ export function createLayoutsProject(): QgsProject {
   const points = project.layers[0]!;
   project.layouts!.push({
     name: "New layout",
-    attributes: { units: "mm", printResolution: "300" },
+    attributes: { units: "mm", printResolution: 300 },
     pages: [
       {
         type: "65638",
@@ -55,7 +55,7 @@ export function createLayoutsProject(): QgsProject {
           positionOnPage: "10,10,mm",
           visibility: "1",
         },
-        format: { style: { fontSize: "24" } },
+        format: { style: { fontSize: 24 } },
       },
       {
         type: "65639",

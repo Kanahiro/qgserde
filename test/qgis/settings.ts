@@ -53,12 +53,12 @@ export function createSettingsProject(): QgsProject {
         {
           name: "pop_k",
           expression: '"pop" / 1000',
-          type: "6",
+          type: 6,
           typeName: "double",
-          length: "0",
-          precision: "0",
+          length: 0,
+          precision: 0,
           comment: "",
-          subType: "0",
+          subType: 0,
         },
       ],
       joins: [
@@ -67,8 +67,8 @@ export function createSettingsProject(): QgsProject {
             joinLayerId: "countries_layer_01",
             joinFieldName: "id",
             targetFieldName: "country_id",
-            memoryCache: "1",
-            hasCustomPrefix: "1",
+            memoryCache: true,
+            hasCustomPrefix: 1,
             customPrefix: "c_",
           },
           fields: ["cname"],
@@ -79,19 +79,19 @@ export function createSettingsProject(): QgsProject {
         {
           attributes: {
             name: "Say hi",
-            type: "1",
+            type: 1,
             action: "print('[% name %]')",
-            capture: "0",
+            capture: false,
             id: "{11111111-1111-1111-1111-111111111111}",
           },
           scopes: ["Feature", "Canvas"],
         },
       ],
       attributeTable: {
-        attributes: { sortExpression: '"pop"', sortOrder: "1" },
+        attributes: { sortExpression: '"pop"', sortOrder: 1 },
         columns: [
-          { type: "field", name: "name", width: "120", hidden: "0" },
-          { type: "field", name: "pop", width: "-1", hidden: "1" },
+          { type: "field", name: "name", width: 120, hidden: "0" },
+          { type: "field", name: "pop", width: -1, hidden: "1" },
         ],
       },
       conditionalStyles: {
@@ -126,14 +126,14 @@ export function createSettingsProject(): QgsProject {
         items: [
           {
             kind: "container",
-            attributes: { name: "Main", type: "Tab", columnCount: "2" },
+            attributes: { name: "Main", type: "Tab", columnCount: 2 },
             children: [
-              { kind: "field", attributes: { name: "name", index: "1" } },
+              { kind: "field", attributes: { name: "name", index: 1 } },
               {
                 kind: "container",
                 attributes: { name: "Numbers", type: "GroupBox" },
                 children: [
-                  { kind: "field", attributes: { name: "pop", index: "3" } },
+                  { kind: "field", attributes: { name: "pop", index: 3 } },
                 ],
               },
             ],
@@ -171,23 +171,23 @@ export function createSettingsProject(): QgsProject {
       },
       temporal: {
         attributes: {
-          enabled: "1",
-          mode: "1",
+          enabled: true,
+          mode: 1,
           startField: "pop",
           durationUnit: "min",
         },
       },
       diagram: {
         renderer: "SingleCategoryDiagramRenderer",
-        attributes: { diagramType: "Pie", attributeLegend: "1" },
+        attributes: { diagramType: "Pie", attributeLegend: true },
         categories: [
           {
             attributes: {
-              enabled: "1",
-              width: "12",
-              height: "12",
+              enabled: true,
+              width: 12,
+              height: 12,
               sizeType: "MM",
-              opacity: "1",
+              opacity: 1,
             },
             fields: [
               { field: '"pop"', color: "#ff0000", label: "Population" },
@@ -197,17 +197,17 @@ export function createSettingsProject(): QgsProject {
         ],
       },
       diagramSettings: {
-        attributes: { placement: "0", dist: "2", priority: "5", showAll: "1" },
+        attributes: { placement: 0, dist: 2, priority: 5, showAll: true },
       },
       selectionColor: {
         spec: "rgb",
-        red: "1",
-        green: "0",
-        blue: "1",
-        alpha: "1",
+        red: 1,
+        green: 0,
+        blue: 1,
+        alpha: 1,
       },
       geometryOptions: {
-        attributes: { geometryPrecision: "0.01", removeDuplicateNodes: "1" },
+        attributes: { geometryPrecision: 0.01, removeDuplicateNodes: 1 },
       },
     },
   );

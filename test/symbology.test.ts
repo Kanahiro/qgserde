@@ -325,7 +325,7 @@ test("reads and edits wrapper renderers, paint effects, and order-by", () => {
   };
   const cluster = byName("cluster");
   if (cluster.type !== "pointCluster") throw new Error("cluster");
-  assert.equal(cluster.attributes?.tolerance, "5");
+  assert.equal(cluster.attributes?.tolerance, 5);
   assert.equal(cluster.renderer?.type, "singleSymbol");
   assert.equal(cluster.clusterSymbol?.type, "marker");
   const displacement = byName("displacement");
@@ -334,7 +334,7 @@ test("reads and edits wrapper renderers, paint effects, and order-by", () => {
   assert.match(displacement.labelFont?.description ?? "", /,12,/u);
   const heatmap = byName("heatmap");
   if (heatmap.type !== "heatmapRenderer") throw new Error("heatmap");
-  assert.equal(heatmap.attributes?.radius, "15");
+  assert.equal(heatmap.attributes?.radius, 15);
   assert.equal(heatmap.colorRamp?.type, "gradient");
   assert.equal(byName("inverted").type, "invertedPolygonRenderer");
   assert.equal(byName("merged").type, "mergedFeatureRenderer");
@@ -344,7 +344,7 @@ test("reads and edits wrapper renderers, paint effects, and order-by", () => {
   const ordered = byName("ordered");
   if (ordered.type !== "singleSymbol") throw new Error("single");
   assert.deepEqual(ordered.orderBy, [
-    { asc: "0", nullsFirst: "1", expression: '"v"' },
+    { asc: false, nullsFirst: true, expression: '"v"' },
   ]);
   assert.deepEqual(
     ordered.effect?.effects?.map((item) => item.type),
@@ -358,10 +358,10 @@ test("reads and edits wrapper renderers, paint effects, and order-by", () => {
   // Edit nested renderers and effect stacks.
   if (cluster.renderer?.type !== "singleSymbol") throw new Error("inner");
   cluster.renderer.symbol!.layers[0]!.properties.color = "1,2,3,255";
-  cluster.attributes!.tolerance = "8";
+  cluster.attributes!.tolerance = 8;
   ordered.effect!.effects!.reverse();
   delete ordered.symbol!.layers[0]!.effect;
-  ordered.orderBy = [{ expression: '"v" * 2', asc: "1", nullsFirst: "0" }];
+  ordered.orderBy = [{ expression: '"v" * 2', asc: true, nullsFirst: false }];
   const output = serializeQgs(project, { version: "3.34" });
   const reparsed = parseQgs(output);
   const again = (name: string) => {
@@ -379,7 +379,7 @@ test("reads and edits wrapper renderers, paint effects, and order-by", () => {
     cluster2.renderer.symbol?.layers[0]?.properties.color,
     "1,2,3,255",
   );
-  assert.equal(cluster2.attributes?.tolerance, "8");
+  assert.equal(cluster2.attributes?.tolerance, 8);
   const ordered2 = again("ordered");
   if (ordered2.type !== "singleSymbol") throw new Error("single");
   assert.deepEqual(

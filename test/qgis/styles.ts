@@ -20,6 +20,6 @@ export function editStylesFixture(): QgsProject {
   renderer!.symbol!.layers[0]!.properties.color = "0,0,128,255";
   const note = project.annotations?.[0];
   if (!note?.item?.attributes) throw new Error("Missing annotation");
-  note.item.attributes.mapPosX = "5";
+  note.item.attributes.mapPosX = 5;
   return project;
 }

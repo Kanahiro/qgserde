@@ -86,9 +86,9 @@ test("reads field, form, and common layer settings written by QGIS", () => {
   assert.equal(layer.server?.legendUrlFormat, "image/png");
   assert.equal(layer.metadata?.contacts?.[0]?.fields?.email, "a@example.com");
   assert.equal(layer.temporal?.attributes?.startField, "when");
-  assert.equal(layer.elevation?.attributes?.zoffset, "10");
+  assert.equal(layer.elevation?.attributes?.zoffset, 10);
   assert.equal(layer.elevation?.profileLineSymbol?.type, "line");
-  assert.equal(layer.attributes?.autoRefreshTime, "5000");
+  assert.equal(layer.attributes?.autoRefreshTime, 5000);
 });
 
 test("edits settings, keeps duplicate QGIS copies in sync, and removes lists", () => {
@@ -183,13 +183,13 @@ test("reads and edits diagrams written by QGIS", () => {
   assert.ok(layer.diagram.attributes?.diagramType);
   const category = layer.diagram.categories![0]!;
   assert.ok(category.attributes?.width);
-  assert.ok(layer.diagramSettings?.attributes?.placement);
+  assert.equal(typeof layer.diagramSettings?.attributes?.placement, "number");
   layer.diagram = {
     renderer: "LinearlyInterpolatedDiagramRenderer",
     attributes: { diagramType: "Pie" },
     categories: [
       {
-        attributes: { enabled: "1" },
+        attributes: { enabled: true },
         fields: [{ field: "1", color: "#ff0000", label: "x" }],
       },
     ],

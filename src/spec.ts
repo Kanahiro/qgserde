@@ -67,7 +67,7 @@ function parseTyped(raw: string, type: Scalar): unknown {
   return undefined;
 }
 
-/** Keep the stored spelling family of a boolean: 1/0 or true/false. */
+/** Keep the stored spelling of an unchanged number and of booleans (1/0 or true/false). */
 function typedText(
   value: unknown,
   type: Scalar,
@@ -75,11 +75,24 @@ function typedText(
   stored: string | undefined,
 ): string {
   const text = scalarText(value, type, name);
+  if (
+    type === "number" &&
+    stored !== undefined &&
+    parseTyped(stored, type) === value
+  )
+    return stored;
   if (type === "boolean" && (stored === "true" || stored === "false"))
     return value ? "true" : "false";
   if (type === "flag" && (stored === "1" || stored === "0"))
     return value ? "1" : "0";
   return text;
+}
+
+/** A number's stored spelling when it differs from the canonical one. */
+function spelling(type: Scalar, raw: string | undefined): string | undefined {
+  return type === "number" && raw !== undefined && String(Number(raw)) !== raw
+    ? raw
+    : undefined;
 }
 
 /** Extension format that restores a boolean in its stored spelling. */
@@ -248,6 +261,7 @@ function captureTyped(
         attribute,
         [...prefix, attribute],
         spelledAsFlag(type, raw),
+        spelling(type, raw),
       );
     else codec.bindAttribute(element, attribute, [...prefix, OTHER, attribute]);
   }
@@ -631,6 +645,7 @@ export function captureSpec(
           entry.attribute,
           at,
           spelledAsFlag(entry.type, target?.attributes[entry.attribute]),
+          spelling(entry.type, target?.attributes[entry.attribute]),
         );
         break;
       case "attributes":

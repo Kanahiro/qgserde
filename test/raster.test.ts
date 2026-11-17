@@ -28,15 +28,15 @@ test("reads raster pipes written by QGIS", () => {
   const project = fixture();
   const gray = raster(project, "gray");
   assert.equal(gray.renderer?.type, "singlebandgray");
-  assert.equal(gray.renderer?.attributes?.grayBand, "1");
+  assert.equal(gray.renderer?.attributes?.grayBand, 1);
   assert.deepEqual(gray.renderer?.contrastEnhancement, {
     minValue: "1",
     maxValue: "4",
     algorithm: "StretchToMinimumMaximum",
   });
   assert.equal(gray.renderer?.minMaxOrigin?.limits, "None");
-  assert.equal(gray.brightnessContrast?.brightness, "10");
-  assert.equal(gray.hueSaturation?.grayscaleMode, "2");
+  assert.equal(gray.brightnessContrast?.brightness, 10);
+  assert.equal(gray.hueSaturation?.grayscaleMode, 2);
   assert.equal(gray.resamplingStage, "resamplingFilter");
   assert.equal(gray.providerResampling?.zoomedInResamplingMethod, "bilinear");
   const plain = (value: unknown) =>
@@ -46,7 +46,7 @@ test("reads raster pipes written by QGIS", () => {
       ),
     );
   assert.deepEqual(plain(gray.noData), [
-    { band: 1, useSourceNoData: true, ranges: [{ min: "1", max: "1" }] },
+    { band: 1, useSourceNoData: true, ranges: [{ min: 1, max: 1 }] },
   ]);
 
   const shader = raster(project, "pseudo").renderer?.shader;
@@ -56,7 +56,7 @@ test("reads raster pipes written by QGIS", () => {
     shader?.items?.map((item) => item.label),
     ["low", "high"],
   );
-  assert.equal(shader?.legend?.useContinuousLegend, "1");
+  assert.equal(shader?.legend?.useContinuousLegend, true);
   assert.equal(raster(project, "paletted").renderer?.palette?.length, 2);
   const rgb = raster(project, "rgb").renderer;
   assert.deepEqual(
@@ -65,13 +65,10 @@ test("reads raster pipes written by QGIS", () => {
   );
   assert.equal(
     rgb?.transparency?.threeValuePixelList?.[0]?.percentTransparent,
-    "100",
+    100,
   );
   assert.equal(rgb?.blueContrastEnhancement?.maxValue, "4");
-  assert.equal(
-    raster(project, "hillshade").renderer?.attributes?.azimuth,
-    "315",
-  );
+  assert.equal(raster(project, "hillshade").renderer?.attributes?.azimuth, 315);
 });
 
 test("edits raster pipes and keeps unmodeled children in place", () => {
@@ -79,16 +76,16 @@ test("edits raster pipes and keeps unmodeled children in place", () => {
   const pseudo = raster(project, "pseudo");
   const shader = pseudo.renderer!.shader!;
   shader.items!.splice(1, 0, {
-    value: "2",
+    value: 2,
     color: "#00ff00",
-    alpha: "255",
+    alpha: 255,
     label: "mid",
   });
   shader.attributes!.colorRampType = "DISCRETE";
   const gray = raster(project, "gray");
   delete gray.renderer!.contrastEnhancement;
   gray.renderer!.minMaxOrigin!.limits = "MinMax";
-  gray.hueSaturation = { saturation: "10" };
+  gray.hueSaturation = { saturation: 10 };
   delete gray.noData;
   const rgb = raster(project, "rgb");
   delete rgb.renderer!.transparency;
