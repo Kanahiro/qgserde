@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>qgserde demo</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body { display: flex; flex-direction: column; font: 14px system-ui, sans-serif; color-scheme: light dark; }
+      header { display: flex; gap: 1em; align-items: center; padding: 0.5em 1em; border-bottom: 1px solid #8884; }
+      header h1 { font-size: 1em; margin: 0; }
+      #status { margin-left: auto; font-family: monospace; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+      #status.error { color: #d33; }
+      main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+      section { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid #8884; }
+      section h2 { font-size: 0.9em; margin: 0; padding: 0.4em 1em; display: flex; gap: 0.5em; align-items: center; }
+      textarea { flex: 1; resize: none; border: 0; padding: 0.5em 1em; font: 12px/1.4 ui-monospace, monospace; white-space: pre; tab-size: 2; }
+      @media (max-width: 700px) { main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>qgserde demo</h1>
+      <a href="../">Docs</a>
+      <label>Open .qgs <input id="file" type="file" accept=".qgs,.xml" /></label>
+      <span id="status"></span>
+    </header>
+    <main>
+      <section>
+        <h2>
+          QGS XML
+          <select id="version">
+            <option>3.16</option>
+            <option>3.22</option>
+            <option>3.28</option>
+            <option>3.34</option>
+            <option>3.40</option>
+            <option>3.44</option>
+            <option>4.0</option>
+            <option selected>4.2</option>
+          </select>
+        </h2>
+        <textarea id="xml" spellcheck="false"></textarea>
+      </section>
+      <section>
+        <h2>JSON (QgsProject)</h2>
+        <textarea id="json" spellcheck="false"></textarea>
+      </section>
+    </main>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

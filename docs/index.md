@@ -5,6 +5,7 @@ Read, edit, and write QGIS project files in TypeScript.
 qgserde exposes a typed model for `.qgs` XML. The model is independent of the
 input QGIS version: choose a target version each time you serialize it. This
 site covers the editing rules and the [public API](https://kanahiro.github.io/qgserde/modules.html).
+Try it in the [demo](https://kanahiro.github.io/qgserde/demo/).
 
 ## Read and edit a project
 

@@ -7,6 +7,7 @@ fields, and the layer tree, then choose a QGIS 3 or 4 version when writing it
 back. Settings outside the typed API retain their values, structure, and order.
 
 [Documentation](https://kanahiro.github.io/qgserde/) ·
+[Demo](https://kanahiro.github.io/qgserde/demo/) ·
 [API reference](https://kanahiro.github.io/qgserde/modules.html)
 
 Pre-release. The API may change before the first release.
