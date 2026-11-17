@@ -100,13 +100,13 @@ export const vectorTileEntries: Entry[] = [
           field: "attributes",
           table: tileMatrixSetAttributes,
         },
+        { kind: "owners", field: "matrices", spec: tileMatrix("matrix") },
         {
           kind: "object",
           field: "rootMatrix",
           at: ["rootMatrix"],
           spec: tileMatrix("rootMatrix"),
         },
-        { kind: "owners", field: "matrices", spec: tileMatrix("matrix") },
       ],
     },
   },
@@ -293,14 +293,14 @@ export const meshEntries: Entry[] = [
           "mesh-settings-native",
         ),
         attributes(
-          "triangularMesh",
-          meshFrameSettingsAttributes,
-          "mesh-settings-triangular",
-        ),
-        attributes(
           "edgeMesh",
           meshFrameSettingsAttributes,
           "mesh-settings-edge",
+        ),
+        attributes(
+          "triangularMesh",
+          meshFrameSettingsAttributes,
+          "mesh-settings-triangular",
         ),
         attributes("averaging", meshAveragingAttributes, "averaging-3d"),
         attributes(

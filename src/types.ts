@@ -208,33 +208,52 @@ import type {
   QgsWmsDimensionAttributes,
 } from "./attributes.generated.ts";
 import type { QgsExtensions } from "./extensions.ts";
+import type { QgsUnmodeled } from "./unmodeled.ts";
 
 /** Values stay strings: coercing IDs, expressions, or coordinates loses information. */
+/** An XML element, such as one kept in {@link QgsUnmodeled}. */
 export interface XmlElement {
+  /** Node kind. */
   type: "element";
+  /** Qualified name, such as `plugin:config`. */
   name: string;
+  /** Attributes in their stored order, including namespace declarations. */
   attributes: Record<string, string>;
+  /** Child nodes in document order. */
   children: XmlNode[];
 }
 
+/** XML character data. */
 export interface XmlText {
+  /** Node kind. */
   type: "text";
+  /** Unescaped text. */
   value: string;
 }
 
+/** An XML CDATA section. */
 export interface XmlCdata {
+  /** Node kind. */
   type: "cdata";
+  /** Section content. */
   value: string;
 }
 
+/** An XML comment. */
 export interface XmlComment {
+  /** Node kind. */
   type: "comment";
+  /** Comment text without `<!--` and `-->`. */
   value: string;
 }
 
+/** An XML processing instruction. */
 export interface XmlProcessingInstruction {
+  /** Node kind. */
   type: "instruction";
+  /** Instruction target. */
   target: string;
+  /** Instruction body. */
   body: string;
 }
 
@@ -249,6 +268,7 @@ export interface XmlDeclaration {
   standalone?: "yes" | "no";
 }
 
+/** A node inside an XML element. */
 export type XmlNode =
   | XmlElement
   | XmlText
@@ -1211,7 +1231,7 @@ export type QgsLayerTreeNode =
 export interface QgsMapLayerBase {
   /** Unique ID with at least 11 UTF-16 code units. Shorter IDs are rejected on serialization, including when read from XML. */
   id: string;
-  /** Layer name. Edits also update matching tree references. */
+  /** Layer name. Tree references keep their own copy. */
   name: string;
   /** Provider connection string or URI. Source availability is not checked and paths are not rewritten. */
   source: string;
@@ -1267,6 +1287,8 @@ export interface QgsMapLayerBase {
   server?: QgsLayerServerProperties;
   /** @internal Unmodeled values and ordering slots. */
   readonly extensions?: QgsExtensions;
+  /** XML of this `<maplayer>` that the model does not cover; see {@link QgsUnmodeled}. */
+  unmodeled?: QgsUnmodeled;
 }
 
 /** Named style variants of a layer (`<map-layer-style-manager>`). */
@@ -1312,6 +1334,7 @@ export type QgsLayerStyle<L extends QgsMapLayerBase = QgsMapLayerBase> =
       | "wkbType"
       | "styles"
       | "extensions"
+      | "unmodeled"
     >
   >;
 

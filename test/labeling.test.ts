@@ -210,7 +210,7 @@ test("unknown labeling types keep their settings and invalid edits fail", () => 
   const output = serializeQgs(project, { version: "4.2" });
   assert.match(
     output,
-    /<labeling type="future" mode="x"><settings custom="1"\/><\/labeling>/u,
+    /<labeling type="future" mode="x">\s*<settings custom="1"\/>\s*<\/labeling>/u,
   );
   for (const labeling of [
     { type: "other" },

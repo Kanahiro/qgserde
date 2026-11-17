@@ -58,7 +58,7 @@ function roundTrip(
   return { model, xml: writeXml({ ...readXml(xml), root: out }) };
 }
 
-test("typed attributes parse, keep unparsable values in other, and round-trip", () => {
+test("typed attributes parse, leave the rest unmodeled, and round-trip", () => {
   const xml = `<item size="2.5" enabled="true" visible="1" name="a" size2="x" extra="y"><row w="3" on="0" k="v"/><row w="auto"/></item>`;
   const { model, xml: out } = roundTrip(xml);
   assert.deepEqual(
@@ -69,29 +69,27 @@ test("typed attributes parse, keep unparsable values in other, and round-trip", 
         enabled: true,
         visible: true,
         name: "a",
-        other: { size2: "x", extra: "y" },
       },
-      rows: [{ w: 3, on: false, other: { k: "v" } }, { other: { w: "auto" } }],
+      rows: [{ w: 3, on: false }, {}],
       extensions: undefined,
     },
   );
   assert.equal(out, writeXml(readXml(xml)));
 });
 
-test("edits keep the stored boolean spelling and typed values win over other", () => {
+test("edits keep the stored boolean spelling and typed values win over unparsable ones", () => {
   const { xml } = roundTrip(
     `<item size="0x1" enabled="true" visible="1"><row w="3" on="1"/></item>`,
     (model) => {
       const attributes = model.attributes as Record<string, unknown>;
       attributes.size = 4;
-      attributes.other = undefined;
       attributes.enabled = false;
       attributes.visible = false;
       const [row] = model.rows as Record<string, unknown>[];
       if (row) row.on = false;
     },
   );
-  // An attribute moved from `other` to its typed field is appended.
-  assert.match(xml, /<item enabled="false" visible="0" size="4">/u);
+  // A typed value replaces the unparsable one in place.
+  assert.match(xml, /<item size="4" enabled="false" visible="0">/u);
   assert.match(xml, /<row w="3" on="0"\/>/u);
 });

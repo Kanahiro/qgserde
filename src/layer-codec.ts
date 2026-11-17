@@ -281,9 +281,15 @@ function writeFields(
           throw new QgsError("INVALID_EDIT", `${property} must be a ${type}`);
         putAttribute(element, attribute, value as string | number | boolean);
       }
-      return [{ element, index: index < 0 ? Infinity : index }];
+      return [
+        { element, name: field.name, index: index < 0 ? Infinity : index },
+      ];
     });
-    records.sort((left, right) => left.index - right.index);
+    records.sort((left, right) =>
+      table.sorted
+        ? Number(left.name > right.name) - Number(left.name < right.name)
+        : left.index - right.index,
+    );
     if (container || records.length)
       replaceChildren(
         container ?? ensure(layer, table.container),
@@ -503,6 +509,18 @@ export function writeLayer(
     );
   }
   writeSpec(layerSpec(layer.type), layer as never, element, codec, target);
+  // QGIS writes default actions before the actions they refer to.
+  const actions = findChild(element, "attributeactions");
+  if (actions)
+    actions.children.sort(
+      (a, b) =>
+        Number(b.type === "element" && b.name === "defaultAction") -
+        Number(a.type === "element" && a.name === "defaultAction"),
+    );
+  // QGIS writes virtual fields twice in a layer; it reads the first copy.
+  const [virtualFields, ...copies] = findChildren(element, "expressionfields");
+  if (layer.type === "vector" && virtualFields && !copies.length)
+    element.children.push(structuredClone(virtualFields));
   // QGIS 3.x rejects vector tile layer XML without a renderer, even with a valid URI.
   // styleUrl is connection metadata; it does not replace native renderer XML.
   if (layer.type === "vector-tile" && !findChild(element, "renderer"))

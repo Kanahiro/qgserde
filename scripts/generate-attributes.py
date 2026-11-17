@@ -369,18 +369,17 @@ def generate(rows, groups):
         for attribute in group.get("exclude", []):
             kinds.pop(attribute, None)
         kinds = {k: v for k, v in kinds.items() if not k.startswith("xmlns")}
-        if "other" in kinds:
-            sys.exit(f"{name}: an attribute is named other")
+        if "unmodeled" in kinds:
+            sys.exit(f"{name}: an attribute is named unmodeled")
         out.append(f"/** {group['doc']} */")
-        out.append(f"export interface Qgs{name}Attributes {{")
-        for attribute in sorted(kinds):
-            out.append(f"  /** `{attribute}`{STORED[kinds[attribute]]}. */")
-            out.append(f"  {ts_key(attribute)}?: {TS_TYPE[kinds[attribute]]};")
-        out.append(
-            "  /** Other attributes, and values that do not parse as their kind. */"
-        )
-        out.append("  other?: Record<string, string>;")
-        out.append("}")
+        if not kinds:
+            out.append(f"export type Qgs{name}Attributes = Record<string, never>;")
+        else:
+            out.append(f"export interface Qgs{name}Attributes {{")
+            for attribute in sorted(kinds):
+                out.append(f"  /** `{attribute}`{STORED[kinds[attribute]]}. */")
+                out.append(f"  {ts_key(attribute)}?: {TS_TYPE[kinds[attribute]]};")
+            out.append("}")
         out.append("")
         out.append(f"export const {camel(name)}Attributes = {{")
         for attribute in sorted(kinds):

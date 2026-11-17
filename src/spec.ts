@@ -47,9 +47,6 @@ export type Scalar = "string" | "number" | "boolean" | "flag";
 /** Kinds of an element's typed attributes, by attribute name. */
 export type AttributeTable = Readonly<Record<string, Scalar>>;
 
-/** Map field holding attributes a table does not type. */
-export const OTHER = "other";
-
 /**
  * Parse a typed attribute strictly; `undefined` means the raw value does not
  * have the expected form and is kept as a string instead.
@@ -230,8 +227,8 @@ function readRecord(entry: RecordEntry, item: XmlElement): Model {
 }
 
 /**
- * Attributes as a model map. With a table, typed attributes that parse become
- * values and every other attribute is kept as text in `other`.
+ * Attributes as a model map. With a table, only typed attributes that parse
+ * become values; the rest stay unmodeled XML.
  */
 function readTyped(
   attributes: [string, string][],
@@ -239,14 +236,11 @@ function readTyped(
 ): Model {
   if (!table) return Object.fromEntries(attributes);
   const map: Model = {};
-  const other: Record<string, string> = {};
   for (const [attribute, raw] of attributes) {
     const type = table[attribute];
     const value = type === undefined ? undefined : parseTyped(raw, type);
-    if (value === undefined) other[attribute] = raw;
-    else map[attribute] = value;
+    if (value !== undefined) map[attribute] = value;
   }
-  if (Object.keys(other).length) map[OTHER] = other;
   return map;
 }
 
@@ -272,7 +266,6 @@ function captureTyped(
         spelledAsFlag(type, raw),
         spelling(type, raw),
       );
-    else codec.bindAttribute(element, attribute, [...prefix, OTHER, attribute]);
   }
 }
 
@@ -293,12 +286,8 @@ function captureTexts(
         spelledAsFlag(type, raw),
         spelling(type, raw),
       );
-    else
-      codec.bindText(
-        element,
-        child.name,
-        table ? [...prefix, OTHER, child.name] : [...prefix, child.name],
-      );
+    else if (!table)
+      codec.bindText(element, child.name, [...prefix, child.name]);
   }
 }
 
@@ -316,7 +305,11 @@ function writeTexts(
     ? typedMap(value, table, name, stored)
     : stringMap(value, name);
   for (const child of leaves(element))
-    if (!Object.hasOwn(map, child.name)) remove(element, child.name);
+    if (
+      !Object.hasOwn(map, child.name) &&
+      modeled(table, child.name, getText(child))
+    )
+      remove(element, child.name);
   for (const [tag, item] of Object.entries(map)) putText(element, tag, item);
 }
 
@@ -331,11 +324,25 @@ function writeTyped(
   const wanted = table
     ? typedMap(value, table, name, element.attributes)
     : stringMap(value, name);
-  for (const attribute of Object.keys(element.attributes))
-    if (!skip.has(attribute) && !Object.hasOwn(wanted, attribute))
+  for (const [attribute, raw] of Object.entries(element.attributes))
+    if (
+      !skip.has(attribute) &&
+      !Object.hasOwn(wanted, attribute) &&
+      modeled(table, attribute, raw)
+    )
       delete element.attributes[attribute];
   for (const [attribute, text] of Object.entries(wanted))
     if (!skip.has(attribute)) element.attributes[attribute] = text;
+}
+
+/** Whether a stored value belongs to the model, so removing it there removes it. */
+function modeled(
+  table: AttributeTable | undefined,
+  name: string,
+  raw: string,
+): boolean {
+  const type = table?.[name];
+  return !table || (type !== undefined && parseTyped(raw, type) !== undefined);
 }
 
 function typedMap(
@@ -346,15 +353,13 @@ function typedMap(
 ): Record<string, string> {
   if (!isMap(value))
     throw new QgsError("INVALID_EDIT", `${name} must be an object`);
-  const { [OTHER]: other, ...typed } = value;
-  const wanted: Record<string, string> =
-    other === undefined ? {} : stringMap(other, `${name}.${OTHER}`);
-  for (const [attribute, item] of Object.entries(typed)) {
+  const wanted: Record<string, string> = {};
+  for (const [attribute, item] of Object.entries(value)) {
     const type = table[attribute];
     if (type === undefined)
       throw new QgsError(
         "INVALID_EDIT",
-        `${name}.${attribute} is not a typed attribute; put it in ${OTHER}`,
+        `${name}.${attribute} is not a typed attribute`,
       );
     if (item !== undefined)
       wanted[attribute] = typedText(

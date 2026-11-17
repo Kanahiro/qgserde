@@ -78,15 +78,17 @@ for editing rules and the full type reference.
 
 ## Data preservation
 
-A parsed model stores known settings in typed properties and unknown data in
-internal `extensions`, along with ordering and reference information. It does
-not keep the original XML string or a complete XML tree as a backup.
+A parsed model stores known settings in typed properties. XML a layer's model
+does not cover is kept in its `unmodeled` property as plain, editable data;
+other objects still use internal `extensions`. The model does not keep the
+original XML string or a complete XML tree as a backup.
 
 Known settings are always reconstructed from the model, including when unchanged.
 Parsed, JSON-restored, and new models use the same validation and output rules.
 Missing format metadata and redundant settings are normalized. Unknown elements,
 attributes, namespaces, comments, CDATA, and their placement are preserved.
-Numeric spelling, quotes, and entity syntax can change. Operations that would
+Numeric spelling, quotes, entity syntax, and the order of `<maplayer>` children
+(written as the target QGIS writes them) can change. Operations that would
 erase unknown nested data or collapse distinct view settings fail with
 `INVALID_EDIT`.
 
@@ -112,9 +114,8 @@ The target QGIS installation must support those features.
   outside the library's scope.
 - File paths and data source URIs are kept as supplied. qgserde does not check
   whether a source exists or rewrite paths for a new project location.
-- Layer ID edits update tree references and drawing order. References in
-  relations, joins, layouts, or plugin settings are not updated; keep IDs stable
-  in projects that use them.
+- Layer ID edits do not update tree references, drawing order, relations,
+  joins, layouts, or plugin settings; keep IDs stable.
 - Layer IDs must contain at least 11 UTF-16 code units. QGIS
   replaces shorter IDs on load, breaking tree and drawing-order references.
   Serialization rejects shorter IDs with `INVALID_EDIT`, including unchanged

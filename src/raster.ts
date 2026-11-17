@@ -86,16 +86,6 @@ const rendererSpec: Spec = {
       table: rasterRendererAttributes,
     },
     {
-      kind: "texts",
-      field: "minMaxOrigin",
-      at: ["minMaxOrigin"],
-      table: minMaxOriginAttributes,
-    },
-    contrast("contrastEnhancement"),
-    contrast("redContrastEnhancement"),
-    contrast("greenContrastEnhancement"),
-    contrast("blueContrastEnhancement"),
-    {
       kind: "object",
       field: "transparency",
       at: ["rasterTransparency"],
@@ -119,6 +109,16 @@ const rendererSpec: Spec = {
         ],
       },
     },
+    {
+      kind: "texts",
+      field: "minMaxOrigin",
+      at: ["minMaxOrigin"],
+      table: minMaxOriginAttributes,
+    },
+    contrast("contrastEnhancement"),
+    contrast("redContrastEnhancement"),
+    contrast("greenContrastEnhancement"),
+    contrast("blueContrastEnhancement"),
     {
       kind: "object",
       field: "shader",
@@ -157,6 +157,12 @@ export const rasterLayerSpec: Spec = {
       tag: "pipe-data-defined-properties",
     },
     {
+      kind: "attributes",
+      field: "providerResampling",
+      table: providerResamplingAttributes,
+      at: ["pipe", "provider", "resampling"],
+    },
+    {
       kind: "object",
       field: "renderer",
       at: ["pipe", "rasterrenderer"],
@@ -185,12 +191,6 @@ export const rasterLayerSpec: Spec = {
       field: "resamplingStage",
       at: ["pipe", "resamplingStage"],
       type: "string",
-    },
-    {
-      kind: "attributes",
-      field: "providerResampling",
-      table: providerResamplingAttributes,
-      at: ["pipe", "provider", "resampling"],
     },
     {
       kind: "attribute",

@@ -26,7 +26,7 @@ for (const version of ["3.8", "3.44", "4.2"]) {
       assert.equal(definition?.authId, "EPSG:6677");
       assert.equal(definition?.srsId, 1);
     }
-    assert.equal((output.match(/<!--keep--><custom\/>/gu) ?? []).length, 5);
+    assert.equal((output.match(/<!--keep-->\s*<custom\/>/gu) ?? []).length, 5);
     assert.equal((output.match(/plugin="keep"/gu) ?? []).length, 5);
     assert.deepEqual(project, before);
     assert.deepEqual(

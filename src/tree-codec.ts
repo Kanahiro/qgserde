@@ -4,7 +4,6 @@ import {
   putAttribute,
   putElementText,
   replaceChildren,
-  text,
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
@@ -140,29 +139,14 @@ export function writeTree(
         );
       if (layer) referenced.add(id);
       putAttribute(element, "id", id);
+      // The node keeps its own values: QGIS stores a provider-generated source
+      // here that can differ from the layer's. New nodes take the layer's.
       for (const [attribute, property] of [
         ["name", "name"],
         ["source", "source"],
         ["providerKey", "provider"],
-      ] as const) {
-        // Layer edits synchronize references; otherwise the tree's own modeled
-        // connection may include a distinct provider-generated UID.
-        const sourceLayer = layer && codec.source(layer);
-        const tag =
-          property === "name"
-            ? "layername"
-            : property === "source"
-              ? "datasource"
-              : "provider";
-        const origin =
-          layer?.extensions?.origin?.[property] ??
-          (sourceLayer ? (text(sourceLayer, tag) ?? "") : undefined);
-        const value =
-          layer && origin !== undefined && origin !== layer[property]
-            ? layer[property]
-            : (node[property] ?? layer?.[property]);
-        putAttribute(element, attribute, value);
-      }
+      ] as const)
+        putAttribute(element, attribute, node[property] ?? layer?.[property]);
       return element;
     }
     putAttribute(element, "name", node.name);

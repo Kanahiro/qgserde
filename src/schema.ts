@@ -36,6 +36,8 @@ export const fieldRecords: readonly {
   values: Record<string, FieldValue>;
   /** Older projects may list fields only here; they become typed fields. */
   defines?: true;
+  /** QGIS keeps these in a map and writes them sorted by field name. */
+  sorted?: true;
 }[] = [
   {
     container: "aliases",
@@ -102,24 +104,28 @@ export const fieldRecords: readonly {
     container: "editable",
     tag: "field",
     key: "name",
+    sorted: true,
     values: { editable: ["editable", "boolean"] },
   },
   {
     container: "labelOnTop",
     tag: "field",
     key: "name",
+    sorted: true,
     values: { labelOnTop: ["labelOnTop", "boolean"] },
   },
   {
     container: "reuseLastValue",
     tag: "field",
     key: "name",
+    sorted: true,
     values: { reuseLastValue: ["reuseLastValue", "boolean"] },
   },
   {
     container: "reuseLastValuePolicy",
     tag: "field",
     key: "name",
+    sorted: true,
     values: { reuseLastValuePolicy: ["reuseLastValuePolicy", "string"] },
   },
 ];

@@ -27,6 +27,7 @@ import type {
   XmlElement,
   XmlNode,
 } from "./types.ts";
+import { indent, mergeUnmodeled, orderLayer } from "./unmodeled.ts";
 import { normalizeVersion, parseQgisVersion } from "./version.ts";
 import { readView, writeView } from "./view-codec.ts";
 import {
@@ -260,7 +261,13 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
       oldContainer ?? ensure(root, "projectlayers"),
       ["maplayer"],
       project.layers.map((layer) =>
-        writeLayer(layer, codec, parseQgisVersion(version)),
+        indent(
+          mergeUnmodeled(
+            orderLayer(writeLayer(layer, codec, target), layer.type),
+            layer.unmodeled,
+          ),
+          2,
+        ),
       ),
     );
   const addedLayers = project.layers.some((layer) => {

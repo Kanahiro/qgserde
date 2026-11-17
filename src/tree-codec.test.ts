@@ -154,7 +154,7 @@ test("removes deleted references, resolves renamed IDs and adds only new unrefer
   );
 });
 
-test("preserves provider-generated tree URIs until the typed layer source changes", () => {
+test("keeps provider-generated tree URIs when the typed layer source changes", () => {
   const codec = new ExtensionCodec();
   const source = readXml(
     '<layer-tree-group><layer-tree-layer id="v" name="Cities" source="Point?uid=provider-generated" providerKey="memory"/></layer-tree-group>',
@@ -173,10 +173,11 @@ test("preserves provider-generated tree URIs until the typed layer source change
     findChild(write(), "layer-tree-layer")!.attributes.source,
     "Point?uid=provider-generated",
   );
+  // Tree nodes own their values; a layer edit does not rewrite them.
   parsedLayer.source = "./cities.gpkg";
   assert.equal(
     findChild(write(), "layer-tree-layer")!.attributes.source,
-    "./cities.gpkg",
+    "Point?uid=provider-generated",
   );
   assert.equal(
     findChild(source, "layer-tree-layer")!.attributes.source,
