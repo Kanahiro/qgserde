@@ -93,7 +93,7 @@ test("edits labeling and keeps unmodeled data with its owner", () => {
     "circle";
   delete settings.format.background!.fillSymbol;
   settings.substitutions = [
-    { match: "Street", replace: "St", caseSensitive: "0", wholeWord: "1" },
+    { match: "Street", replace: "St", caseSensitive: false, wholeWord: true },
   ];
   delete settings.callout;
   rules.rootRule.children.reverse();

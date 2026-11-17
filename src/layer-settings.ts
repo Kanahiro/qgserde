@@ -22,10 +22,13 @@ import {
   formSpacerAttributes,
   geometryOptionsAttributes,
   joinAttributes,
+  layerFlagsAttributes,
   layerLegendAttributes,
   linearDiagramRendererAttributes,
   mapLayerAttributes,
+  metadataAddressAttributes,
   metadataConstraintAttributes,
+  metadataContactAttributes,
   metadataDateAttributes,
   metadataLinkAttributes,
   metadataSpatialExtentAttributes,
@@ -36,6 +39,7 @@ import {
   selectionAttributes,
   storedExpressionAttributes,
   temporalAttributes,
+  temporalRangeAttributes,
 } from "./attributes.generated.ts";
 import { putElementText, remove, replaceChildren } from "./codec.ts";
 import { QgsError } from "./errors.ts";
@@ -205,13 +209,19 @@ const metadataBase: Entry[] = [
     spec: {
       tag: "contact",
       entries: [
-        { kind: "texts", field: "fields", at: [] },
+        {
+          kind: "texts",
+          field: "fields",
+          at: [],
+          table: metadataContactAttributes,
+        },
         {
           kind: "records",
           field: "addresses",
           at: [],
           item: "contactAddress",
           texts: true,
+          table: metadataAddressAttributes,
         },
       ],
     },
@@ -288,7 +298,7 @@ export const commonLayerEntries: Entry[] = [
       "labelsEnabled",
     ],
   },
-  { kind: "texts", field: "flags", at: ["flags"] },
+  { kind: "texts", field: "flags", at: ["flags"], table: layerFlagsAttributes },
   {
     kind: "object",
     field: "renderer3d",
@@ -326,7 +336,12 @@ export const commonLayerEntries: Entry[] = [
       tag: "temporal",
       entries: [
         { kind: "attributes", field: "attributes", table: temporalAttributes },
-        { kind: "texts", field: "fixedRange", at: ["fixedRange"] },
+        {
+          kind: "texts",
+          field: "fixedRange",
+          at: ["fixedRange"],
+          table: temporalRangeAttributes,
+        },
       ],
     },
   },

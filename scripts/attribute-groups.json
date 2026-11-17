@@ -716,5 +716,79 @@
     "kinds": {
       "designerForm": "string"
     }
+  },
+  "MinMaxOrigin": {
+    "doc": "`<minMaxOrigin>` child texts.",
+    "keys": [],
+    "kinds": {
+      "limits": "string",
+      "extent": "string",
+      "statAccuracy": "string",
+      "cumulativeCutLower": "number",
+      "cumulativeCutUpper": "number",
+      "stdDevFactor": "number"
+    }
+  },
+  "ContrastEnhancement": {
+    "doc": "Contrast enhancement child texts.",
+    "keys": [],
+    "kinds": {
+      "minValue": "number",
+      "maxValue": "number",
+      "algorithm": "string"
+    }
+  },
+  "LayerFlags": {
+    "doc": "Layer `<flags>` child texts.",
+    "keys": [],
+    "kinds": {
+      "Identifiable": "boolean",
+      "Removable": "boolean",
+      "Searchable": "boolean",
+      "Private": "boolean"
+    }
+  },
+  "TemporalRange": {
+    "doc": "Temporal range child texts.",
+    "keys": [],
+    "kinds": {
+      "start": "string",
+      "end": "string"
+    }
+  },
+  "MetadataContact": {
+    "doc": "Metadata `<contact>` child texts.",
+    "keys": [],
+    "kinds": {
+      "name": "string",
+      "organization": "string",
+      "position": "string",
+      "voice": "string",
+      "fax": "string",
+      "email": "string",
+      "role": "string"
+    }
+  },
+  "LabelSubstitution": {
+    "doc": "Label text `<replacement>`.",
+    "keys": [],
+    "kinds": {
+      "match": "string",
+      "replace": "string",
+      "caseSensitive": "boolean",
+      "wholeWord": "boolean"
+    }
+  },
+  "MetadataAddress": {
+    "doc": "Metadata `<contactAddress>` child texts.",
+    "keys": [],
+    "kinds": {
+      "type": "string",
+      "address": "string",
+      "city": "string",
+      "administrativearea": "string",
+      "postalcode": "string",
+      "country": "string"
+    }
   }
 }

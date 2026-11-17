@@ -30,8 +30,8 @@ test("reads raster pipes written by QGIS", () => {
   assert.equal(gray.renderer?.type, "singlebandgray");
   assert.equal(gray.renderer?.attributes?.grayBand, 1);
   assert.deepEqual(gray.renderer?.contrastEnhancement, {
-    minValue: "1",
-    maxValue: "4",
+    minValue: 1,
+    maxValue: 4,
     algorithm: "StretchToMinimumMaximum",
   });
   assert.equal(gray.renderer?.minMaxOrigin?.limits, "None");
@@ -67,7 +67,7 @@ test("reads raster pipes written by QGIS", () => {
     rgb?.transparency?.threeValuePixelList?.[0]?.percentTransparent,
     100,
   );
-  assert.equal(rgb?.blueContrastEnhancement?.maxValue, "4");
+  assert.equal(rgb?.blueContrastEnhancement?.maxValue, 4);
   assert.equal(raster(project, "hillshade").renderer?.attributes?.azimuth, 315);
 });
 

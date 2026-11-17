@@ -2,6 +2,7 @@ import {
   labelFormattingAttributes,
   labelPlacementAttributes,
   labelRenderingAttributes,
+  labelSubstitutionAttributes,
   textBackgroundAttributes,
   textBufferAttributes,
   textMaskAttributes,
@@ -125,6 +126,7 @@ export const labelSettingsSpec: Spec = {
       field: "substitutions",
       at: ["text-style", "substitutions"],
       item: "replacement",
+      table: labelSubstitutionAttributes,
     },
     {
       kind: "attributes",

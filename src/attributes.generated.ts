@@ -4497,3 +4497,162 @@ export interface QgsFormAnnotationAttributes {
 export const formAnnotationAttributes = {
   designerForm: "string",
 } as const satisfies AttributeTable;
+
+/** `<minMaxOrigin>` child texts. */
+export interface QgsMinMaxOriginAttributes {
+  /** `cumulativeCutLower`. */
+  cumulativeCutLower?: number;
+  /** `cumulativeCutUpper`. */
+  cumulativeCutUpper?: number;
+  /** `extent`. */
+  extent?: string;
+  /** `limits`. */
+  limits?: string;
+  /** `statAccuracy`. */
+  statAccuracy?: string;
+  /** `stdDevFactor`. */
+  stdDevFactor?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const minMaxOriginAttributes = {
+  cumulativeCutLower: "number",
+  cumulativeCutUpper: "number",
+  extent: "string",
+  limits: "string",
+  statAccuracy: "string",
+  stdDevFactor: "number",
+} as const satisfies AttributeTable;
+
+/** Contrast enhancement child texts. */
+export interface QgsContrastEnhancementAttributes {
+  /** `algorithm`. */
+  algorithm?: string;
+  /** `maxValue`. */
+  maxValue?: number;
+  /** `minValue`. */
+  minValue?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const contrastEnhancementAttributes = {
+  algorithm: "string",
+  maxValue: "number",
+  minValue: "number",
+} as const satisfies AttributeTable;
+
+/** Layer `<flags>` child texts. */
+export interface QgsLayerFlagsAttributes {
+  /** `Identifiable`, stored as 1 or 0. */
+  Identifiable?: boolean;
+  /** `Private`, stored as 1 or 0. */
+  Private?: boolean;
+  /** `Removable`, stored as 1 or 0. */
+  Removable?: boolean;
+  /** `Searchable`, stored as 1 or 0. */
+  Searchable?: boolean;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const layerFlagsAttributes = {
+  Identifiable: "boolean",
+  Private: "boolean",
+  Removable: "boolean",
+  Searchable: "boolean",
+} as const satisfies AttributeTable;
+
+/** Temporal range child texts. */
+export interface QgsTemporalRangeAttributes {
+  /** `end`. */
+  end?: string;
+  /** `start`. */
+  start?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const temporalRangeAttributes = {
+  end: "string",
+  start: "string",
+} as const satisfies AttributeTable;
+
+/** Metadata `<contact>` child texts. */
+export interface QgsMetadataContactAttributes {
+  /** `email`. */
+  email?: string;
+  /** `fax`. */
+  fax?: string;
+  /** `name`. */
+  name?: string;
+  /** `organization`. */
+  organization?: string;
+  /** `position`. */
+  position?: string;
+  /** `role`. */
+  role?: string;
+  /** `voice`. */
+  voice?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const metadataContactAttributes = {
+  email: "string",
+  fax: "string",
+  name: "string",
+  organization: "string",
+  position: "string",
+  role: "string",
+  voice: "string",
+} as const satisfies AttributeTable;
+
+/** Label text `<replacement>`. */
+export interface QgsLabelSubstitutionAttributes {
+  /** `caseSensitive`, stored as 1 or 0. */
+  caseSensitive?: boolean;
+  /** `match`. */
+  match?: string;
+  /** `replace`. */
+  replace?: string;
+  /** `wholeWord`, stored as 1 or 0. */
+  wholeWord?: boolean;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const labelSubstitutionAttributes = {
+  caseSensitive: "boolean",
+  match: "string",
+  replace: "string",
+  wholeWord: "boolean",
+} as const satisfies AttributeTable;
+
+/** Metadata `<contactAddress>` child texts. */
+export interface QgsMetadataAddressAttributes {
+  /** `address`. */
+  address?: string;
+  /** `administrativearea`. */
+  administrativearea?: string;
+  /** `city`. */
+  city?: string;
+  /** `country`. */
+  country?: string;
+  /** `postalcode`. */
+  postalcode?: string;
+  /** `type`. */
+  type?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const metadataAddressAttributes = {
+  address: "string",
+  administrativearea: "string",
+  city: "string",
+  country: "string",
+  postalcode: "string",
+  type: "string",
+} as const satisfies AttributeTable;

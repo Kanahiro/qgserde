@@ -129,7 +129,13 @@ export type Entry =
       table?: AttributeTable;
     }
   /** Text of every leaf child element of `at`, by element name. */
-  | { kind: "texts"; field: string; at: At }
+  | {
+      kind: "texts";
+      field: string;
+      at: At;
+      /** Typed child texts; the rest go to the map's `other` field. */
+      table?: AttributeTable;
+    }
   /** Fixed attribute written by the codec, such as a reference name. */
   | { kind: "constant"; attribute: string; value: string; at?: At }
   /** Text of the element at `at`. */
@@ -210,11 +216,12 @@ const MAX_DEPTH = 128;
 type RecordEntry = Extract<Entry, { kind: "records" }>;
 
 function readRecord(entry: RecordEntry, item: XmlElement): Model {
-  const record: Model = entry.texts
-    ? Object.fromEntries(
-        leaves(item).map((child) => [child.name, getText(child)]),
-      )
-    : readTyped(Object.entries(item.attributes), entry.table);
+  const record = readTyped(
+    entry.texts
+      ? leaves(item).map((child) => [child.name, getText(child)])
+      : Object.entries(item.attributes),
+    entry.table,
+  );
   if (entry.text !== undefined && !findChildren(item).length)
     record[entry.text] = getText(item);
   return record;
@@ -267,6 +274,50 @@ function captureTyped(
   }
 }
 
+function captureTexts(
+  element: XmlElement,
+  table: AttributeTable | undefined,
+  codec: ExtensionCodec,
+  prefix: readonly string[],
+): void {
+  for (const child of leaves(element)) {
+    const raw = getText(child);
+    const type = table?.[child.name];
+    if (type !== undefined && parseTyped(raw, type) !== undefined)
+      codec.bindText(
+        element,
+        child.name,
+        [...prefix, child.name],
+        spelledAsFlag(type, raw),
+        spelling(type, raw),
+      );
+    else
+      codec.bindText(
+        element,
+        child.name,
+        table ? [...prefix, OTHER, child.name] : [...prefix, child.name],
+      );
+  }
+}
+
+/** Write a model map as leaf child elements, keeping the stored order. */
+function writeTexts(
+  element: XmlElement,
+  value: unknown,
+  table: AttributeTable | undefined,
+  name: string,
+): void {
+  const stored = Object.fromEntries(
+    leaves(element).map((child) => [child.name, getText(child)]),
+  );
+  const map = table
+    ? typedMap(value, table, name, stored)
+    : stringMap(value, name);
+  for (const child of leaves(element))
+    if (!Object.hasOwn(map, child.name)) remove(element, child.name);
+  for (const [tag, item] of Object.entries(map)) putText(element, tag, item);
+}
+
 /** Write a model map's attributes in place, keeping the stored order. */
 function writeTyped(
   element: XmlElement,
@@ -276,7 +327,7 @@ function writeTyped(
   skip = none,
 ): void {
   const wanted = table
-    ? typedMap(value, table, name, element)
+    ? typedMap(value, table, name, element.attributes)
     : stringMap(value, name);
   for (const attribute of Object.keys(element.attributes))
     if (!skip.has(attribute) && !Object.hasOwn(wanted, attribute))
@@ -289,7 +340,7 @@ function typedMap(
   value: unknown,
   table: AttributeTable,
   name: string,
-  element: XmlElement,
+  stored: Record<string, string>,
 ): Record<string, string> {
   if (!isMap(value))
     throw new QgsError("INVALID_EDIT", `${name} must be an object`);
@@ -308,7 +359,7 @@ function typedMap(
         item,
         type,
         `${name}.${attribute}`,
-        element.attributes[attribute],
+        stored[attribute],
       );
   }
   return wanted;
@@ -326,12 +377,8 @@ function writeRecord(
       "INVALID_EDIT",
       `${name}.${entry.text} must be a string`,
     );
-  if (entry.texts) {
-    const map = stringMap(rest, name);
-    for (const leaf of leaves(child))
-      if (!Object.hasOwn(map, leaf.name)) remove(child, leaf.name);
-    for (const [tag, value] of Object.entries(map)) putText(child, tag, value);
-  } else writeTyped(child, rest, entry.table, name);
+  if (entry.texts) writeTexts(child, rest, entry.table, name);
+  else writeTyped(child, rest, entry.table, name);
   if (entry.text !== undefined) putElementText(child, own ?? "");
 }
 
@@ -504,8 +551,9 @@ export function readSpec(
         });
         break;
       case "texts":
-        model[entry.field] = Object.fromEntries(
+        model[entry.field] = readTyped(
           leaves(target).map((child) => [child.name, getText(child)]),
+          entry.table,
         );
         break;
       case "attribute": {
@@ -636,8 +684,7 @@ export function captureSpec(
             }
         break;
       case "texts":
-        for (const child of leaves(target))
-          codec.bindText(target, child.name, [...at, child.name]);
+        if (target) captureTexts(target, entry.table, codec, at);
         break;
       case "attribute":
         codec.bindAttribute(
@@ -695,9 +742,7 @@ export function captureSpec(
             entry.item,
           ).entries()) {
             const prefix = [...at, String(index)];
-            if (entry.texts)
-              for (const child of leaves(item))
-                codec.bindText(item, child.name, [...prefix, child.name]);
+            if (entry.texts) captureTexts(item, entry.table, codec, prefix);
             else captureTyped(item, entry.table, codec, prefix);
             if (entry.text !== undefined)
               codec.bindElementText(item, [...prefix, entry.text]);
@@ -879,11 +924,12 @@ export function writeSpec(
           removePath(element, entry.at);
           break;
         }
-        const host = existing ?? ensurePath(element, entry.at);
-        const map = stringMap(value, name);
-        for (const child of leaves(host))
-          if (!Object.hasOwn(map, child.name)) remove(host, child.name);
-        for (const [tag, item] of Object.entries(map)) putText(host, tag, item);
+        writeTexts(
+          existing ?? ensurePath(element, entry.at),
+          value,
+          entry.table,
+          name,
+        );
         break;
       }
       case "attribute": {

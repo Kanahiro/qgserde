@@ -2,7 +2,9 @@ import {
   brightnessContrastAttributes,
   colorRampItemAttributes,
   colorRampShaderAttributes,
+  contrastEnhancementAttributes,
   hueSaturationAttributes,
+  minMaxOriginAttributes,
   noDataRangeAttributes,
   paletteEntryAttributes,
   pixelListEntryAttributes,
@@ -64,6 +66,7 @@ export const contrast = (field: string): Entry => ({
   kind: "texts",
   field,
   at: [field],
+  table: contrastEnhancementAttributes,
 });
 
 const rendererSpec: Spec = {
@@ -81,7 +84,12 @@ const rendererSpec: Spec = {
       field: "attributes",
       table: rasterRendererAttributes,
     },
-    { kind: "texts", field: "minMaxOrigin", at: ["minMaxOrigin"] },
+    {
+      kind: "texts",
+      field: "minMaxOrigin",
+      at: ["minMaxOrigin"],
+      table: minMaxOriginAttributes,
+    },
     contrast("contrastEnhancement"),
     contrast("redContrastEnhancement"),
     contrast("greenContrastEnhancement"),

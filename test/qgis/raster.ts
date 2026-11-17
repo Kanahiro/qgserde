@@ -42,8 +42,8 @@ export function createRasterProject(): QgsProject {
         type: "singlebandgray",
         attributes: { grayBand: 1, gradient: "WhiteToBlack" },
         contrastEnhancement: {
-          minValue: "1",
-          maxValue: "4",
+          minValue: 1,
+          maxValue: 4,
           algorithm: "StretchToMinimumMaximum",
         },
       },
@@ -103,8 +103,8 @@ export function createRasterProject(): QgsProject {
           ],
         },
         redContrastEnhancement: {
-          minValue: "1",
-          maxValue: "4",
+          minValue: 1,
+          maxValue: 4,
           algorithm: "StretchToMinimumMaximum",
         },
       },

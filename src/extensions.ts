@@ -127,8 +127,18 @@ export class ExtensionCodec {
   }
 
   /** Bind the text of a scalar child element to a property path of its owner. */
-  bindText(parent: XmlElement | undefined, name: string, path: string[]): void {
-    this.value(parent, name, { property: path });
+  bindText(
+    parent: XmlElement | undefined,
+    name: string,
+    path: string[],
+    format?: "boolean",
+    text?: string,
+  ): void {
+    this.value(parent, name, {
+      property: path,
+      ...(format ? { format } : {}),
+      ...(text === undefined ? {} : { text }),
+    });
   }
 
   /**

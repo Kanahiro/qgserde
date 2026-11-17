@@ -13,6 +13,7 @@ import type {
   QgsColorRampItemAttributes,
   QgsColorRampShaderAttributes,
   QgsConditionalStyleAttributes,
+  QgsContrastEnhancementAttributes,
   QgsDefaultActionAttributes,
   QgsDiagramAttributeAttributes,
   QgsDiagramCategoryAttributes,
@@ -40,6 +41,8 @@ import type {
   QgsLabelFormattingAttributes,
   QgsLabelPlacementAttributes,
   QgsLabelRenderingAttributes,
+  QgsLabelSubstitutionAttributes,
+  QgsLayerFlagsAttributes,
   QgsLayerLegendAttributes,
   QgsLayerTreeGroupAttributes,
   QgsLayerTreeLayerAttributes,
@@ -79,11 +82,14 @@ import type {
   QgsMeshSimplifyAttributes,
   QgsMeshStrokeWidthAttributes,
   QgsMeshVectorSettingsAttributes,
+  QgsMetadataAddressAttributes,
   QgsMetadataConstraintAttributes,
+  QgsMetadataContactAttributes,
   QgsMetadataDateAttributes,
   QgsMetadataLinkAttributes,
   QgsMetadataSpatialExtentAttributes,
   QgsMetadataUrlAttributes,
+  QgsMinMaxOriginAttributes,
   QgsNoDataRangeAttributes,
   QgsOrderByClauseAttributes,
   QgsPaletteEntryAttributes,
@@ -112,6 +118,7 @@ import type {
   QgsSvgAnnotationAttributes,
   QgsSymmetricModeAttributes,
   QgsTemporalAttributes,
+  QgsTemporalRangeAttributes,
   QgsTerrainProviderAttributes,
   QgsTextAnnotationAttributes,
   QgsTextBackgroundAttributes,
@@ -661,7 +668,7 @@ export interface QgsProjectTimeSettings {
   /** Settings such as `timeStep`, `timeStepUnit`, and `frameRate`. */
   attributes?: QgsProjectTimeSettingsAttributes;
   /** Temporal range (`start`, `end`) in ISO 8601. */
-  range?: QgsAttributes;
+  range?: QgsTemporalRangeAttributes;
 }
 
 /** Terrain settings. */
@@ -810,7 +817,7 @@ export interface QgsMapLayerBase {
   /** 3D renderer type and settings; nested 3D symbols stay in extension data. */
   renderer3d?: QgsRenderer3d;
   /** Layer flags (`<flags>`): `Identifiable`, `Removable`, `Searchable`, and `Private`, as `1` or `0`. */
-  flags?: QgsAttributes;
+  flags?: QgsLayerFlagsAttributes;
   /** Plugin and application properties stored with the layer. */
   customProperties?: QgsVariantMap;
   /** QPainter composition mode used to draw the layer, as a QGIS blend mode number. */
@@ -868,7 +875,7 @@ export interface QgsTemporalProperties {
   /** Settings such as `enabled`, `mode`, `startField`, and `durationUnit`. */
   attributes?: QgsTemporalAttributes;
   /** Fixed range (`start`, `end`) for fixed-range modes. */
-  fixedRange?: QgsAttributes;
+  fixedRange?: QgsTemporalRangeAttributes;
 }
 
 /** Layer elevation and profile settings. */
@@ -917,9 +924,9 @@ export interface QgsLayerServerProperties {
 /** Contact in metadata. */
 export interface QgsMetadataContact {
   /** Contact fields such as `name`, `organization`, `position`, `email`, and `role`. */
-  fields?: QgsAttributes;
+  fields?: QgsMetadataContactAttributes;
   /** Postal addresses, each with fields such as `type`, `address`, and `city`. */
-  addresses?: QgsAttributes[];
+  addresses?: QgsMetadataAddressAttributes[];
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -1424,11 +1431,11 @@ export interface QgsPointCloudRenderer {
   /** Ramp shader. */
   shader?: QgsColorRampShader;
   /** Red contrast enhancement. */
-  redContrastEnhancement?: QgsAttributes;
+  redContrastEnhancement?: QgsContrastEnhancementAttributes;
   /** Green contrast enhancement. */
-  greenContrastEnhancement?: QgsAttributes;
+  greenContrastEnhancement?: QgsContrastEnhancementAttributes;
   /** Blue contrast enhancement. */
-  blueContrastEnhancement?: QgsAttributes;
+  blueContrastEnhancement?: QgsContrastEnhancementAttributes;
 }
 
 /** Plugin layer. Type-specific settings stay in extension data. */
@@ -2024,7 +2031,7 @@ export interface QgsLabelSettings {
   /** Text format. */
   format: QgsTextFormat;
   /** Text substitutions, each with `match`, `replace`, `caseSensitive`, and `wholeWord`. */
-  substitutions?: QgsAttributes[];
+  substitutions?: QgsLabelSubstitutionAttributes[];
   /** Wrapping and number formatting (`<text-format>`), such as `wrapChar` and `multilineAlign`. */
   formatting?: QgsLabelFormattingAttributes;
   /** Placement (`<placement>`), such as `placement`, `dist`, and `priority`. */
@@ -2137,15 +2144,15 @@ export interface QgsRasterRenderer {
   /** Other renderer settings, such as `grayBand`, `gradient`, `classificationMin`, or `azimuth`. */
   attributes?: QgsRasterRendererAttributes;
   /** How minimum and maximum values are computed, such as `limits` and `extent`. */
-  minMaxOrigin?: QgsAttributes;
+  minMaxOrigin?: QgsMinMaxOriginAttributes;
   /** Single-band contrast enhancement, such as `minValue`, `maxValue`, and `algorithm`. */
-  contrastEnhancement?: QgsAttributes;
+  contrastEnhancement?: QgsContrastEnhancementAttributes;
   /** Red band contrast enhancement. */
-  redContrastEnhancement?: QgsAttributes;
+  redContrastEnhancement?: QgsContrastEnhancementAttributes;
   /** Green band contrast enhancement. */
-  greenContrastEnhancement?: QgsAttributes;
+  greenContrastEnhancement?: QgsContrastEnhancementAttributes;
   /** Blue band contrast enhancement. */
-  blueContrastEnhancement?: QgsAttributes;
+  blueContrastEnhancement?: QgsContrastEnhancementAttributes;
   /** Pixel transparency. */
   transparency?: QgsRasterTransparency;
   /** Pseudocolor shader. */
