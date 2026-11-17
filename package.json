@@ -35,7 +35,8 @@
     "test:integration": "node --experimental-strip-types --test test/*.test.ts",
     "check": "biome check .",
     "format": "biome check --write .",
-    "prepack": "pnpm build"
+    "prepack": "pnpm build",
+    "demo:build": "esbuild demo/main.ts --bundle --format=esm --minify --loader:.qgs=text --outdir=docs/api/demo && cp demo/index.html docs/api/demo/"
   },
   "dependencies": {
     "saxes": "6.0.0",
@@ -44,6 +45,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.6.5",
     "@types/node": "26.6.6",
+    "esbuild": "0.28.2",
     "typedoc": "0.28.20",
     "typescript": "6.0.3"
   }
