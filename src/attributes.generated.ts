@@ -6294,3 +6294,21 @@ export const meshTimeSettingsAttributes = {
   "absolute-time-format": "string",
   "relative-time-format": "string",
 } as const satisfies AttributeTable;
+
+/** Legend `<patch>` shape. */
+export interface QgsLegendPatchAttributes {
+  /** `preserveAspect`, stored as 1 or 0. */
+  preserveAspect?: boolean;
+  /** `type`. */
+  type?: number;
+  /** `wkt`. */
+  wkt?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const legendPatchAttributes = {
+  preserveAspect: "boolean",
+  type: "number",
+  wkt: "string",
+} as const satisfies AttributeTable;

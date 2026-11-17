@@ -81,6 +81,7 @@ import type {
   QgsLayoutSnapperAttributes,
   QgsLayoutTableCellStyleAttributes,
   QgsLayoutTableColumnAttributes,
+  QgsLegendPatchAttributes,
   QgsLegendStyleAttributes,
   QgsLegendTextOnSymbolItemAttributes,
   QgsLegendTreeGroupAttributes,
@@ -801,6 +802,8 @@ export interface QgsLegendNode {
   attributes?: QgsLegendTreeGroupAttributes & QgsLegendTreeLayerAttributes;
   /** Custom properties, such as legend node overrides. */
   customProperties?: QgsVariantMap;
+  /** Legend patch shape of a layer: `type`, `wkt`, and `preserveAspect`. */
+  patch?: QgsLegendPatchAttributes;
   /** Children of a group. */
   children?: QgsLegendNode[];
   /** @internal */
@@ -1125,6 +1128,8 @@ export interface QgsLayerTreeLayer {
   attributes?: QgsLayerTreeLayerAttributes;
   /** Plugin and application properties stored with the node. */
   customProperties?: QgsVariantMap;
+  /** Legend patch shape: `type`, `wkt`, and `preserveAspect`. */
+  patch?: QgsLegendPatchAttributes;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }

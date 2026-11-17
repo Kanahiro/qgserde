@@ -1135,5 +1135,11 @@
   "MeshTimeSettings": {
     "doc": "`<mesh-time-settings>` attributes.",
     "keys": ["^qgsmeshtimesettings\\.cpp\\|mesh-time-settings$"]
+  },
+  "LegendPatch": {
+    "doc": "Legend `<patch>` shape.",
+    "keys": [
+      "^qgslegendpatchshape\\.cpp\\|@QgsLegendPatchShape::writeXml:element$"
+    ]
   }
 }

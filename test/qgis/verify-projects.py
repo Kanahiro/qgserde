@@ -410,6 +410,8 @@ def check_project_settings(project):
         assert engine.rules()[0].distance() == 5
     assert project.timeSettings().timeStep() == 2
     assert project.timeSettings().temporalRange().begin().date().year() == 2020
+    lines = project.layerTreeRoot().findLayer("lines_layer_00001")
+    assert lines.patchShape().geometry().asWkt() == "LineString (0 0, 1 1)"
     group = project.layerTreeRoot().findGroup("Group")
     assert group.isMutuallyExclusive()
     assert group.customProperty("plugin/flag") == "x"

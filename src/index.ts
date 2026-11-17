@@ -82,6 +82,7 @@ export type {
   QgsLayoutSnapperAttributes,
   QgsLayoutTableCellStyleAttributes,
   QgsLayoutTableColumnAttributes,
+  QgsLegendPatchAttributes,
   QgsLegendStyleAttributes,
   QgsLegendTextOnSymbolItemAttributes,
   QgsLegendTreeGroupAttributes,

@@ -33,7 +33,16 @@ export function createProjectSettingsProject(): QgsProject {
     name: "Group",
     expanded: true,
     checked: "checked",
-    children: [],
+    children: [
+      {
+        type: "layer",
+        layerId: lines,
+        name: "lines",
+        expanded: true,
+        checked: "checked",
+        patch: { type: 1, wkt: "LineString (0 0, 1 1)", preserveAspect: true },
+      },
+    ],
     attributes: { "mutually-exclusive": "1" },
     customProperties: { "plugin/flag": "x" },
   });

@@ -20,6 +20,7 @@ import {
   layoutSnapperAttributes,
   layoutTableCellStyleAttributes,
   layoutTableColumnAttributes,
+  legendPatchAttributes,
   legendStyleAttributes,
   legendTreeGroupAttributes,
   legendTreeLayerAttributes,
@@ -111,7 +112,16 @@ export const legendGroup: Spec = {
 };
 const legendLayer: Spec = {
   tag: "layer-tree-layer",
-  entries: [rest(legendTreeLayerAttributes), treeProperties],
+  entries: [
+    rest(legendTreeLayerAttributes),
+    treeProperties,
+    {
+      kind: "attributes",
+      field: "patch",
+      table: legendPatchAttributes,
+      at: ["patch"],
+    },
+  ],
 };
 (legendGroup.entries as Entry[]).push({
   kind: "nodes",

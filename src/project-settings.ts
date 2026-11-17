@@ -10,6 +10,7 @@ import {
   labelEngineRuleAttributes,
   layerTreeGroupAttributes,
   layerTreeLayerAttributes,
+  legendPatchAttributes,
   mapThemeAttributes,
   mapThemeLayerAttributes,
   maskingSourceAttributes,
@@ -573,6 +574,14 @@ export function treeNodeSpec(group: boolean): Spec {
           : ["id", "name", "source", "providerKey", "checked", "expanded"],
       },
       { kind: "custom", field: "customProperties", custom: customProperties },
+      ...(group ? [] : [patchEntry]),
     ],
   };
 }
+
+const patchEntry: Entry = {
+  kind: "attributes",
+  field: "patch",
+  table: legendPatchAttributes,
+  at: ["patch"],
+};
