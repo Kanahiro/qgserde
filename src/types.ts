@@ -2205,6 +2205,12 @@ export interface QgsField {
   reuseLastValue?: boolean;
   /** Reuse-last-value policy, such as `NotAllowed` or `AllowedDefaultOn`. */
   reuseLastValuePolicy?: string;
+  /**
+   * Unmodeled XML of this field's records in layer-level containers, keyed
+   * like {@link QgsMapLayerBase.unmodeled} but without a record index, such
+   * as `"aliases/alias"`. It follows the field through renames and reordering.
+   */
+  unmodeled?: QgsUnmodeled;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -2224,7 +2230,25 @@ export type QgsVariant =
   | number
   | string
   | QgsVariant[]
-  | QgsVariantMap;
+  | QgsVariantMap
+  | QgsTypedVariant;
+
+/**
+ * A variant whose Qt type its plain value does not imply, such as
+ * `{ "@type": "double", value: 1 }`, `{ "@type": "StringList", value: [] }`, or
+ * `{ "@type": "color", value: "255,0,0,255" }`. Plain values are written as
+ * `QString`, `bool`, `int` (or `qlonglong`), `double` for non-integers, `List`,
+ * `Map`, and `invalid` for nested nulls. A type qgserde does not decode, such
+ * as a CRS, keeps its child elements in `xml`.
+ */
+export interface QgsTypedVariant {
+  /** Qt type name as QGIS writes it, such as `double` or `StringList`; `""` for none. */
+  "@type": string;
+  /** The decoded value. */
+  value?: QgsVariant;
+  /** Child elements of a type qgserde does not decode. */
+  xml?: XmlElement[];
+}
 
 /** String-keyed QGIS variant map. */
 export interface QgsVariantMap {

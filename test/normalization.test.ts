@@ -32,6 +32,8 @@ test("unchanged known values are reconstructed and normalized after JSON storage
     findChild(findChild(layer, "aliases")!, "alias")!.attributes,
     {
       field: "amount",
+      // QGIS writes the field's position.
+      index: "0",
       name: "",
       plugin: "keep",
     },

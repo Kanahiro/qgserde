@@ -79,3 +79,32 @@ test("modeled values win over unmodeled attributes and malformed data fails", ()
     );
   }
 });
+
+test("unmodeled data of field records follows its field through reorder and rename", () => {
+  const project = parseQgs(
+    '<qgis version="4.2.0"><projectlayers><maplayer type="vector"><id>vector_layer_001</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="a" name="A" plugin="of-a"/><alias field="b" name="B" plugin="of-b"><note/></alias></aliases></maplayer></projectlayers></qgis>',
+  );
+  const layer = project.layers[0]!;
+  if (layer.type !== "vector") throw new Error("vector");
+  assert.equal(layer.unmodeled?.["aliases/alias"], undefined);
+  assert.deepEqual(layer.fields[0]!.unmodeled, {
+    "aliases/alias": { attributes: { plugin: "of-a" } },
+  });
+  layer.fields.reverse();
+  layer.fields[1]!.name = "renamed";
+  const aliases = findChildren(
+    findChild(layerOf(serializeQgs(project, { version: "4.2" })), "aliases")!,
+    "alias",
+  );
+  assert.deepEqual(
+    aliases.map((alias) => [
+      alias.attributes.field,
+      alias.attributes.plugin,
+      findChildren(alias).map((child) => child.name),
+    ]),
+    [
+      ["b", "of-b", ["note"]],
+      ["renamed", "of-a", []],
+    ],
+  );
+});

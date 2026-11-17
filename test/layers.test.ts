@@ -55,9 +55,9 @@ test("keeps every alias record, written in field order", () => {
       (alias) => alias.attributes,
     ),
     [
-      { field: "a", name: "A" },
-      { field: "b", name: "B" },
-      { field: "external", name: "keep" },
+      { field: "a", index: "0", name: "A" },
+      { field: "b", index: "1", name: "B" },
+      { field: "external", index: "2", name: "keep" },
     ],
   );
 });

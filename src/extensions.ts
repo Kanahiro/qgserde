@@ -431,6 +431,8 @@ export class ExtensionCodec {
       this.sources.set(layer, element);
     }
     const unmodeled = toUnmodeled(layout, written);
+    if (layer.type === "vector")
+      moveFieldRecords(unmodeled, element, layer.fields);
     if (Object.keys(unmodeled).length) Object.assign(layer, { unmodeled });
     this.slots.set(element, {
       kind: "slot",
@@ -876,4 +878,35 @@ function toUnmodeled(
   return Object.fromEntries(
     Object.entries(result).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
   );
+}
+
+/**
+ * Move unmodeled data of per-field records (`aliases/alias[2]`) to the field
+ * the record belongs to (`aliases/alias`), so it follows renames and reordering.
+ */
+function moveFieldRecords(
+  unmodeled: QgsUnmodeled,
+  element: XmlElement,
+  fields: QgsField[],
+): void {
+  for (const table of fieldRecords) {
+    const container = findChild(element, table.container);
+    if (!container) continue;
+    const records = findChildren(container, table.tag);
+    const prefix = `${table.container}/${table.tag}`;
+    for (const [path, entry] of Object.entries(unmodeled)) {
+      const match = /^(?:\[(\d+)\])?(\/.*)?$/u.exec(
+        path.startsWith(prefix) ? path.slice(prefix.length) : "-",
+      );
+      if (!match) continue;
+      const name = records[Number(match[1] ?? 0)]?.attributes[table.key];
+      const field = fields.find((item) => item.name === name);
+      if (!field) continue;
+      field.unmodeled = {
+        ...field.unmodeled,
+        [prefix + (match[2] ?? "")]: entry,
+      };
+      delete unmodeled[path];
+    }
+  }
 }

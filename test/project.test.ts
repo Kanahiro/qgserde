@@ -106,7 +106,6 @@ function withoutLayers(xml: string) {
 
 // Layers are rebuilt from the model: whitespace, CDATA and numeric spelling
 // normalize, and <maplayer> children follow the target QGIS writer order.
-// ponytail: List/StringList normalize too; the variant model has no Qt type yet.
 function layerContent(xml: string, sortChildren: boolean) {
   const value = (text: string) =>
     text.trim() !== "" && Number.isFinite(Number(text))
@@ -117,10 +116,7 @@ function layerContent(xml: string, sortChildren: boolean) {
       return node.value ? [{ type: "text", value: value(node.value) }] : [];
     if (node.type !== "element") return [node];
     const attributes = Object.fromEntries(
-      Object.entries(node.attributes).map(([key, text]) => [
-        key,
-        key === "type" && text === "StringList" ? "List" : value(text),
-      ]),
+      Object.entries(node.attributes).map(([key, text]) => [key, value(text)]),
     );
     const children = node.children.flatMap(normalize);
     const merged = children.some((child) => child.type === "element")

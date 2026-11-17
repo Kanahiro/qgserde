@@ -359,6 +359,7 @@ export type {
   QgsTiledSceneRenderer,
   QgsTileMatrix,
   QgsTileMatrixSet,
+  QgsTypedVariant,
   QgsUnknownLabeling,
   QgsUnknownLayer,
   QgsUnknownVectorRenderer,

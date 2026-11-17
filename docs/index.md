@@ -148,10 +148,24 @@ Data-defined properties are keyed by the QGIS property name, such as `size` or
 and a `type`: 1 for a static `val`, 2 for a `field`, or 3 for an `expression`.
 
 Property maps, data-defined properties, and other `<Option>` values use
-`QgsVariant`: strings, numbers, booleans, `null`, arrays, and plain objects. An
-unchanged kind of value keeps its stored QGIS type, such as `double` or `color`.
-Values QGIS cannot express as plain data, such as CRS variants, read as `null`
-and are kept as stored while they stay `null`. Category values keep their
+`QgsVariant`. A value whose Qt type is the one QGIS writes for it is plain: a
+string (`QString`), boolean (`bool`), integer (`int`, or `qlonglong` when
+large), non-integer (`double`), array (`List`), object (`Map`), or `null`
+(`invalid`). QGIS writes an empty map without a type, and qgserde reads such an
+`<Option/>` as `{}`. Any other type is tagged, so the model keeps it:
+
+```ts
+{ "@type": "double", value: 1 }        // an integral double
+{ "@type": "StringList", value: ["a"] }
+{ "@type": "color", value: "255,0,0,255" }
+{ "@type": "QgsProperty", value: { active: true, type: 3 } }
+{ "@type": "QgsCoordinateReferenceSystem", xml: [/* <spatialrefsys> */] }
+```
+
+A tagged value must fit its type; replace the whole tag to change the type. A
+type qgserde does not decode keeps its child elements in `xml`. A map whose
+only keys are `@type`, `value`, or `xml` is tagged as `"Map"`. Map entries are
+written sorted by key, as QGIS does. Category values keep their
 stored type when QGIS would read the same value back; integers beyond the safe
 JavaScript range stay strings.
 
@@ -370,6 +384,9 @@ holds them, each child with the modeled sibling it follows. Edit, copy, or
 delete it like any other property; copying a layer copies it. Data under an
 element the model no longer writes, such as a removed CRS, is dropped with it.
 Modeled values take precedence over unmodeled attributes of the same name.
+Unmodeled data of a field's records, such as an unknown attribute on its
+`<alias>`, is kept in the field's own `unmodeled` (`"aliases/alias"`), so it
+follows the field through renames and reordering.
 `<maplayer>` children are written in the order the target QGIS version writes
 them, and unmodeled children follow their recorded sibling.
 

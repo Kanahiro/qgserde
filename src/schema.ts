@@ -38,6 +38,8 @@ export const fieldRecords: readonly {
   defines?: true;
   /** QGIS keeps these in a map and writes them sorted by field name. */
   sorted?: true;
+  /** Attribute QGIS fills with the field's position. */
+  position?: string;
 }[] = [
   {
     container: "aliases",
@@ -45,6 +47,7 @@ export const fieldRecords: readonly {
     key: "field",
     values: { name: ["alias", "string", ""] },
     defines: true,
+    position: "index",
   },
   {
     container: "defaults",

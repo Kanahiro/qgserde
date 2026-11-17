@@ -2,6 +2,7 @@ import { remove, replaceChildren } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type {
   QgisVersion,
+  QgsTypedVariant,
   QgsVariant,
   QgsVariantMap,
   XmlElement,
@@ -44,12 +45,46 @@ function deep(depth: number, code: "INVALID_PROJECT" | "INVALID_EDIT"): void {
     throw new QgsError(code, "Cyclic or excessively deep variant value");
 }
 
-/**
- * Decode an <Option> element. Types QGIS reads as invalid, and opaque types
- * such as CRS values, decode to null; their XML is kept while the value stays null.
- */
-export function readVariant(element: XmlElement, depth = 0): QgsVariant {
-  deep(depth, "INVALID_PROJECT");
+/** A variant whose Qt type the plain value does not imply; see {@link QgsTypedVariant}. */
+export const TYPE = "@type";
+
+const known = (type: string) =>
+  type === "" ||
+  type === "invalid" ||
+  type === "Map" ||
+  type === "List" ||
+  type === "StringList" ||
+  type === "bool" ||
+  numeric.has(type) ||
+  textual.has(type) ||
+  wrappers.has(type);
+
+export function isTyped(value: unknown): value is QgsTypedVariant {
+  return (
+    isMap(value) &&
+    typeof value[TYPE] === "string" &&
+    Object.keys(value).every(
+      (key) => key === TYPE || key === "value" || key === "xml",
+    )
+  );
+}
+
+/** The Qt type QGIS writes for a plain value; it omits the type of an empty map. */
+function defaultType(value: QgsVariant): string {
+  if (value === null) return "invalid";
+  if (Array.isArray(value)) return "List";
+  if (typeof value === "string") return "QString";
+  if (typeof value === "boolean") return "bool";
+  if (typeof value === "number")
+    return !Number.isInteger(value)
+      ? "double"
+      : Math.abs(value) <= 2147483647
+        ? "int"
+        : "qlonglong";
+  return Object.keys(value).length ? "Map" : "";
+}
+
+function decode(element: XmlElement, depth: number): QgsVariant {
   const type = element.attributes.type ?? "";
   const value = element.attributes.value ?? "";
   if (type === "Map")
@@ -77,7 +112,27 @@ export function readVariant(element: XmlElement, depth = 0): QgsVariant {
     const inner = options(element)[0];
     return inner ? readVariant(inner, depth + 1) : null;
   }
-  return null;
+  // QGIS writes an empty map without a type; it reads that as invalid.
+  return type === "" ? {} : null;
+}
+
+/**
+ * Decode an <Option> element. A value is plain when its Qt type is the one QGIS
+ * writes for it; otherwise it is tagged with its type, and a type qgserde does
+ * not decode, such as a CRS, keeps its XML.
+ */
+export function readVariant(element: XmlElement, depth = 0): QgsVariant {
+  deep(depth, "INVALID_PROJECT");
+  const type = element.attributes.type ?? "";
+  if (!known(type))
+    return {
+      [TYPE]: type,
+      xml: findChildren(element).map((child) => structuredClone(child)),
+    };
+  const value = decode(element, depth);
+  // A map that looks like a tagged value is tagged as a map.
+  if (type === defaultType(value) && !isTyped(value)) return value;
+  return { [TYPE]: type, value };
 }
 
 export function bindVariant(
@@ -88,6 +143,8 @@ export function bindVariant(
 ): void {
   if (depth > MAX_DEPTH) return;
   const type = element.attributes.type ?? "";
+  if (!known(type)) return;
+  if (isTyped(readVariant(element, depth))) path = [...path, "value"];
   if (type === "Map")
     for (const child of options(element))
       bindVariant(
@@ -113,60 +170,56 @@ export function isMap(value: unknown): value is QgsVariantMap {
   return prototype === Object.prototype || prototype === null;
 }
 
-function numberType(value: number, current: string): string {
-  if (!Number.isFinite(value))
-    throw new QgsError("INVALID_EDIT", "Variant numbers must be finite");
-  const integer = Number.isInteger(value);
-  if (numeric.has(current)) {
-    if (!integral.has(current)) return current;
-    if (integer && !(current.startsWith("u") && value < 0)) return current;
-  }
-  if (!integer) return "double";
-  return Math.abs(value) <= 2147483647 ? "int" : "qlonglong";
-}
-
 export function numberText(value: number): string {
   return Number.isInteger(value) ? BigInt(value).toString() : String(value);
 }
 
-/** Reconcile an <Option> element with a value, preserving matching children and types. */
+function mismatch(type: string): never {
+  throw new QgsError("INVALID_EDIT", `Variant value does not fit type ${type}`);
+}
+
+/** Write a value into an <Option> element, keeping matching nested children. */
 export function writeVariant(
   element: XmlElement,
   value: QgsVariant,
   depth = 0,
 ): void {
   deep(depth, "INVALID_EDIT");
-  const type = element.attributes.type ?? "";
-  if (value === null) {
-    // Unset, invalid, and opaque (e.g. CRS) values are kept as stored.
-    if (
-      type === "" ||
-      type === "invalid" ||
-      !(
-        type === "Map" ||
-        type === "List" ||
-        type === "StringList" ||
-        type === "bool" ||
-        numeric.has(type) ||
-        textual.has(type) ||
-        wrappers.has(type)
-      )
-    )
+  if (isTyped(value)) {
+    const type = value[TYPE];
+    if (!known(type)) {
+      if (!Array.isArray(value.xml)) mismatch(type);
+      element.attributes.type = type;
+      delete element.attributes.value;
+      element.children = value.xml.map((child) => structuredClone(child));
       return;
-    element.attributes.type = "invalid";
-    delete element.attributes.value;
-    remove(element, "Option");
+    }
+    writeAs(element, type, value.value ?? null, depth);
     return;
   }
-  if (Array.isArray(value)) {
+  writeAs(element, defaultType(value), value, depth);
+}
+
+function writeAs(
+  element: XmlElement,
+  type: string,
+  value: QgsVariant,
+  depth: number,
+): void {
+  if (type) element.attributes.type = type;
+  else delete element.attributes.type;
+  delete element.attributes.value;
+  if (type === "invalid") {
+    if (value !== null) mismatch(type);
+    remove(element, "Option");
+  } else if (type === "") {
+    if (!isMap(value) || Object.keys(value).length) mismatch(type);
+    remove(element, "Option");
+  } else if (type === "List" || type === "StringList") {
+    if (!Array.isArray(value)) mismatch(type);
+    if (type === "StringList" && value.some((item) => typeof item !== "string"))
+      mismatch(type);
     const existing = options(element);
-    // QGIS omits the type of an empty container; reading it yields an invalid value.
-    if (!(type === "" && value.length === 0))
-      element.attributes.type =
-        type === "StringList" && value.every((item) => typeof item === "string")
-          ? "StringList"
-          : "List";
-    delete element.attributes.value;
     replaceChildren(
       element,
       ["Option"],
@@ -177,62 +230,56 @@ export function writeVariant(
         return child;
       }),
     );
-    return;
-  }
-  if (isMap(value)) {
-    if (wrappers.has(type)) {
-      const inner = options(element)[0] ?? createElement("Option");
-      writeVariant(inner, value, depth + 1);
-      replaceChildren(element, ["Option"], [inner]);
-      return;
-    }
+  } else if (type === "Map") {
+    if (!isMap(value)) mismatch(type);
     writeVariantMap(element, value, depth);
-    return;
+  } else if (wrappers.has(type)) {
+    const inner = options(element)[0] ?? createElement("Option");
+    writeVariant(inner, value, depth + 1);
+    replaceChildren(element, ["Option"], [inner]);
+  } else {
+    remove(element, "Option");
+    if (type === "bool") {
+      if (typeof value !== "boolean") mismatch(type);
+      element.attributes.value = value ? "true" : "false";
+    } else if (numeric.has(type)) {
+      if (typeof value !== "number" || !Number.isFinite(value)) mismatch(type);
+      if (integral.has(type) && !Number.isInteger(value)) mismatch(type);
+      element.attributes.value = numberText(value);
+    } else {
+      if (typeof value !== "string") mismatch(type);
+      element.attributes.value = value;
+    }
   }
-  remove(element, "Option");
-  if (typeof value === "string") {
-    element.attributes.type = textual.has(type) ? type : "QString";
-    element.attributes.value = value;
-  } else if (typeof value === "boolean") {
-    element.attributes.type = "bool";
-    element.attributes.value = value ? "true" : "false";
-  } else if (typeof value === "number") {
-    element.attributes.type = numberType(value, type);
-    element.attributes.value = numberText(value);
-  } else
-    throw new QgsError(
-      "INVALID_EDIT",
-      `Unsupported variant value of type ${typeof value}`,
-    );
 }
 
+/** QGIS stores maps sorted by key (`QMap`). */
 function writeVariantMap(
   element: XmlElement,
   value: QgsVariantMap,
   depth: number,
 ): void {
-  const entries = Object.entries(value);
-  if (!(element.attributes.type === undefined && entries.length === 0))
-    element.attributes.type = "Map";
-  delete element.attributes.value;
   const existing = options(element);
   const used = new Set<XmlElement>();
-  const matched: XmlElement[] = [];
-  const added: XmlElement[] = [];
-  for (const [key, item] of entries) {
-    const found = existing.find(
-      (child) => !used.has(child) && child.attributes.name === key,
-    );
-    const child = found ?? createElement("Option", { name: key });
-    used.add(child);
-    writeVariant(child, item, depth + 1);
-    (found ? matched : added).push(child);
-  }
-  matched.sort((a, b) => existing.indexOf(a) - existing.indexOf(b));
-  replaceChildren(element, ["Option"], [...matched, ...added]);
+  replaceChildren(
+    element,
+    ["Option"],
+    Object.entries(value)
+      .sort(([a], [b]) => Number(a > b) - Number(a < b))
+      .map(([key, item]) => {
+        const child =
+          existing.find(
+            (option) => !used.has(option) && option.attributes.name === key,
+          ) ?? createElement("Option", { name: key });
+        used.add(child);
+        writeVariant(child, item, depth + 1);
+        return child;
+      }),
+  );
 }
 
 function scalarText(value: QgsVariant, key: string): string {
+  if (isTyped(value)) return scalarText(value.value ?? null, key);
   if (value === null) return "";
   if (typeof value === "boolean") return value ? "true" : "false";
   if (typeof value === "number") {
