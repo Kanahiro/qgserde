@@ -229,7 +229,7 @@ test("rejects blank layer IDs and duplicate fields including inferred legacy fie
   assert.throws(() => writeLayer(layer, codec, target), /Duplicate field/u);
 });
 
-test("new and renamed layer IDs must survive QGIS loading", () => {
+test("new and parsed layer IDs must survive QGIS loading", () => {
   for (const type of ["vector", "raster", "vector-tile"] as const) {
     for (const id of ["states", "1234567890"])
       assert.throws(
@@ -256,13 +256,11 @@ test("new and renamed layer IDs must survive QGIS loading", () => {
     );
   }
   const codec = new ExtensionCodec();
-  const source = readXml(
-    '<maplayer type="raster"><id>states_wms_layer</id></maplayer>',
-  ).root;
-  const layer = readLayer(source, codec);
-  layer.id = "states";
+  const layer = readLayer(
+    readXml('<maplayer type="raster"><id>states</id></maplayer>').root,
+    codec,
+  );
   assert.throws(() => writeLayer(layer, codec, target), /at least 11/u);
-  assert.equal(readLayerId(source), "states_wms_layer");
 });
 
 test("fresh vector tiles get complete native styles while existing renderers stay intact", () => {

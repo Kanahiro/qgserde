@@ -200,8 +200,11 @@ export function writeCrs(
       `User CRS ${crs.authId} requires a WKT or PROJ definition`,
     );
   const srs = ensure(ensure(parent, name), "spatialrefsys");
-  for (const [field, tag] of Object.entries(crsStrings))
-    putText(srs, tag, crs[field as keyof typeof crsStrings]);
+  const put = (field: keyof typeof crsStrings) =>
+    putText(srs, crsStrings[field], crs[field]);
+  // In QGIS writer order.
+  put("wkt");
+  put("proj4");
   // QGIS gates authid lookup on a positive legacy system ID (< 100000),
   // even though the actual definition is then resolved exclusively by authid.
   // For authority-only input, 1 is a lookup marker, not a database-ID claim.
@@ -210,6 +213,10 @@ export function writeCrs(
   const authorityOnly = crs.authId && !user && !crs.wkt && !crs.proj4;
   putNumber(srs, "srsid", crs.srsId ?? (authorityOnly ? 1 : undefined));
   putNumber(srs, "srid", crs.srid);
+  put("authId");
+  put("description");
+  put("projectionAcronym");
+  put("ellipsoidAcronym");
   if (crs.geographic === undefined) remove(srs, "geographicflag");
   else putText(srs, "geographicflag", crs.geographic ? "true" : "false");
   putAttribute(srs, "nativeFormat", crs.nativeFormat);

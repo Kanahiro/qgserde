@@ -74,13 +74,12 @@ test("retains namespaces, unknown strings, nested and mixed content, and sibling
   assert.match(serializeQgs(project, { version: "4.2" }), /<\?plugin kept\?>/u);
 });
 
-test("keeps unknown layer and field payloads attached to their identities through rename and reorder", () => {
+test("keeps unknown layer and field payloads attached to their identities through field rename and reorder", () => {
   const xml =
     '<qgis version="4.2.0"><projectlayers><maplayer type="vector" plugin="first"><id>first_layer_001</id><fieldConfiguration><field name="one"><plugin-field/></field><field name="two"/></fieldConfiguration><aliases><alias field="two" name="Two" plugin="two"/><alias field="one" name="One" plugin="one"/></aliases></maplayer><between value="keep"/><maplayer type="vector" plugin="second"><id>second_layer_001</id></maplayer></projectlayers></qgis>';
   const project = JSON.parse(JSON.stringify(parseQgs(xml)));
   project.layers.reverse();
   const first = project.layers[1];
-  first.id = "renamed_layer_001";
   first.fields.reverse();
   first.fields[1].name = "renamed-field";
   const root = readXml(serializeQgs(project, { version: "4.2" })).root;
@@ -202,7 +201,6 @@ test("retains repeated references in occurrence order and completes missing alia
   const project = parseQgs(distinct);
   const layer = project.layers[0]!;
   assert.equal(layer.type === "vector" && layer.fields[1]?.alias, "");
-  project.layers[0]!.id = "renamed_layer_001";
   const root = readXml(serializeQgs(project, { version: "4.2" })).root;
   assert.deepEqual(
     findChildren(findChild(root, "layerorder")!, "layer").map((node) => [
@@ -210,8 +208,8 @@ test("retains repeated references in occurrence order and completes missing alia
       node.attributes.plugin,
     ]),
     [
-      ["renamed_layer_001", "first"],
-      ["renamed_layer_001", "second"],
+      ["vector_layer_001", "first"],
+      ["vector_layer_001", "second"],
       ["external", "external"],
     ],
   );
@@ -225,8 +223,8 @@ test("retains repeated references in occurrence order and completes missing alia
       node.attributes.plugin,
     ]),
     [
-      ["renamed_layer_001", "first"],
-      ["renamed_layer_001", "second"],
+      ["vector_layer_001", "first"],
+      ["vector_layer_001", "second"],
       ["external", "external"],
     ],
   );

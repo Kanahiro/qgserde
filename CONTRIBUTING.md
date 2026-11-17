@@ -174,8 +174,21 @@ pnpm format
 The scan reads `setAttribute` calls. A kind other than string is used only
 when the writer expression shows it, such as `QString::number`, a numeric or
 enum member, or `? "1" : "0"`. Writers that disagree fall back to string. A
-wrong kind loses nothing, because values that do not parse are kept in
-`other`, but the integration tests should not leave typed values there.
+wrong kind loses nothing, because values that do not parse stay unmodeled XML,
+but the integration tests should not leave typed values there.
+
+## Layer element order
+
+`src/order.generated.ts` holds the order QGIS writes `<maplayer>` children in,
+by layer type, learned from the QGIS-written fixtures; on conflicts the newest
+QGIS version wins. Regenerate it after adding fixtures:
+
+```sh
+node scripts/learn-order.ts
+pnpm format
+```
+
+Deeper elements are written in their writers' order, which must match QGIS.
 
 ## Format references
 

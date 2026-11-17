@@ -208,33 +208,52 @@ import type {
   QgsWmsDimensionAttributes,
 } from "./attributes.generated.ts";
 import type { QgsExtensions } from "./extensions.ts";
+import type { QgsUnmodeled } from "./unmodeled.ts";
 
 /** Values stay strings: coercing IDs, expressions, or coordinates loses information. */
+/** An XML element, such as one kept in {@link QgsUnmodeled}. */
 export interface XmlElement {
+  /** Node kind. */
   type: "element";
+  /** Qualified name, such as `plugin:config`. */
   name: string;
+  /** Attributes in their stored order, including namespace declarations. */
   attributes: Record<string, string>;
+  /** Child nodes in document order. */
   children: XmlNode[];
 }
 
+/** XML character data. */
 export interface XmlText {
+  /** Node kind. */
   type: "text";
+  /** Unescaped text. */
   value: string;
 }
 
+/** An XML CDATA section. */
 export interface XmlCdata {
+  /** Node kind. */
   type: "cdata";
+  /** Section content. */
   value: string;
 }
 
+/** An XML comment. */
 export interface XmlComment {
+  /** Node kind. */
   type: "comment";
+  /** Comment text without `<!--` and `-->`. */
   value: string;
 }
 
+/** An XML processing instruction. */
 export interface XmlProcessingInstruction {
+  /** Node kind. */
   type: "instruction";
+  /** Instruction target. */
   target: string;
+  /** Instruction body. */
   body: string;
 }
 
@@ -249,6 +268,7 @@ export interface XmlDeclaration {
   standalone?: "yes" | "no";
 }
 
+/** A node inside an XML element. */
 export type XmlNode =
   | XmlElement
   | XmlText
@@ -1159,14 +1179,12 @@ export interface QgsLayerTreeGroup {
 export interface QgsLayerTreeLayer {
   /** Discriminant for a layer reference. */
   type: "layer";
-  /** Referenced {@link QgsMapLayerBase.id}. */
+  /**
+   * Referenced {@link QgsMapLayerBase.id}. The node's name, source, and
+   * provider are written from that layer; a reference to a layer outside the
+   * project keeps them as stored.
+   */
   layerId: string;
-  /** Tree display name, including references to external layers. */
-  name?: string;
-  /** Tree connection URI, which may include provider-generated UIDs. */
-  source?: string;
-  /** Tree connection provider identifier. */
-  provider?: string;
   /** Whether the node is expanded in the layer tree. */
   expanded: boolean;
   /** Layer reference check state. Parent group states also affect visibility. */
@@ -1209,9 +1227,14 @@ export type QgsLayerTreeNode =
 
 /** Settings shared by all layer types. Edits do not modify the data source itself. */
 export interface QgsMapLayerBase {
-  /** Unique ID with at least 11 UTF-16 code units. Shorter IDs are rejected on serialization, including when read from XML. */
-  id: string;
-  /** Layer name. Edits also update matching tree references. */
+  /**
+   * Unique ID with at least 11 UTF-16 code units, fixed for the layer's life:
+   * tree, drawing-order, and other references use it. A layer with another ID
+   * is another layer. Shorter IDs are rejected on serialization, including
+   * when read from XML.
+   */
+  readonly id: string;
+  /** Layer name, also written to its tree references. */
   name: string;
   /** Provider connection string or URI. Source availability is not checked and paths are not rewritten. */
   source: string;
@@ -1267,6 +1290,8 @@ export interface QgsMapLayerBase {
   server?: QgsLayerServerProperties;
   /** @internal Unmodeled values and ordering slots. */
   readonly extensions?: QgsExtensions;
+  /** XML of this `<maplayer>` that the model does not cover; see {@link QgsUnmodeled}. */
+  unmodeled?: QgsUnmodeled;
 }
 
 /** Named style variants of a layer (`<map-layer-style-manager>`). */
@@ -1312,6 +1337,7 @@ export type QgsLayerStyle<L extends QgsMapLayerBase = QgsMapLayerBase> =
       | "wkbType"
       | "styles"
       | "extensions"
+      | "unmodeled"
     >
   >;
 
@@ -2177,6 +2203,12 @@ export interface QgsField {
   reuseLastValue?: boolean;
   /** Reuse-last-value policy, such as `NotAllowed` or `AllowedDefaultOn`. */
   reuseLastValuePolicy?: string;
+  /**
+   * Unmodeled XML of this field's records in layer-level containers, keyed
+   * like {@link QgsMapLayerBase.unmodeled} but without a record index, such
+   * as `"aliases/alias"`. It follows the field through renames and reordering.
+   */
+  unmodeled?: QgsUnmodeled;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
@@ -2196,7 +2228,25 @@ export type QgsVariant =
   | number
   | string
   | QgsVariant[]
-  | QgsVariantMap;
+  | QgsVariantMap
+  | QgsTypedVariant;
+
+/**
+ * A variant whose Qt type its plain value does not imply, such as
+ * `{ "@type": "double", value: 1 }`, `{ "@type": "StringList", value: [] }`, or
+ * `{ "@type": "color", value: "255,0,0,255" }`. Plain values are written as
+ * `QString`, `bool`, `int` (or `qlonglong`), `double` for non-integers, `List`,
+ * `Map`, and `invalid` for nested nulls. A type qgserde does not decode, such
+ * as a CRS, keeps its child elements in `xml`.
+ */
+export interface QgsTypedVariant {
+  /** Qt type name as QGIS writes it, such as `double` or `StringList`; `""` for none. */
+  "@type": string;
+  /** The decoded value. */
+  value?: QgsVariant;
+  /** Child elements of a type qgserde does not decode. */
+  xml?: XmlElement[];
+}
 
 /** String-keyed QGIS variant map. */
 export interface QgsVariantMap {

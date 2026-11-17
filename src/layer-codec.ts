@@ -46,6 +46,7 @@ import type {
   QgsMapLayerBase,
   XmlElement,
 } from "./types.ts";
+import { mergeUnmodeled } from "./unmodeled.ts";
 import { readVariant, writeVariant } from "./variant.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
 
@@ -262,7 +263,7 @@ function writeFields(
   for (const table of fieldRecords) {
     const container = findChild(layer, table.container);
     const previous = container ? findChildren(container, table.tag) : [];
-    const records = fields.flatMap((field) => {
+    const records = fields.flatMap((field, position) => {
       const source = field as unknown as Record<string, unknown>;
       const entries = Object.entries(table.values);
       if (entries.every(([, [property]]) => source[property] === undefined))
@@ -275,15 +276,35 @@ function writeFields(
         previous[index] ?? createElement(table.tag),
       );
       putAttribute(element, table.key, field.name);
+      if (table.position) putAttribute(element, table.position, position);
+      const prefix = `${table.container}/${table.tag}`;
+      mergeUnmodeled(
+        element,
+        Object.fromEntries(
+          Object.entries(field.unmodeled ?? {}).flatMap(([path, entry]) =>
+            path === prefix
+              ? [["", entry]]
+              : path.startsWith(`${prefix}/`)
+                ? [[path.slice(prefix.length + 1), entry]]
+                : [],
+          ),
+        ),
+      );
       for (const [attribute, [property, type, fallback]] of entries) {
         const value = source[property] ?? fallback;
         if (value !== undefined && typeof value !== type)
           throw new QgsError("INVALID_EDIT", `${property} must be a ${type}`);
         putAttribute(element, attribute, value as string | number | boolean);
       }
-      return [{ element, index: index < 0 ? Infinity : index }];
+      return [
+        { element, name: field.name, index: index < 0 ? Infinity : index },
+      ];
     });
-    records.sort((left, right) => left.index - right.index);
+    records.sort((left, right) =>
+      table.sorted
+        ? Number(left.name > right.name) - Number(left.name < right.name)
+        : left.index - right.index,
+    );
     if (container || records.length)
       replaceChildren(
         container ?? ensure(layer, table.container),
@@ -503,6 +524,18 @@ export function writeLayer(
     );
   }
   writeSpec(layerSpec(layer.type), layer as never, element, codec, target);
+  // QGIS writes default actions before the actions they refer to.
+  const actions = findChild(element, "attributeactions");
+  if (actions)
+    actions.children.sort(
+      (a, b) =>
+        Number(b.type === "element" && b.name === "defaultAction") -
+        Number(a.type === "element" && a.name === "defaultAction"),
+    );
+  // QGIS writes virtual fields twice in a layer; it reads the first copy.
+  const [virtualFields, ...copies] = findChildren(element, "expressionfields");
+  if (layer.type === "vector" && virtualFields && !copies.length)
+    element.children.push(structuredClone(virtualFields));
   // QGIS 3.x rejects vector tile layer XML without a renderer, even with a valid URI.
   // styleUrl is connection metadata; it does not replace native renderer XML.
   if (layer.type === "vector-tile" && !findChild(element, "renderer"))

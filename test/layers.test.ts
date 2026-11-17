@@ -44,17 +44,21 @@ test("legacy fields are modeled while custom order payloads and embedded referen
   assert.match(output, /source="external.qgs"/u);
 });
 
-test("retains the original alias order when it differs from field configuration order", () => {
+test("keeps every alias record, written in field order", () => {
   const xml =
     '<qgis version="4.2.0"><projectlayers><maplayer type="vector"><id>vector_layer_001</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="external" name="keep"/><alias field="b" name="B"/><alias field="a" name="A"/></aliases></maplayer></projectlayers></qgis>';
   const root = readXml(serializeQgs(parseQgs(xml), { version: "4.2" })).root;
   const layer = findChild(findChild(root, "projectlayers")!, "maplayer")!;
+  // QGIS reads aliases by field name, so their order carries no meaning.
   assert.deepEqual(
-    findChild(layer, "aliases"),
-    findChild(
-      findChild(findChild(readXml(xml).root, "projectlayers")!, "maplayer")!,
-      "aliases",
+    findChildren(findChild(layer, "aliases")!, "alias").map(
+      (alias) => alias.attributes,
     ),
+    [
+      { field: "a", index: "0", name: "A" },
+      { field: "b", index: "1", name: "B" },
+      { field: "external", index: "2", name: "keep" },
+    ],
   );
 });
 
@@ -129,24 +133,22 @@ test("typed edits synchronize every nested tree reference and keep renderer symb
   );
 });
 
-test("renaming and removing typed layers synchronizes tree and order IDs", () => {
+test("removing typed layers removes their tree and order IDs", () => {
   const project = parseQgs(
     readFileSync(new URL("./fixtures/qgis3.qgs", import.meta.url), "utf8"),
   );
-  project.layers[0]!.id = "renamed_layer_001";
-  project.layers.splice(1, 1);
+  const [kept] = project.layers.splice(1, 1) && project.layers;
+  const id = kept!.id;
   const result = parseQgs(serializeQgs(project, { version: "4.2" }));
   assert.deepEqual(
     result.layers.map((layer) => layer.id),
-    ["renamed_layer_001"],
+    [id],
   );
-  assert.deepEqual(result.layerOrder, ["renamed_layer_001"]);
-  assert.deepEqual(result.layerTree!.customOrder!.layerIds, [
-    "renamed_layer_001",
-  ]);
+  assert.deepEqual(result.layerOrder, [id]);
+  assert.deepEqual(result.layerTree!.customOrder!.layerIds, [id]);
   assert.equal(result.layerTree!.children.length, 1);
   const child = result.layerTree!.children[0]!;
-  assert.equal(child.type === "layer" && child.layerId, "renamed_layer_001");
+  assert.equal(child.type === "layer" && child.layerId, id);
 });
 
 test("rejects duplicate IDs, empty IDs and cyclic typed trees", () => {
@@ -157,7 +159,7 @@ test("rejects duplicate IDs, empty IDs and cyclic typed trees", () => {
     /Duplicate layer ID/u,
   );
   project.layers.pop();
-  project.layers[0]!.id = "";
+  project.layers[0] = { ...project.layers[0]!, id: "" };
   assert.throws(
     () => serializeQgs(project, { version: "4.2" }),
     /must not be empty/u,
@@ -175,21 +177,12 @@ test("short IDs are rejected even when read unchanged from XML or JSON", () => {
     () => serializeQgs(project, { version: "3.44" }),
     /at least 11/u,
   );
-  project.layers[0].id = "other";
   const before = JSON.stringify(project);
   assert.throws(
     () => serializeQgs(project, { version: "3.44" }),
     /at least 11/u,
   );
   assert.equal(JSON.stringify(project), before);
-  project.layers[0].id = "states_wms_layer";
-  const result = parseQgs(serializeQgs(project, { version: "3.44" }));
-  const reference = result.layerTree!.children[0]!;
-  assert.equal(
-    reference.type === "layer" && reference.layerId,
-    "states_wms_layer",
-  );
-  project.layers.push({ ...definition, id: "cities" });
   assert.throws(
     () => serializeQgs(project, { version: "3.44" }),
     /at least 11/u,
@@ -234,7 +227,7 @@ test("field configurations, aliases and defaults have editable types", () => {
   assert.equal(updated.fields[0]!.alias, "都市名");
   assert.equal(updated.fields[0]!.defaultExpression, "'B'");
   assert.equal(updated.fields[1]!.editorWidgetType, "Range");
-  assert.match(output, /<config><Option type="Map"\/><\/config>/u);
+  assert.match(output, /<config>\s*<Option type="Map"\/>\s*<\/config>/u);
 });
 
 test("fresh vector tiles include native symbology required by QGIS 3 and preserve existing styles and multi-source URIs", () => {
@@ -255,7 +248,7 @@ test("fresh vector tiles include native symbology required by QGIS 3 and preserv
   )!;
   const renderer = findChild(layer, "renderer")!;
   assert.equal(renderer.attributes.type, "basic");
-  assert.equal(findChild(renderer, "styles")!.children.length, 3);
+  assert.equal(findChildren(findChild(renderer, "styles")!).length, 3);
   assert.equal(parseQgs(output).layers[0]!.source, source);
   const custom = output.replace(
     '<renderer type="basic">',

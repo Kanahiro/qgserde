@@ -4,11 +4,9 @@ import {
   putAttribute,
   putElementText,
   replaceChildren,
-  text,
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
-import { readLayerId } from "./layer-codec.ts";
 import { treeNodeSpec, treeTags } from "./project-settings.ts";
 import { readSpec, writeSpec } from "./spec.ts";
 import type {
@@ -53,13 +51,6 @@ export function readTree(
       layerId: element.attributes.id ?? "",
       ...state,
     };
-    for (const [attribute, property] of [
-      ["name", "name"],
-      ["source", "source"],
-      ["providerKey", "provider"],
-    ] as const)
-      if (element.attributes[attribute] !== undefined)
-        node[property] = element.attributes[attribute];
     Object.assign(node, readSpec(treeNodeSpec("layer"), element, codec));
     return codec.remember(node, element);
   }
@@ -91,12 +82,25 @@ export function readTree(
   return codec.remember(group, element);
 }
 
-/** Resolve IDs from typed layers, including renamed IDs, without changing caller data. */
+/**
+ * The data provider name QGIS writes for a layer. Annotation and group layers
+ * store no `<provider>`, but QGIS gives both an `annotation` data provider.
+ */
+function providerKey(layer: QgsMapLayer): string {
+  return !layer.provider &&
+    (layer.type === "annotation" || layer.type === "group")
+    ? "annotation"
+    : layer.provider;
+}
+
+/**
+ * Write the tree for the typed layers without changing caller data. References
+ * to removed layers (in `originalIds`) are dropped; new layers are appended.
+ */
 export function writeTree(
   tree: QgsLayerTreeGroup,
   layers: QgsMapLayer[],
   originalIds: Set<string>,
-  resolve: (id: string) => string,
   codec: ExtensionCodec,
   target: QgisVersion,
 ): XmlElement {
@@ -129,7 +133,7 @@ export function writeTree(
       return element;
     }
     if (node.type === "layer") {
-      const id = resolve(node.layerId);
+      const id = node.layerId;
       const layer = layerMap.get(id);
       active.delete(node);
       if (!layer && originalIds.has(node.layerId)) return undefined;
@@ -140,29 +144,16 @@ export function writeTree(
         );
       if (layer) referenced.add(id);
       putAttribute(element, "id", id);
-      for (const [attribute, property] of [
-        ["name", "name"],
-        ["source", "source"],
-        ["providerKey", "provider"],
-      ] as const) {
-        // Layer edits synchronize references; otherwise the tree's own modeled
-        // connection may include a distinct provider-generated UID.
-        const sourceLayer = layer && codec.source(layer);
-        const tag =
-          property === "name"
-            ? "layername"
-            : property === "source"
-              ? "datasource"
-              : "provider";
-        const origin =
-          layer?.extensions?.origin?.[property] ??
-          (sourceLayer ? (text(sourceLayer, tag) ?? "") : undefined);
-        const value =
-          layer && origin !== undefined && origin !== layer[property]
-            ? layer[property]
-            : (node[property] ?? layer?.[property]);
-        putAttribute(element, attribute, value);
-      }
+      // Name, source, and provider come from the layer. QGIS resolves the
+      // reference by ID; a reference to a layer outside the project keeps
+      // its stored values.
+      if (layer)
+        for (const [attribute, value] of [
+          ["name", layer.name],
+          ["source", layer.source],
+          ["providerKey", providerKey(layer)],
+        ] as const)
+          putAttribute(element, attribute, value);
       return element;
     }
     putAttribute(element, "name", node.name);
@@ -174,9 +165,9 @@ export function writeTree(
     if (node.customOrder) {
       const order = ensure(element, "custom-order");
       putAttribute(order, "enabled", node.customOrder.enabled);
-      const items = node.customOrder.layerIds
-        .map(resolve)
-        .filter((id) => layerMap.has(id) || !originalIds.has(id));
+      const items = node.customOrder.layerIds.filter(
+        (id) => layerMap.has(id) || !originalIds.has(id),
+      );
       const available = findChildren(order, "item");
       const used = new Set<XmlElement>();
       replaceChildren(
@@ -184,7 +175,7 @@ export function writeTree(
         ["item"],
         items.map((id) => {
           const source = available.find(
-            (item) => !used.has(item) && resolve(getText(item)) === id,
+            (item) => !used.has(item) && getText(item) === id,
           );
           if (source) used.add(source);
           const element = structuredClone(source ?? createElement("item"));
@@ -203,24 +194,18 @@ export function writeTree(
   if (!root)
     throw new QgsError("INVALID_EDIT", "A layer tree must have a root group");
   for (const layer of layers) {
-    const source = codec.source(layer);
-    const oldId = source && readLayerId(source);
-    const existed = originalIds.has(oldId ?? layer.id);
-    if (!referenced.has(layer.id) && !existed) {
+    if (!referenced.has(layer.id) && !originalIds.has(layer.id)) {
       root.children.push(
         createElement("layer-tree-layer", {
           id: layer.id,
           name: layer.name,
           source: layer.source,
-          providerKey: layer.provider,
+          providerKey: providerKey(layer),
           checked: "Qt::Checked",
           expanded: "1",
         }),
       );
-      if (
-        tree.customOrder &&
-        !tree.customOrder.layerIds.map(resolve).includes(layer.id)
-      )
+      if (tree.customOrder && !tree.customOrder.layerIds.includes(layer.id))
         ensure(root, "custom-order").children.push(
           createElement("item", {}, [{ type: "text", value: layer.id }]),
         );

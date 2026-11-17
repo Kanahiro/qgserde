@@ -36,7 +36,6 @@ const layer: QgsMapLayer = {
   provider: "memory",
   fields: [],
 };
-const identity = (id: string): string => id;
 
 test("reads nested groups, check states and custom order while ignoring extension elements", () => {
   const source = readXml(
@@ -85,7 +84,6 @@ test("new references receive typed layer connection values without changing the 
     tree,
     [layer],
     new Set(),
-    identity,
     new ExtensionCodec(),
     target,
   );
@@ -103,8 +101,7 @@ test("new references receive typed layer connection values without changing the 
 test("unknown new references fail, while embedded references from source XML survive", () => {
   const tree = { ...group(), children: [reference("external")] };
   assert.throws(
-    () =>
-      writeTree(tree, [], new Set(), identity, new ExtensionCodec(), target),
+    () => writeTree(tree, [], new Set(), new ExtensionCodec(), target),
     (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
   );
   const source = readXml(
@@ -113,7 +110,7 @@ test("unknown new references fail, while embedded references from source XML sur
   const codec = new ExtensionCodec();
   const parsed = readTree(source, codec);
   if (parsed.type !== "group") throw new Error("Expected group");
-  const output = writeTree(parsed, [], new Set(), identity, codec, target);
+  const output = writeTree(parsed, [], new Set(), codec, target);
   assert.equal(
     findChild(output, "layer-tree-layer")!.attributes.source,
     "external.qgs",
@@ -128,19 +125,18 @@ test("unknown new references fail, while embedded references from source XML sur
   );
 });
 
-test("removes deleted references, resolves renamed IDs and adds only new unreferenced layers", () => {
+test("removes deleted references and adds only new unreferenced layers", () => {
   const tree: QgsLayerTreeGroup = {
     ...group(),
-    children: [reference("old"), reference("deleted")],
-    customOrder: { enabled: true, layerIds: ["old", "deleted", "external"] },
+    children: [reference("v"), reference("deleted")],
+    customOrder: { enabled: true, layerIds: ["v", "deleted", "external"] },
   };
   const added = { ...layer, id: "added" };
   const hidden = { ...layer, id: "hidden" };
   const output = writeTree(
     tree,
     [layer, added, hidden],
-    new Set(["old", "deleted", "hidden"]),
-    (id) => (id === "old" ? "v" : id),
+    new Set(["v", "deleted", "hidden"]),
     new ExtensionCodec(),
     target,
   );
@@ -154,29 +150,35 @@ test("removes deleted references, resolves renamed IDs and adds only new unrefer
   );
 });
 
-test("preserves provider-generated tree URIs until the typed layer source changes", () => {
+test("layer references take their name, source and provider from the layer", () => {
   const codec = new ExtensionCodec();
   const source = readXml(
     '<layer-tree-group><layer-tree-layer id="v" name="Cities" source="Point?uid=provider-generated" providerKey="memory"/></layer-tree-group>',
   ).root;
   const tree = readTree(source, codec);
   if (tree.type !== "group") throw new Error("Expected group");
+  assert.deepEqual(Object.keys(tree.children[0]!).sort(), [
+    "checked",
+    "expanded",
+    "layerId",
+    "type",
+  ]);
   const parsedLayer = readLayer(
     readXml(
       '<maplayer type="vector"><id>v</id><layername>Cities</layername><datasource>Point</datasource><provider>memory</provider></maplayer>',
     ).root,
     codec,
   );
-  const write = () =>
-    writeTree(tree, [parsedLayer], new Set(["v"]), identity, codec, target);
-  assert.equal(
-    findChild(write(), "layer-tree-layer")!.attributes.source,
-    "Point?uid=provider-generated",
-  );
+  parsedLayer.name = "Towns";
   parsedLayer.source = "./cities.gpkg";
-  assert.equal(
-    findChild(write(), "layer-tree-layer")!.attributes.source,
-    "./cities.gpkg",
+  parsedLayer.provider = "ogr";
+  const written = findChild(
+    writeTree(tree, [parsedLayer], new Set(["v"]), codec, target),
+    "layer-tree-layer",
+  )!.attributes;
+  assert.deepEqual(
+    [written.name, written.source, written.providerKey],
+    ["Towns", "./cities.gpkg", "ogr"],
   );
   assert.equal(
     findChild(source, "layer-tree-layer")!.attributes.source,
@@ -192,14 +194,7 @@ test("custom order keeps distinct duplicate payloads and unrelated siblings afte
   const tree = readTree(source, codec);
   if (tree.type !== "group") throw new Error("Expected group");
   tree.customOrder!.layerIds = ["other", "v", "v"];
-  const output = writeTree(
-    tree,
-    [layer],
-    new Set(["v"]),
-    identity,
-    codec,
-    target,
-  );
+  const output = writeTree(tree, [layer], new Set(["v"]), codec, target);
   const order = findChild(output, "custom-order")!;
   assert.deepEqual(
     findChildren(order, "item").map((item) => item.attributes.plugin),
@@ -212,7 +207,7 @@ test("custom order keeps distinct duplicate payloads and unrelated siblings afte
   delete tree.customOrder;
   assert.equal(
     findChild(
-      writeTree(tree, [layer], new Set(["v"]), identity, codec, target),
+      writeTree(tree, [layer], new Set(["v"]), codec, target),
       "custom-order",
     ),
     undefined,
@@ -223,8 +218,7 @@ test("rejects cyclic and excessively deep trees while allowing repeated acyclic 
   const cyclic = group();
   cyclic.children.push(cyclic);
   assert.throws(
-    () =>
-      writeTree(cyclic, [], new Set(), identity, new ExtensionCodec(), target),
+    () => writeTree(cyclic, [], new Set(), new ExtensionCodec(), target),
     /Cyclic/u,
   );
   const deep = group();
@@ -235,8 +229,7 @@ test("rejects cyclic and excessively deep trees while allowing repeated acyclic 
     current = next;
   }
   assert.throws(
-    () =>
-      writeTree(deep, [], new Set(), identity, new ExtensionCodec(), target),
+    () => writeTree(deep, [], new Set(), new ExtensionCodec(), target),
     /excessively deep/u,
   );
   const node = reference("v");
@@ -245,7 +238,6 @@ test("rejects cyclic and excessively deep trees while allowing repeated acyclic 
     tree,
     [layer],
     new Set(),
-    identity,
     new ExtensionCodec(),
     target,
   );

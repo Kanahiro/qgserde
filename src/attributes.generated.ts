@@ -37,8 +37,6 @@ export interface QgsMapLayerAttributes {
   styleCategories?: string;
   /** `symbologyReferenceScale`. */
   symbologyReferenceScale?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const mapLayerAttributes = {
@@ -83,8 +81,6 @@ export interface QgsStyleRootAttributes {
   styleCategories?: string;
   /** `symbologyReferenceScale`. */
   symbologyReferenceScale?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const styleRootAttributes = {
@@ -108,8 +104,6 @@ export interface QgsLayerLegendAttributes {
   showLabelLegend?: boolean;
   /** `type`. */
   type?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layerLegendAttributes = {
@@ -134,8 +128,6 @@ export interface QgsMetadataLinkAttributes {
   type?: string;
   /** `url`. */
   url?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const metadataLinkAttributes = {
@@ -154,8 +146,6 @@ export interface QgsMetadataDateAttributes {
   type?: string;
   /** `value`. */
   value?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const metadataDateAttributes = {
@@ -167,8 +157,6 @@ export const metadataDateAttributes = {
 export interface QgsMetadataConstraintAttributes {
   /** `type`. */
   type?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const metadataConstraintAttributes = {
@@ -193,8 +181,6 @@ export interface QgsMetadataSpatialExtentAttributes {
   miny?: number;
   /** `minz`. */
   minz?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const metadataSpatialExtentAttributes = {
@@ -226,8 +212,6 @@ export interface QgsExpressionFieldAttributes {
   type?: number;
   /** `typeName`. */
   typeName?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const expressionFieldAttributes = {
@@ -247,8 +231,6 @@ export interface QgsDefaultActionAttributes {
   key?: string;
   /** `value`. */
   value?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const defaultActionAttributes = {
@@ -266,8 +248,6 @@ export interface QgsAttributeTableConfigAttributes {
   sortExpression?: string;
   /** `sortOrder`. */
   sortOrder?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const attributeTableConfigAttributes = {
@@ -287,8 +267,6 @@ export interface QgsAttributeTableColumnAttributes {
   type?: string;
   /** `width`. */
   width?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const attributeTableColumnAttributes = {
@@ -304,8 +282,6 @@ export interface QgsGeometryOptionsAttributes {
   geometryPrecision?: number;
   /** `removeDuplicateNodes`. */
   removeDuplicateNodes?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const geometryOptionsAttributes = {
@@ -319,8 +295,6 @@ export interface QgsDiagramRendererAttributes {
   attributeLegend?: boolean;
   /** `diagramType`. */
   diagramType?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const diagramRendererAttributes = {
@@ -350,8 +324,6 @@ export interface QgsLinearDiagramRendererAttributes {
   upperValue?: number;
   /** `upperWidth`. */
   upperWidth?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const linearDiagramRendererAttributes = {
@@ -431,8 +403,6 @@ export interface QgsDiagramCategoryAttributes {
   stackedDiagramSpacingUnitScale?: string;
   /** `width`. */
   width?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const diagramCategoryAttributes = {
@@ -479,8 +449,6 @@ export interface QgsDiagramAttributeAttributes {
   field?: string;
   /** `label`. */
   label?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const diagramAttributeAttributes = {
@@ -506,8 +474,6 @@ export interface QgsDiagramLayerSettingsAttributes {
   showAll?: boolean;
   /** `zIndex`. */
   zIndex?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const diagramLayerSettingsAttributes = {
@@ -534,8 +500,6 @@ export interface QgsFontAttributes {
   style?: string;
   /** `underline`. */
   underline?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const fontAttributes = {
@@ -551,8 +515,6 @@ export const fontAttributes = {
 export interface QgsAuxiliaryLayerAttributes {
   /** `key`. */
   key?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const auxiliaryLayerAttributes = {
@@ -567,8 +529,6 @@ export interface QgsLayerTreeLayerAttributes {
   legend_split_behavior?: number;
   /** `patch_size`. */
   patch_size?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layerTreeLayerAttributes = {
@@ -589,8 +549,6 @@ export interface QgsLayerTreeGroupAttributes {
   "wms-group-request-mode"?: string;
   /** `wms-has-time-dimension`. */
   "wms-has-time-dimension"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layerTreeGroupAttributes = {
@@ -609,8 +567,6 @@ export interface QgsLayoutAttributes {
   units?: string;
   /** `worldFileMap`. */
   worldFileMap?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutAttributes = {
@@ -629,8 +585,6 @@ export interface QgsLayoutSnapperAttributes {
   snapToItems?: boolean;
   /** `tolerance`. */
   tolerance?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutSnapperAttributes = {
@@ -652,8 +606,6 @@ export interface QgsLayoutGridAttributes {
   resUnits?: string;
   /** `resolution`. */
   resolution?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutGridAttributes = {
@@ -674,8 +626,6 @@ export interface QgsLayoutColorAttributes {
   green?: number;
   /** `red`. */
   red?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutColorAttributes = {
@@ -695,8 +645,6 @@ export interface QgsLayoutGuideAttributes {
   position?: number;
   /** `units`. */
   units?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutGuideAttributes = {
@@ -714,8 +662,6 @@ export interface QgsLayoutMapLayerAttributes {
   provider?: string;
   /** `source`. */
   source?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutMapLayerAttributes = {
@@ -732,8 +678,6 @@ export interface QgsLayoutAtlasMapAttributes {
   margin?: number;
   /** `scalingMode`. */
   scalingMode?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutAtlasMapAttributes = {
@@ -772,8 +716,6 @@ export interface QgsLayoutAtlasAttributes {
   sortFeatures?: boolean;
   /** `sortKey`. */
   sortKey?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutAtlasAttributes = {
@@ -807,8 +749,6 @@ export interface QgsLayoutClippingAttributes {
   forceLabelsInside?: boolean;
   /** `restrictLayers`, stored as 1 or 0. */
   restrictLayers?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutClippingAttributes = {
@@ -1088,8 +1028,6 @@ export interface QgsLayoutItemAttributes {
   zRangeUpper?: number;
   /** `zValue`. */
   zValue?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutItemAttributes = {
@@ -1310,8 +1248,6 @@ export interface QgsLayoutMultiFrameAttributes {
   wrapBehavior?: number;
   /** `wrapString`. */
   wrapString?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutMultiFrameAttributes = {
@@ -1363,8 +1299,6 @@ export interface QgsLayoutChildFrameAttributes {
   templateUuid?: string;
   /** `uuid`. */
   uuid?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutChildFrameAttributes = {
@@ -1378,8 +1312,6 @@ export interface QgsLayoutNodeAttributes {
   x?: number;
   /** `y`. */
   y?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutNodeAttributes = {
@@ -1403,8 +1335,6 @@ export interface QgsLayoutTableColumnAttributes {
   vAlignment?: number;
   /** `width`. */
   width?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutTableColumnAttributes = {
@@ -1423,8 +1353,6 @@ export interface QgsLayoutTableCellStyleAttributes {
   cellBackgroundColor?: string;
   /** `enabled`, stored as 1 or 0. */
   enabled?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutTableCellStyleAttributes = {
@@ -1548,8 +1476,6 @@ export interface QgsMapGridAttributes {
   unit?: number;
   /** `uuid`. */
   uuid?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const mapGridAttributes = {
@@ -1634,8 +1560,6 @@ export interface QgsSnappingSettingsAttributes {
   type?: number;
   /** `unit`. */
   unit?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const snappingSettingsAttributes = {
@@ -1667,8 +1591,6 @@ export interface QgsSnappingLayerSettingsAttributes {
   type?: number;
   /** `units`. */
   units?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const snappingLayerSettingsAttributes = {
@@ -1685,8 +1607,6 @@ export const snappingLayerSettingsAttributes = {
 export interface QgsProjectLegendAttributes {
   /** `updateDrawingOrder`, stored as true or false. */
   updateDrawingOrder?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const projectLegendAttributes = {
@@ -1697,8 +1617,6 @@ export const projectLegendAttributes = {
 export interface QgsActiveAttributes {
   /** `active`, stored as 1 or 0. */
   active?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const activeAttributes = {
@@ -1751,8 +1669,6 @@ export interface QgsTemporalAttributes {
   temporalRepresentationScale?: number;
   /** `temporalRepresentationScaleUnit`. */
   temporalRepresentationScaleUnit?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const temporalAttributes = {
@@ -1838,8 +1754,6 @@ export interface QgsElevationAttributes {
   zoffset?: number;
   /** `zscale`. */
   zscale?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const elevationAttributes = {
@@ -1879,8 +1793,6 @@ export interface QgsMetadataUrlAttributes {
   format?: string;
   /** `type`. */
   type?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const metadataUrlAttributes = {
@@ -1948,8 +1860,6 @@ export interface QgsTextStyleAttributes {
   textOrientation?: string;
   /** `useSubstitutions`, stored as 1 or 0. */
   useSubstitutions?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const textStyleAttributes = {
@@ -2004,8 +1914,6 @@ export interface QgsTextBufferAttributes {
   bufferSizeMapUnitScale?: string;
   /** `bufferSizeUnits`. */
   bufferSizeUnits?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const textBufferAttributes = {
@@ -2040,8 +1948,6 @@ export interface QgsTextMaskAttributes {
   maskType?: number;
   /** `maskedSymbolLayers`. */
   maskedSymbolLayers?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const textMaskAttributes = {
@@ -2110,8 +2016,6 @@ export interface QgsTextBackgroundAttributes {
   shapeSizeY?: number;
   /** `shapeType`. */
   shapeType?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const textBackgroundAttributes = {
@@ -2175,8 +2079,6 @@ export interface QgsTextShadowAttributes {
   shadowScale?: number;
   /** `shadowUnder`. */
   shadowUnder?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const textShadowAttributes = {
@@ -2223,8 +2125,6 @@ export interface QgsLabelFormattingAttributes {
   useMaxLineLengthForAutoWrap?: boolean;
   /** `wrapChar`. */
   wrapChar?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const labelFormattingAttributes = {
@@ -2348,8 +2248,6 @@ export interface QgsLabelPlacementAttributes {
   xOffset?: number;
   /** `yOffset`. */
   yOffset?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const labelPlacementAttributes = {
@@ -2445,8 +2343,6 @@ export interface QgsLabelRenderingAttributes {
   upsidedownLabels?: number;
   /** `zIndex`. */
   zIndex?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const labelRenderingAttributes = {
@@ -2478,8 +2374,6 @@ export interface QgsStoredExpressionAttributes {
   name?: number;
   /** `tag`. */
   tag?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const storedExpressionAttributes = {
@@ -2492,8 +2386,6 @@ export const storedExpressionAttributes = {
 export interface QgsSelectionAttributes {
   /** `mode`. */
   mode?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const selectionAttributes = {
@@ -2530,8 +2422,6 @@ export interface QgsColorAttributes {
   value?: number;
   /** `y`. */
   y?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const colorAttributes = {
@@ -2575,8 +2465,6 @@ export interface QgsElevationShadingAttributes {
   "light-altitude"?: number;
   /** `light-azimuth`. */
   "light-azimuth"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const elevationShadingAttributes = {
@@ -2605,8 +2493,6 @@ export interface QgsProjectStyleSettingsAttributes {
   iccProfileId?: string;
   /** `projectStyleId`. */
   projectStyleId?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const projectStyleSettingsAttributes = {
@@ -2629,8 +2515,6 @@ export interface QgsProjectTimeSettingsAttributes {
   timeStepUnit?: string;
   /** `totalMovieFrames`. */
   totalMovieFrames?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const projectTimeSettingsAttributes = {
@@ -2651,8 +2535,6 @@ export interface QgsProjectElevationAttributes {
   RangeLower?: number;
   /** `RangeUpper`. */
   RangeUpper?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const projectElevationAttributes = {
@@ -2676,8 +2558,6 @@ export interface QgsTerrainProviderAttributes {
   offset?: number;
   /** `scale`. */
   scale?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const terrainProviderAttributes = {
@@ -2695,8 +2575,6 @@ export interface QgsProjectDisplaySettingsAttributes {
   CoordinateAxisOrder?: string;
   /** `CoordinateType`. */
   CoordinateType?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const projectDisplaySettingsAttributes = {
@@ -2720,8 +2598,6 @@ export interface QgsProjectGpsSettingsAttributes {
   destinationLayerProvider?: string;
   /** `destinationLayerSource`. */
   destinationLayerSource?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const projectGpsSettingsAttributes = {
@@ -2740,8 +2616,6 @@ export interface QgsGpsTimeStampFieldAttributes {
   destinationLayer?: string;
   /** `field`. */
   field?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const gpsTimeStampFieldAttributes = {
@@ -2821,8 +2695,6 @@ export interface QgsAnnotationLayerItemAttributes {
   yMin?: number;
   /** `zIndex`. */
   zIndex?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const annotationLayerItemAttributes = {
@@ -2869,8 +2741,6 @@ export interface QgsMeshActiveDatasetAttributes {
   scalar?: number;
   /** `vector`. */
   vector?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshActiveDatasetAttributes = {
@@ -2894,8 +2764,6 @@ export interface QgsMeshScalarSettingsAttributes {
   "range-extent"?: string;
   /** `range-limit`. */
   "range-limit"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshScalarSettingsAttributes = {
@@ -2930,8 +2798,6 @@ export interface QgsMeshVectorSettingsAttributes {
   "user-grid-height"?: number;
   /** `user-grid-width`. */
   "user-grid-width"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshVectorSettingsAttributes = {
@@ -2951,8 +2817,6 @@ export const meshVectorSettingsAttributes = {
 export interface QgsMeshEdgeSettingsAttributes {
   /** `stroke-width-unit`. */
   "stroke-width-unit"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshEdgeSettingsAttributes = {
@@ -2977,8 +2841,6 @@ export interface QgsMeshStrokeWidthAttributes {
   "use-absolute-value"?: number;
   /** `width-varying`. */
   "width-varying"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshStrokeWidthAttributes = {
@@ -3002,8 +2864,6 @@ export interface QgsMeshFrameSettingsAttributes {
   "line-width"?: number;
   /** `line-width-unit`. */
   "line-width-unit"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshFrameSettingsAttributes = {
@@ -3017,8 +2877,6 @@ export const meshFrameSettingsAttributes = {
 export interface QgsMeshAveragingAttributes {
   /** `method`. */
   method?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshAveragingAttributes = {
@@ -3031,8 +2889,6 @@ export interface QgsMeshSigmaAveragingAttributes {
   "end-fraction"?: number;
   /** `start-fraction`. */
   "start-fraction"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshSigmaAveragingAttributes = {
@@ -3058,8 +2914,6 @@ export interface QgsMeshDatasetGroupTreeItemAttributes {
   "original-name"?: string;
   /** `source-name`. */
   "source-name"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshDatasetGroupTreeItemAttributes = {
@@ -3081,8 +2935,6 @@ export interface QgsMeshDatasetAttributes {
   "source-index"?: string;
   /** `source-type`. */
   "source-type"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshDatasetAttributes = {
@@ -3097,8 +2949,6 @@ export interface QgsMeshNameIndexAttributes {
   "global-index"?: number;
   /** `name`. */
   name?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshNameIndexAttributes = {
@@ -3114,8 +2964,6 @@ export interface QgsMeshSimplifyAttributes {
   "mesh-resolution"?: number;
   /** `reduction-factor`. */
   "reduction-factor"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshSimplifyAttributes = {
@@ -3128,8 +2976,6 @@ export const meshSimplifyAttributes = {
 export interface QgsTileMatrixSetAttributes {
   /** `scaleToZoomMethod`. */
   scaleToZoomMethod?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const tileMatrixSetAttributes = {
@@ -3158,8 +3004,6 @@ export interface QgsTileMatrixAttributes {
   yMin?: number;
   /** `zoomLevel`. */
   zoomLevel?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const tileMatrixAttributes = {
@@ -3191,8 +3035,6 @@ export interface QgsVectorTileStyleAttributes {
   "min-zoom"?: number;
   /** `name`. */
   name?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const vectorTileStyleAttributes = {
@@ -3209,8 +3051,6 @@ export const vectorTileStyleAttributes = {
 export interface QgsVectorTileLabelingAttributes {
   /** `labelsEnabled`, stored as 1 or 0. */
   labelsEnabled?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const vectorTileLabelingAttributes = {
@@ -3231,8 +3071,6 @@ export interface QgsColorRampShaderAttributes {
   maximumValue?: number;
   /** `minimumValue`. */
   minimumValue?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const colorRampShaderAttributes = {
@@ -3254,8 +3092,6 @@ export interface QgsColorRampItemAttributes {
   label?: string;
   /** `value`. */
   value?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const colorRampItemAttributes = {
@@ -3281,8 +3117,6 @@ export interface QgsRampLegendSettingsAttributes {
   suffix?: string;
   /** `useContinuousLegend`, stored as 1 or 0. */
   useContinuousLegend?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const rampLegendSettingsAttributes = {
@@ -3323,8 +3157,6 @@ export interface QgsRelationAttributes {
   relationStrength?: string;
   /** `strength`. */
   strength?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const relationAttributes = {
@@ -3349,8 +3181,6 @@ export interface QgsRelationFieldRefAttributes {
   referencedField?: string;
   /** `referencingField`. */
   referencingField?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const relationFieldRefAttributes = {
@@ -3364,8 +3194,6 @@ export interface QgsMapThemeAttributes {
   "has-checked-group-info"?: string;
   /** `has-expanded-info`. */
   "has-expanded-info"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const mapThemeAttributes = {
@@ -3383,8 +3211,6 @@ export interface QgsMapThemeLayerAttributes {
   style?: string;
   /** `visible`, stored as 1 or 0. */
   visible?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const mapThemeLayerAttributes = {
@@ -3406,8 +3232,6 @@ export interface QgsBookmarkAttributes {
   name?: string;
   /** `rotation`. */
   rotation?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const bookmarkAttributes = {
@@ -3424,8 +3248,6 @@ export interface QgsTransformPairAttributes {
   allowFallback?: boolean;
   /** `coordinateOp`. */
   coordinateOp?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const transformPairAttributes = {
@@ -3461,8 +3283,6 @@ export interface QgsRasterRendererAttributes {
   nodataColor?: string;
   /** `zfactor`. */
   zfactor?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const rasterRendererAttributes = {
@@ -3489,8 +3309,6 @@ export interface QgsBrightnessContrastAttributes {
   contrast?: number;
   /** `gamma`. */
   gamma?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const brightnessContrastAttributes = {
@@ -3517,8 +3335,6 @@ export interface QgsHueSaturationAttributes {
   invertColors?: number;
   /** `saturation`. */
   saturation?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const hueSaturationAttributes = {
@@ -3540,8 +3356,6 @@ export interface QgsRasterResamplerAttributes {
   zoomedInResampler?: string;
   /** `zoomedOutResampler`. */
   zoomedOutResampler?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const rasterResamplerAttributes = {
@@ -3560,8 +3374,6 @@ export interface QgsProviderResamplingAttributes {
   zoomedInResamplingMethod?: string;
   /** `zoomedOutResamplingMethod`. */
   zoomedOutResamplingMethod?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const providerResamplingAttributes = {
@@ -3577,8 +3389,6 @@ export interface QgsNoDataRangeAttributes {
   max?: number;
   /** `min`. */
   min?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const noDataRangeAttributes = {
@@ -3596,8 +3406,6 @@ export interface QgsPaletteEntryAttributes {
   label?: string;
   /** `value`. */
   value?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const paletteEntryAttributes = {
@@ -3627,8 +3435,6 @@ export interface QgsPixelListEntryAttributes {
   toleranceGreen?: number;
   /** `toleranceRed`. */
   toleranceRed?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const pixelListEntryAttributes = {
@@ -3649,8 +3455,6 @@ export interface QgsOrderByClauseAttributes {
   asc?: boolean;
   /** `nullsFirst`, stored as 1 or 0. */
   nullsFirst?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const orderByClauseAttributes = {
@@ -3662,8 +3466,6 @@ export const orderByClauseAttributes = {
 export interface QgsTextAnnotationAttributes {
   /** `document`. */
   document?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const textAnnotationAttributes = {
@@ -3696,8 +3498,6 @@ export interface QgsCanvasAnnotationAttributes {
   offsetYMM?: number;
   /** `visible`. */
   visible?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const canvasAnnotationAttributes = {
@@ -3737,8 +3537,6 @@ export interface QgsJoinAttributes {
   targetFieldName?: string;
   /** `upsertOnEdit`, stored as 1 or 0. */
   upsertOnEdit?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const joinAttributes = {
@@ -3774,8 +3572,6 @@ export interface QgsActionAttributes {
   shortTitle?: string;
   /** `type`. */
   type?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const actionAttributes = {
@@ -3798,8 +3594,6 @@ export interface QgsFormLabelStyleAttributes {
   overrideLabelColor?: string;
   /** `overrideLabelFont`. */
   overrideLabelFont?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const formLabelStyleAttributes = {
@@ -3836,8 +3630,6 @@ export interface QgsFormContainerAttributes {
   visibilityExpression?: string;
   /** `visibilityExpressionEnabled`. */
   visibilityExpressionEnabled?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const formContainerAttributes = {
@@ -3868,8 +3660,6 @@ export interface QgsFormFieldAttributes {
   showLabel?: boolean;
   /** `verticalStretch`. */
   verticalStretch?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const formFieldAttributes = {
@@ -3888,8 +3678,6 @@ export interface QgsSymmetricModeAttributes {
   enabled?: number;
   /** `symmetrypoint`. */
   symmetrypoint?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const symmetricModeAttributes = {
@@ -3906,8 +3694,6 @@ export interface QgsClassificationLabelFormatAttributes {
   labelprecision?: number;
   /** `trimtrailingzeroes`, stored as true or false. */
   trimtrailingzeroes?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const classificationLabelFormatAttributes = {
@@ -3932,8 +3718,6 @@ export interface QgsLegendStyleAttributes {
   marginTop?: number;
   /** `name`. */
   name?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const legendStyleAttributes = {
@@ -3960,8 +3744,6 @@ export interface QgsHeatmapRendererAttributes {
   radius_unit?: number;
   /** `weight_expression`. */
   weight_expression?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const heatmapRendererAttributes = {
@@ -3997,8 +3779,6 @@ export interface QgsPointDisplacementRendererAttributes {
   toleranceUnit?: string;
   /** `toleranceUnitScale`. */
   toleranceUnitScale?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const pointDisplacementRendererAttributes = {
@@ -4023,8 +3803,6 @@ export interface QgsPointClusterRendererAttributes {
   toleranceUnit?: string;
   /** `toleranceUnitScale`. */
   toleranceUnitScale?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const pointClusterRendererAttributes = {
@@ -4037,8 +3815,6 @@ export const pointClusterRendererAttributes = {
 export interface QgsInvertedPolygonRendererAttributes {
   /** `preprocessing`, stored as 1 or 0. */
   preprocessing?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const invertedPolygonRendererAttributes = {
@@ -4049,8 +3825,6 @@ export const invertedPolygonRendererAttributes = {
 export interface QgsTextTabAttributes {
   /** `position`. */
   position?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const textTabAttributes = {
@@ -4083,8 +3857,6 @@ export interface QgsLayoutMapOverviewAttributes {
   stackingLayerSource?: string;
   /** `uuid`. */
   uuid?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutMapOverviewAttributes = {
@@ -4144,8 +3916,6 @@ export interface QgsPointCloudRendererAttributes {
   showLabels?: string;
   /** `zoomOutBehavior`. */
   zoomOutBehavior?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const pointCloudRendererAttributes = {
@@ -4183,8 +3953,6 @@ export interface QgsPointCloudCategoryAttributes {
   render?: boolean;
   /** `value`. */
   value?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const pointCloudCategoryAttributes = {
@@ -4205,8 +3973,6 @@ export interface QgsTiledSceneRendererAttributes {
   tileBorderRendering?: number;
   /** `useTextureColors`, stored as 1 or 0. */
   useTextureColors?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const tiledSceneRendererAttributes = {
@@ -4238,8 +4004,6 @@ export interface QgsRenderer3DAttributes {
   "show-bounding-boxes"?: boolean;
   /** `zoom-out-behavior`. */
   "zoom-out-behavior"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const renderer3DAttributes = {
@@ -4269,8 +4033,6 @@ export interface QgsConditionalStyleAttributes {
   text_color?: string;
   /** `text_color_alpha`. */
   text_color_alpha?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const conditionalStyleAttributes = {
@@ -4302,8 +4064,6 @@ export interface QgsFormRelationAttributes {
   showLabel?: boolean;
   /** `verticalStretch`. */
   verticalStretch?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const formRelationAttributes = {
@@ -4330,8 +4090,6 @@ export interface QgsFormActionAttributes {
   showLabel?: boolean;
   /** `verticalStretch`. */
   verticalStretch?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const formActionAttributes = {
@@ -4354,8 +4112,6 @@ export interface QgsFormSpacerAttributes {
   showLabel?: boolean;
   /** `verticalStretch`. */
   verticalStretch?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const formSpacerAttributes = {
@@ -4376,8 +4132,6 @@ export interface QgsFormElementAttributes {
   showLabel?: boolean;
   /** `verticalStretch`. */
   verticalStretch?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const formElementAttributes = {
@@ -4407,8 +4161,6 @@ export interface QgsLegendTreeLayerAttributes {
   providerKey?: string;
   /** `source`. */
   source?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const legendTreeLayerAttributes = {
@@ -4441,8 +4193,6 @@ export interface QgsLegendTreeGroupAttributes {
   "wms-group-request-mode"?: string;
   /** `wms-has-time-dimension`. */
   "wms-has-time-dimension"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const legendTreeGroupAttributes = {
@@ -4464,8 +4214,6 @@ export interface QgsProjectAttributes {
   saveUser?: string;
   /** `saveUserFull`. */
   saveUserFull?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const projectAttributes = {
@@ -4478,8 +4226,6 @@ export const projectAttributes = {
 export interface QgsSvgAnnotationAttributes {
   /** `file`. */
   file?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const svgAnnotationAttributes = {
@@ -4492,8 +4238,6 @@ export interface QgsHtmlAnnotationAttributes {
   htmlfile?: string;
   /** `htmlsource`. */
   htmlsource?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const htmlAnnotationAttributes = {
@@ -4505,8 +4249,6 @@ export const htmlAnnotationAttributes = {
 export interface QgsFormAnnotationAttributes {
   /** `designerForm`. */
   designerForm?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const formAnnotationAttributes = {
@@ -4527,8 +4269,6 @@ export interface QgsMinMaxOriginAttributes {
   statAccuracy?: string;
   /** `stdDevFactor`. */
   stdDevFactor?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const minMaxOriginAttributes = {
@@ -4548,8 +4288,6 @@ export interface QgsContrastEnhancementAttributes {
   maxValue?: number;
   /** `minValue`. */
   minValue?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const contrastEnhancementAttributes = {
@@ -4568,8 +4306,6 @@ export interface QgsLayerFlagsAttributes {
   Removable?: boolean;
   /** `Searchable`, stored as 1 or 0. */
   Searchable?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layerFlagsAttributes = {
@@ -4585,8 +4321,6 @@ export interface QgsTemporalRangeAttributes {
   end?: string;
   /** `start`. */
   start?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const temporalRangeAttributes = {
@@ -4610,8 +4344,6 @@ export interface QgsMetadataContactAttributes {
   role?: string;
   /** `voice`. */
   voice?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const metadataContactAttributes = {
@@ -4634,8 +4366,6 @@ export interface QgsLabelSubstitutionAttributes {
   replace?: string;
   /** `wholeWord`, stored as 1 or 0. */
   wholeWord?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const labelSubstitutionAttributes = {
@@ -4659,8 +4389,6 @@ export interface QgsMetadataAddressAttributes {
   postalcode?: string;
   /** `type`. */
   type?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const metadataAddressAttributes = {
@@ -4688,8 +4416,6 @@ export interface QgsWmsDimensionAttributes {
   unitSymbol?: string;
   /** `units`. */
   units?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const wmsDimensionAttributes = {
@@ -4708,8 +4434,6 @@ export interface QgsLegendTextOnSymbolItemAttributes {
   key?: string;
   /** `value`. */
   value?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const legendTextOnSymbolItemAttributes = {
@@ -4727,8 +4451,6 @@ export interface QgsLayoutLayerStyleAttributes {
   provider?: string;
   /** `source`. */
   source?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layoutLayerStyleAttributes = {
@@ -4742,8 +4464,6 @@ export const layoutLayerStyleAttributes = {
 export interface QgsTableRowHeightAttributes {
   /** `height`. */
   height?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const tableRowHeightAttributes = {
@@ -4754,8 +4474,6 @@ export const tableRowHeightAttributes = {
 export interface QgsTableColumnWidthAttributes {
   /** `width`. */
   width?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const tableColumnWidthAttributes = {
@@ -4794,8 +4512,6 @@ export interface QgsLabelEngineRuleAttributes {
   targetLayerProvider?: string;
   /** `targetLayerSource`. */
   targetLayerSource?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const labelEngineRuleAttributes = {
@@ -4824,8 +4540,6 @@ export interface QgsSizeLegendAttributes {
   type?: string;
   /** `valign`. */
   valign?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const sizeLegendAttributes = {
@@ -4840,8 +4554,6 @@ export interface QgsSizeLegendTextStyleAttributes {
   align?: number;
   /** `color`. */
   color?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const sizeLegendTextStyleAttributes = {
@@ -4859,8 +4571,6 @@ export interface QgsSizeLegendFontAttributes {
   size?: number;
   /** `weight`. */
   weight?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const sizeLegendFontAttributes = {
@@ -4876,8 +4586,6 @@ export interface QgsSizeLegendClassAttributes {
   label?: string;
   /** `size`. */
   size?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const sizeLegendClassAttributes = {
@@ -4891,8 +4599,6 @@ export interface QgsMeshArrowSettingsAttributes {
   "arrow-head-length-ratio"?: number;
   /** `arrow-head-width-ratio`. */
   "arrow-head-width-ratio"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshArrowSettingsAttributes = {
@@ -4912,8 +4618,6 @@ export interface QgsMeshShaftLengthAttributes {
   min?: number;
   /** `scale-factor`. */
   "scale-factor"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshShaftLengthAttributes = {
@@ -4930,8 +4634,6 @@ export interface QgsMeshStreamlineSettingsAttributes {
   "seeding-density"?: number;
   /** `seeding-method`. */
   "seeding-method"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshStreamlineSettingsAttributes = {
@@ -4947,8 +4649,6 @@ export interface QgsMeshTracesSettingsAttributes {
   "maximum-tail-length-unit"?: number;
   /** `particles-count`. */
   "particles-count"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshTracesSettingsAttributes = {
@@ -4967,8 +4667,6 @@ export interface QgsMeshWindBarbSettingsAttributes {
   "shaft-length"?: number;
   /** `shaft-length-units`. */
   "shaft-length-units"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshWindBarbSettingsAttributes = {
@@ -4984,8 +4682,6 @@ export interface QgsMeshLayersAveragingAttributes {
   "end-layer-index"?: number;
   /** `start-layer-index`. */
   "start-layer-index"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshLayersAveragingAttributes = {
@@ -4999,8 +4695,6 @@ export interface QgsMeshHeightAveragingAttributes {
   "end-height"?: number;
   /** `start-height`. */
   "start-height"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshHeightAveragingAttributes = {
@@ -5014,8 +4708,6 @@ export interface QgsMeshElevationAveragingAttributes {
   "end-elevation"?: number;
   /** `start-elevation`. */
   "start-elevation"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshElevationAveragingAttributes = {
@@ -5029,8 +4721,6 @@ export interface QgsRasterAttributeTableAttributes {
   band?: number;
   /** `path`. */
   path?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const rasterAttributeTableAttributes = {
@@ -5044,8 +4734,6 @@ export interface QgsClassificationExtraAttributes {
   effective_symmetry_point?: number;
   /** `std_dev`. */
   std_dev?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const classificationExtraAttributes = {
@@ -5071,8 +4759,6 @@ export interface QgsPlotAttributes {
   pieChartLabelType?: string;
   /** `plotType`. */
   plotType?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const plotAttributes = {
@@ -5100,8 +4786,6 @@ export interface QgsPlotAxisAttributes {
   suffixPlacement?: string;
   /** `type`. */
   type?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const plotAxisAttributes = {
@@ -5123,8 +4807,6 @@ export interface QgsChartSeriesAttributes {
   xExpression?: string;
   /** `yExpression`. */
   yExpression?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const chartSeriesAttributes = {
@@ -5144,8 +4826,6 @@ export interface QgsLayerRefAttributes {
   provider?: string;
   /** `source`. */
   source?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layerRefAttributes = {
@@ -5159,8 +4839,6 @@ export const layerRefAttributes = {
 export interface QgsProfileCustomSourceAttributes {
   /** `id`. */
   id?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const profileCustomSourceAttributes = {
@@ -5201,8 +4879,6 @@ export interface QgsSymbol3DAttributes {
   "vertical-filter-threshold"?: number;
   /** `vertical-triangle-filter`. */
   "vertical-triangle-filter"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const symbol3DAttributes = {
@@ -5248,8 +4924,6 @@ export interface QgsSymbol3DDataAttributes {
   "simple-lines"?: boolean;
   /** `width`. */
   width?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const symbol3DDataAttributes = {
@@ -5340,8 +5014,6 @@ export interface QgsMaterial3DAttributes {
   texture_scale?: number;
   /** `warm`. */
   warm?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const material3DAttributes = {
@@ -5391,8 +5063,6 @@ export interface QgsPolygonEdges3DAttributes {
   enabled?: boolean;
   /** `width`. */
   width?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const polygonEdges3DAttributes = {
@@ -5405,8 +5075,6 @@ export const polygonEdges3DAttributes = {
 export interface QgsSymbol3DTransformAttributes {
   /** `matrix`. */
   matrix?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const symbol3DTransformAttributes = {
@@ -5449,8 +5117,6 @@ export interface QgsMesh3DAdvancedAttributes {
   "wireframe-line-color"?: string;
   /** `wireframe-line-width`. */
   "wireframe-line-width"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const mesh3DAdvancedAttributes = {
@@ -5485,8 +5151,6 @@ export interface QgsPointCloud3DCategoryAttributes {
   render?: boolean;
   /** `value`. */
   value?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const pointCloud3DCategoryAttributes = {
@@ -5505,8 +5169,6 @@ export interface QgsTiling3DAttributes {
   "show-bounding-boxes"?: boolean;
   /** `zoom-levels-count`. */
   "zoom-levels-count"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const tiling3DAttributes = {
@@ -5525,8 +5187,6 @@ export interface QgsRule3DAttributes {
   filter?: string;
   /** `key`. */
   key?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const rule3DAttributes = {
@@ -5540,8 +5200,6 @@ export const rule3DAttributes = {
 export interface QgsCategory3DAttributes {
   /** `render`, stored as 1 or 0. */
   render?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const category3DAttributes = {
@@ -5556,8 +5214,6 @@ export interface QgsScene3DOriginAttributes {
   y?: number;
   /** `z`. */
   z?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const scene3DOriginAttributes = {
@@ -5578,8 +5234,6 @@ export interface QgsScene3DExtentAttributes {
   yMax?: number;
   /** `yMin`. */
   yMin?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const scene3DExtentAttributes = {
@@ -5600,8 +5254,6 @@ export interface QgsScene3DCameraAttributes {
   "field-of-view"?: number;
   /** `projection-type`. */
   "projection-type"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const scene3DCameraAttributes = {
@@ -5617,8 +5269,6 @@ export interface QgsScene3DColorAttributes {
   background?: string;
   /** `selection`. */
   selection?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const scene3DColorAttributes = {
@@ -5652,8 +5302,6 @@ export interface QgsScene3DTerrainAttributes {
   "terrain-rendering-enabled"?: number;
   /** `texture-size`. */
   "texture-size"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const scene3DTerrainAttributes = {
@@ -5675,8 +5323,6 @@ export const scene3DTerrainAttributes = {
 export interface QgsScene3DGeneratorAttributes {
   /** `type`. */
   type?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const scene3DGeneratorAttributes = {
@@ -5703,8 +5349,6 @@ export interface QgsPointLight3DAttributes {
   y?: number;
   /** `z`. */
   z?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const pointLight3DAttributes = {
@@ -5733,8 +5377,6 @@ export interface QgsDirectionalLight3DAttributes {
   y?: number;
   /** `z`. */
   z?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const directionalLight3DAttributes = {
@@ -5778,8 +5420,6 @@ export interface QgsBackground3DAttributes {
   "top-color"?: string;
   /** `type`. */
   type?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const background3DAttributes = {
@@ -5814,8 +5454,6 @@ export interface QgsShadow3DAttributes {
   "shadow-map-resolution"?: number;
   /** `shadow-rendering-enabled`, stored as 1 or 0. */
   "shadow-rendering-enabled"?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const shadow3DAttributes = {
@@ -5837,8 +5475,6 @@ export interface QgsAmbientOcclusion3DAttributes {
   radius?: number;
   /** `threshold`. */
   threshold?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const ambientOcclusion3DAttributes = {
@@ -5856,8 +5492,6 @@ export interface QgsBloom3DAttributes {
   intensity?: number;
   /** `radius`. */
   radius?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const bloom3DAttributes = {
@@ -5872,8 +5506,6 @@ export interface QgsColorGrading3DAttributes {
   exposure?: number;
   /** `tone-mapping`. */
   "tone-mapping"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const colorGrading3DAttributes = {
@@ -5901,8 +5533,6 @@ export interface QgsDebug3DAttributes {
   "stop-updates"?: number;
   /** `terrain-tile-info`. */
   "terrain-tile-info"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const debug3DAttributes = {
@@ -5925,8 +5555,6 @@ export interface QgsEyeDome3DAttributes {
   "eye-dome-lighting-distance"?: number;
   /** `eye-dome-lighting-strength`. */
   "eye-dome-lighting-strength"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const eyeDome3DAttributes = {
@@ -5941,8 +5569,6 @@ export interface QgsNavigationSync3DAttributes {
   "view-frustum-visualization-enabled"?: number;
   /** `view-sync-mode`. */
   "view-sync-mode"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const navigationSync3DAttributes = {
@@ -5964,8 +5590,6 @@ export interface QgsDebugSettings3DAttributes {
   "shadowmap-enabled"?: boolean;
   /** `shadowmap-size`. */
   "shadowmap-size"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const debugSettings3DAttributes = {
@@ -5983,8 +5607,6 @@ export interface QgsTemporalRange3DAttributes {
   end?: string;
   /** `start`. */
   start?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const temporalRange3DAttributes = {
@@ -6006,8 +5628,6 @@ export interface QgsAxis3DAttributes {
   mode?: string;
   /** `vertical`. */
   vertical?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const axis3DAttributes = {
@@ -6023,8 +5643,6 @@ export const axis3DAttributes = {
 export interface QgsMapOverlay3DAttributes {
   /** `enabled`. */
   enabled?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const mapOverlay3DAttributes = {
@@ -6045,8 +5663,6 @@ export interface QgsCameraPoseAttributes {
   y?: number;
   /** `z`. */
   z?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const cameraPoseAttributes = {
@@ -6062,8 +5678,6 @@ export const cameraPoseAttributes = {
 export interface QgsAnimation3DAttributes {
   /** `interpolation`. */
   interpolation?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const animation3DAttributes = {
@@ -6086,8 +5700,6 @@ export interface QgsKeyframe3DAttributes {
   yaw?: number;
   /** `z`. */
   z?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const keyframe3DAttributes = {
@@ -6106,8 +5718,6 @@ export interface QgsMapView3DAttributes {
   isOpen?: boolean;
   /** `name`. */
   name?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const mapView3DAttributes = {
@@ -6123,8 +5733,6 @@ export interface QgsLayout3DTemporalAttributes {
   temporalRangeBegin?: string;
   /** `temporalRangeEnd`. */
   temporalRangeEnd?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const layout3DTemporalAttributes = {
@@ -6159,8 +5767,6 @@ export interface QgsReportSectionAttributes {
   headerVisibility?: number;
   /** `type`. */
   type?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const reportSectionAttributes = {
@@ -6196,8 +5802,6 @@ export interface QgsSensorAttributes {
   portName?: string;
   /** `type`. */
   type?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const sensorAttributes = {
@@ -6223,8 +5827,6 @@ export interface QgsElevationProfileAttributes {
   tolerance?: number;
   /** `useProjectLayerTree`, stored as 1 or 0. */
   useProjectLayerTree?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const elevationProfileAttributes = {
@@ -6241,8 +5843,6 @@ export interface QgsMaskingSourceSetAttributes {
   id?: string;
   /** `name`. */
   name?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const maskingSourceSetAttributes = {
@@ -6258,8 +5858,6 @@ export interface QgsMaskingSourceAttributes {
   sourceId?: string;
   /** `sourceType`. */
   sourceType?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const maskingSourceAttributes = {
@@ -6272,8 +5870,6 @@ export const maskingSourceAttributes = {
 export interface QgsMeshDatasetReferenceAttributes {
   /** `dataset-index`. */
   "dataset-index"?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshDatasetReferenceAttributes = {
@@ -6286,8 +5882,6 @@ export interface QgsMeshTimeSettingsAttributes {
   "absolute-time-format"?: string;
   /** `relative-time-format`. */
   "relative-time-format"?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const meshTimeSettingsAttributes = {
@@ -6303,8 +5897,6 @@ export interface QgsLegendPatchAttributes {
   type?: number;
   /** `wkt`. */
   wkt?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const legendPatchAttributes = {
@@ -6327,8 +5919,6 @@ export interface QgsRasterLabelingAttributes {
   type?: string;
   /** `zIndex`. */
   zIndex?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const rasterLabelingAttributes = {
@@ -6344,8 +5934,6 @@ export const rasterLabelingAttributes = {
 export interface QgsRasterLabelPlacementAttributes {
   /** `overlapHandling`. */
   overlapHandling?: string;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const rasterLabelPlacementAttributes = {
@@ -6360,8 +5948,6 @@ export interface QgsRasterLabelThinningAttributes {
   maxNumLabels?: number;
   /** `minFeatureSize`. */
   minFeatureSize?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const rasterLabelThinningAttributes = {
@@ -6378,8 +5964,6 @@ export interface QgsRasterLabelRenderingAttributes {
   scaleMin?: number;
   /** `scaleVisibility`, stored as 1 or 0. */
   scaleVisibility?: boolean;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const rasterLabelRenderingAttributes = {
@@ -6404,8 +5988,6 @@ export interface QgsSunLight3DAttributes {
   "sun-time"?: string;
   /** `temperature`. */
   temperature?: number;
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
 }
 
 export const sunLight3DAttributes = {
@@ -6419,10 +6001,7 @@ export const sunLight3DAttributes = {
 } as const satisfies AttributeTable;
 
 /** `<layer-tree-custom-node>` attributes (QGIS 4.2+). */
-export interface QgsLayerTreeCustomNodeAttributes {
-  /** Other attributes, and values that do not parse as their kind. */
-  other?: Record<string, string>;
-}
+export type QgsLayerTreeCustomNodeAttributes = Record<string, never>;
 
 export const layerTreeCustomNodeAttributes =
   {} as const satisfies AttributeTable;

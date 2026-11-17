@@ -16,7 +16,7 @@ const xml = (source: string) => readXml(source).root;
 const text = (element: XmlElement) =>
   writeXml({ before: [], root: element, after: [] });
 
-test("reads QGIS variant types as plain values", () => {
+test("reads default QGIS types as plain values and tags the rest", () => {
   const element = xml(
     `<Option type="Map">
       <Option name="s" type="QString" value="a"/>
@@ -51,17 +51,29 @@ test("reads QGIS variant types as plain values", () => {
       s: "a",
       i: 2,
       d: 2.5,
-      empty: 0,
+      // An integral double is not the default type for 0.
+      empty: { "@type": "double", value: 0 },
       b: true,
       // QGIS compares bool text with "true" only.
       one: false,
-      c: "1,2,3,255",
+      c: { "@type": "color", value: "1,2,3,255" },
       n: null,
-      unset: null,
+      // QGIS writes an empty map without a type.
+      unset: {},
       l: [1, "x"],
-      sl: ["y"],
-      p: { active: false },
-      crs: null,
+      sl: { "@type": "StringList", value: ["y"] },
+      p: { "@type": "QgsProperty", value: { active: false } },
+      crs: {
+        "@type": "QgsCoordinateReferenceSystem",
+        xml: [
+          {
+            type: "element",
+            name: "spatialrefsys",
+            attributes: {},
+            children: [],
+          },
+        ],
+      },
     },
   );
   assert.throws(
@@ -70,15 +82,18 @@ test("reads QGIS variant types as plain values", () => {
   );
 });
 
-test("writes variants while keeping matching elements, stored types and order", () => {
+test("writes plain values with QGIS default types, tagged values with theirs, and maps by key", () => {
   const element = xml(
     '<Option type="Map"><!--keep--><Option name="z" type="double" value="1"/><Option name="c" type="color" value="0,0,0,255"/><Option name="gone" type="QString" value="x"/><Option name="crs" type="QgsCoordinateReferenceSystem"><spatialrefsys/></Option><Option name="u" type="uint" value="1"/><Option name="empty"/></Option>',
   );
   writeVariant(element, {
     a: "new",
-    z: 2,
-    c: "255,0,0,255",
-    crs: null,
+    z: { "@type": "double", value: 2 },
+    c: { "@type": "color", value: "255,0,0,255" },
+    crs: {
+      "@type": "QgsCoordinateReferenceSystem",
+      xml: [xml("<spatialrefsys/>")],
+    },
     u: -1,
     empty: {},
     big: 2 ** 40,
@@ -87,8 +102,18 @@ test("writes variants while keeping matching elements, stored types and order", 
   });
   assert.equal(
     text(element),
-    '<Option type="Map"><!--keep--><Option name="z" type="double" value="2"/><Option name="c" type="color" value="255,0,0,255"/><Option name="crs" type="QgsCoordinateReferenceSystem"><spatialrefsys/></Option><Option name="u" type="int" value="-1"/><Option name="empty"/><Option name="a" type="QString" value="new"/><Option name="big" type="qlonglong" value="1099511627776"/><Option name="f" type="double" value="0.25"/><Option name="list" type="List"><Option type="bool" value="true"/><Option/></Option></Option>',
+    '<Option type="Map"><!--keep--><Option name="a" type="QString" value="new"/><Option name="big" type="qlonglong" value="1099511627776"/><Option name="c" type="color" value="255,0,0,255"/><Option name="crs" type="QgsCoordinateReferenceSystem"><spatialrefsys/></Option><Option name="empty"/><Option name="f" type="double" value="0.25"/><Option name="list" type="List"><Option type="bool" value="true"/><Option type="invalid"/></Option><Option name="u" type="int" value="-1"/><Option name="z" type="double" value="2"/></Option>',
   );
+  for (const mismatch of [
+    { "@type": "int", value: 0.5 },
+    { "@type": "StringList", value: [1] },
+    { "@type": "bool", value: "true" },
+    { "@type": "", value: { a: 1 } },
+  ])
+    assert.throws(
+      () => writeVariant(xml("<Option/>"), mismatch as never),
+      (error) => error instanceof QgsError && error.code === "INVALID_EDIT",
+    );
   writeVariant(element, "scalar");
   assert.equal(
     text(element),
@@ -107,15 +132,19 @@ test("writes variants while keeping matching elements, stored types and order", 
   );
 });
 
-test("wrapped variants stay wrapped while their value remains a map", () => {
-  const element = xml(
-    '<Option type="QgsProperty"><Option type="Map"><Option name="active" type="bool" value="true"/></Option></Option>',
-  );
-  writeVariant(element, { active: false, type: 3 });
-  assert.equal(
-    text(element),
-    '<Option type="QgsProperty"><Option type="Map"><Option name="active" type="bool" value="false"/><Option name="type" type="int" value="3"/></Option></Option>',
-  );
+test("wrapped variants round-trip through their tag", () => {
+  const source =
+    '<Option type="QgsProperty"><Option type="Map"><Option name="active" type="bool" value="true"/></Option></Option>';
+  const element = xml(source);
+  const value = readVariant(element);
+  assert.deepEqual(value, { "@type": "QgsProperty", value: { active: true } });
+  writeVariant(element, value);
+  assert.equal(text(element), source);
+  // A map that looks like a tag is tagged as a map, so it stays a map.
+  const lookalike = { "@type": "x", value: 1 };
+  const map = xml("<Option/>");
+  writeVariant(map, { "@type": "Map", value: lookalike });
+  assert.deepEqual(readVariant(map), { "@type": "Map", value: lookalike });
 });
 
 test("binds every scalar value to its model path", () => {
@@ -147,7 +176,7 @@ test("properties use <prop> before QGIS 3.18 and an <Option> map afterwards", ()
   writeProperties(modern, properties, parseQgisVersion("3.18"));
   assert.equal(
     text(modern),
-    '<layer class="SimpleFill"><Option type="Map"><Option name="color" type="QString" value="1,1,1,255"/><Option name="width" type="double" value="0.5"/><Option name="flag" type="bool" value="true"/></Option><effect/></layer>',
+    '<layer class="SimpleFill"><Option type="Map"><Option name="color" type="QString" value="1,1,1,255"/><Option name="flag" type="bool" value="true"/><Option name="width" type="double" value="0.5"/></Option><effect/></layer>',
   );
   assert.deepEqual(readProperties(modern), properties);
   // QGIS 3.18-3.3x wrote both forms; the map wins on read and the copy is dropped.

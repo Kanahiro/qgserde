@@ -135,7 +135,8 @@ test("reads, edits, and writes custom layer tree nodes", () => {
     },
     { id: "note", name: "Note", checked: "unchecked", expanded: false },
   );
-  assert.deepEqual(node.attributes, { other: { kind: "x" } });
+  // `kind` is not a typed attribute; it stays unmodeled XML.
+  assert.equal(node.attributes, undefined);
   assert.deepEqual(node.customProperties, { k: "v" });
   node.name = "Renamed";
   const output = serializeQgs(parseJson(serializeJson(project)), {

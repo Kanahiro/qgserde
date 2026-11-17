@@ -4,12 +4,13 @@ import { test } from "node:test";
 import {
   createProject,
   parseJson,
+  parseQgisVersion,
   parseQgs,
   QgsError,
   serializeJson,
   serializeQgs,
 } from "../src/index.ts";
-import type { XmlElement } from "../src/types.ts";
+import type { XmlElement, XmlNode } from "../src/types.ts";
 import {
   findChild,
   findChildren,
@@ -90,6 +91,78 @@ function canonicalDocument(xml: string) {
       extentText(findChild(layer, "extent"));
     }
   return document;
+}
+
+const textOf = (parent: XmlElement, name: string) => {
+  const child = findChild(parent, name);
+  return child ? getText(child) : "";
+};
+
+// The document outside <maplayer>, which keeps its structure and order. Tree
+// references take their name, source, and provider from the layer.
+function withoutLayers(xml: string) {
+  const document = canonicalDocument(xml);
+  const layers = findChild(document.root, "projectlayers");
+  const byId = new Map(
+    (layers ? findChildren(layers, "maplayer") : []).map((layer) => [
+      getText(findChild(layer, "id")!),
+      {
+        name: textOf(layer, "layername"),
+        source: textOf(layer, "datasource"),
+        // Annotation and group layers store no provider; QGIS names theirs annotation.
+        providerKey:
+          textOf(layer, "provider") ||
+          (["annotation", "group"].includes(layer.attributes.type ?? "")
+            ? "annotation"
+            : ""),
+      },
+    ]),
+  );
+  const visit = (element: XmlElement) => {
+    for (const child of findChildren(element)) {
+      const layer = byId.get(child.attributes.id ?? "");
+      if (child.name === "layer-tree-layer" && layer)
+        Object.assign(child.attributes, layer);
+      visit(child);
+    }
+  };
+  visit(document.root);
+  if (layers)
+    layers.children = layers.children.filter(
+      (node) => node.type !== "element" || node.name !== "maplayer",
+    );
+  return document;
+}
+
+// Layers are rebuilt from the model: whitespace, CDATA and numeric spelling
+// normalize, and <maplayer> children follow the target QGIS writer order.
+function layerContent(xml: string, sortChildren: boolean) {
+  const value = (text: string) =>
+    text.trim() !== "" && Number.isFinite(Number(text))
+      ? String(Number(text))
+      : text;
+  const normalize = (node: XmlNode): XmlNode[] => {
+    if (node.type === "text" || node.type === "cdata")
+      return node.value ? [{ type: "text", value: value(node.value) }] : [];
+    if (node.type !== "element") return [node];
+    const attributes = Object.fromEntries(
+      Object.entries(node.attributes).map(([key, text]) => [key, value(text)]),
+    );
+    const children = node.children.flatMap(normalize);
+    const merged = children.some((child) => child.type === "element")
+      ? children.filter((child) => child.type !== "text" || child.value.trim())
+      : children;
+    return [{ ...node, attributes, children: merged }];
+  };
+  const container = findChild(readXml(xml).root, "projectlayers");
+  return (container ? findChildren(container, "maplayer") : []).map((layer) => {
+    const [normalized] = normalize(layer) as [XmlElement];
+    if (sortChildren)
+      normalized.children.sort((a, b) =>
+        JSON.stringify(a) < JSON.stringify(b) ? -1 : 1,
+      );
+    return normalized;
+  });
 }
 
 test("deserializes a domain model instead of an arbitrary XML root", () => {
@@ -196,10 +269,7 @@ test("title edits retain unknown XML across output versions", () => {
         findChild(root, "plugin:config"),
         findChild(readXml(xml).root, "plugin:config"),
       );
-      assert.deepEqual(
-        findChild(root, "projectlayers"),
-        findChild(readXml(xml).root, "projectlayers"),
-      );
+      assert.deepEqual(layerContent(output, false), layerContent(xml, false));
       assert.match(output, /<!--keep--><\?plugin keep\?>/u);
     }
     assert.equal(JSON.stringify(project), before);
@@ -550,29 +620,36 @@ for (const fixture of [
   "qgis4",
   "qgis4-translation",
 ]) {
-  test(`preserves semantic values, structure and order in an unmodified typed ${fixture} model, including after JSON storage`, () => {
+  test(`rebuilds an unmodified ${fixture} model and keeps its unmodeled data, including after JSON storage`, () => {
     const xml = readFileSync(
       new URL(`./fixtures/${fixture}.qgs`, import.meta.url),
       "utf8",
     );
     const project = parseQgs(xml);
     const version = readXml(xml).root.attributes.version!;
+    const output = serializeQgs(project, { version });
+    assert.deepEqual(withoutLayers(output), withoutLayers(xml));
+    // Older QGIS versions wrote <maplayer> children in another order.
+    const current = parseQgisVersion(version);
+    const sameOrder = current.major > 3 || current.minor >= 10;
     assert.deepEqual(
-      canonicalDocument(serializeQgs(project, { version })),
-      canonicalDocument(xml),
+      layerContent(output, !sameOrder),
+      layerContent(xml, !sameOrder),
     );
-    assert.deepEqual(
-      canonicalDocument(
-        serializeQgs(parseJson(serializeJson(project)), { version }),
-      ),
-      canonicalDocument(xml),
+    assert.equal(
+      serializeQgs(parseJson(serializeJson(project)), { version }),
+      output,
     );
+    assert.equal(serializeQgs(parseQgs(output), { version }), output);
     const before = JSON.stringify(project);
     project.title = "edited";
     const edited = serializeQgs(project, { version });
     assert.equal(parseQgs(edited).title, "edited");
-    // Extension data is not changed when the model is serialized.
-    assert.deepEqual(project.extensions, JSON.parse(before).extensions);
+    // Serializing does not change the model.
+    assert.equal(
+      JSON.stringify({ ...project, title: "x" }),
+      JSON.stringify({ ...JSON.parse(before), title: "x" }),
+    );
   });
 }
 

@@ -148,10 +148,24 @@ Data-defined properties are keyed by the QGIS property name, such as `size` or
 and a `type`: 1 for a static `val`, 2 for a `field`, or 3 for an `expression`.
 
 Property maps, data-defined properties, and other `<Option>` values use
-`QgsVariant`: strings, numbers, booleans, `null`, arrays, and plain objects. An
-unchanged kind of value keeps its stored QGIS type, such as `double` or `color`.
-Values QGIS cannot express as plain data, such as CRS variants, read as `null`
-and are kept as stored while they stay `null`. Category values keep their
+`QgsVariant`. A value whose Qt type is the one QGIS writes for it is plain: a
+string (`QString`), boolean (`bool`), integer (`int`, or `qlonglong` when
+large), non-integer (`double`), array (`List`), object (`Map`), or `null`
+(`invalid`). QGIS writes an empty map without a type, and qgserde reads such an
+`<Option/>` as `{}`. Any other type is tagged, so the model keeps it:
+
+```ts
+{ "@type": "double", value: 1 }        // an integral double
+{ "@type": "StringList", value: ["a"] }
+{ "@type": "color", value: "255,0,0,255" }
+{ "@type": "QgsProperty", value: { active: true, type: 3 } }
+{ "@type": "QgsCoordinateReferenceSystem", xml: [/* <spatialrefsys> */] }
+```
+
+A tagged value must fit its type; replace the whole tag to change the type. A
+type qgserde does not decode keeps its child elements in `xml`. A map whose
+only keys are `@type`, `value`, or `xml` is tagged as `"Map"`. Map entries are
+written sorted by key, as QGIS does. Category values keep their
 stored type when QGIS would read the same value back; integers beyond the safe
 JavaScript range stay strings.
 
@@ -243,12 +257,12 @@ cannot store nested values, and as an `<Option>` map afterwards. QGIS writes
 
 Adding a layer to `project.layers` adds a tree reference and an entry in any
 existing drawing-order list when serialized. Removing a layer removes its tree
-and order references. Editing its name, provider, or source updates matching
-tree references. Unedited provider-generated values, such as UIDs, are retained.
+and order references. A tree reference holds only the layer ID; its name,
+source, and provider are written from the layer, so layer edits reach every
+reference. A reference to a layer outside the project keeps its stored values.
 
-Changing a layer ID updates tree and drawing-order references. It does not
-update references inside relations, joins, layouts, or plugin settings. Keep
-layer IDs stable in projects that use those features.
+Layer IDs are read-only: tree, drawing-order, relation, join, layout, and
+plugin references use them. A layer with another ID is another layer.
 
 Layer IDs must have at least 11 UTF-16 code units. QGIS replaces
 shorter IDs on load, leaving tree and drawing-order references unresolved, even
@@ -354,10 +368,9 @@ if (buffer) {
 ```
 
 Attributes a group does not type, and values that do not parse as their kind,
-such as `nan`, are kept as text in `other`; they are written back unchanged.
-A boolean keeps its stored `1`/`0` or `true`/`false` spelling, and an unchanged
-number keeps its stored spelling, such as `1.0`. A key that is not part of the
-group must go in `other`; anything else fails with `INVALID_EDIT`.
+such as `nan`, are not part of the group; they stay unmodeled XML and are
+written back unchanged. Setting the typed key replaces such a value. A key that
+is not part of the group fails with `INVALID_EDIT`.
 Namespace declarations (`xmlns:*`) are never part of a group.
 
 The interfaces and their attribute kinds are generated from the QGIS 3.44 and
@@ -365,11 +378,21 @@ The interfaces and their attribute kinds are generated from the QGIS 3.44 and
 
 ## Preserve data and order
 
-The model separates known properties from unknown values, attributes,
-namespaces, and element positions in internal `extensions`. Positions of known
-items refer back to model properties. Small amounts of identity information
-support reference updates. The original XML string and a complete XML tree are
-not kept in the model.
+XML a layer's model does not cover is kept in its `unmodeled` property as plain
+data: attributes and child nodes keyed by the path of the modeled element that
+holds them, each child with the modeled sibling it follows. Edit, copy, or
+delete it like any other property; copying a layer copies it. Data under an
+element the model no longer writes, such as a removed CRS, is dropped with it.
+Modeled values take precedence over unmodeled attributes of the same name.
+Unmodeled data of a field's records, such as an unknown attribute on its
+`<alias>`, is kept in the field's own `unmodeled` (`"aliases/alias"`), so it
+follows the field through renames and reordering.
+`<maplayer>` children are written in the order the target QGIS version writes
+them, and unmodeled children follow their recorded sibling.
+
+Other objects still keep unknown data and element positions in internal
+`extensions` while they move to the same scheme. The original XML string and a
+complete XML tree are not kept in the model.
 
 Known settings always pass through the intermediate model and are reconstructed
 on every write, even when unchanged. Parsed, JSON-restored, and new models use
@@ -377,9 +400,9 @@ the same validation and normalization rules. Unknown elements and their
 parent–child relationships and order are preserved. Comments, CDATA, and processing instructions
 are retained. Byte-for-byte reproduction is not guaranteed: numeric and boolean
 spelling, quotes, empty-element syntax, entity notation, and XML line-ending
-normalization may differ, though unchanged typed values keep their spelling.
-Unknown strings, including leading zeros, remain
-strings. Existing whitespace is kept; output is not automatically formatted.
+normalization may differ; modeled values are written as QGIS writes them.
+Unknown strings, including leading zeros, remain strings. Layers are indented
+with two spaces per level, as QGIS does; elsewhere existing whitespace is kept.
 
 Legacy aliases and defaults without field configuration become typed fields.
 Duplicate alias/default records for the same field are rejected with
@@ -401,7 +424,7 @@ const xml = serializeQgs(restored, { version: "4.2" });
 The output has the form `{"qgserde":"<version>","project":{...}}`. `parseJson`
 accepts JSON written by a compatible qgserde version: the same major version,
 or the same minor version before 1.0. Other versions cause `INVALID_VERSION`,
-because the `extensions` format may change between them. Malformed JSON or a
+because the `unmodeled` and `extensions` formats may change between them. Malformed JSON or a
 missing envelope causes `INVALID_JSON`. The model itself is validated when it
 is written with `serializeQgs`.
 

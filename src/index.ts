@@ -359,6 +359,7 @@ export type {
   QgsTiledSceneRenderer,
   QgsTileMatrix,
   QgsTileMatrixSet,
+  QgsTypedVariant,
   QgsUnknownLabeling,
   QgsUnknownLayer,
   QgsUnknownVectorRenderer,
@@ -374,5 +375,16 @@ export type {
   QgsVectorTileRenderer,
   QgsVectorTileStyle,
   SerializeOptions,
+  XmlCdata,
+  XmlComment,
+  XmlElement,
+  XmlNode,
+  XmlProcessingInstruction,
+  XmlText,
 } from "./types.ts";
+export type {
+  QgsUnmodeled,
+  QgsUnmodeledChild,
+  QgsUnmodeledEntry,
+} from "./unmodeled.ts";
 export { parseQgisVersion } from "./version.ts";

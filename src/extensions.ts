@@ -1,6 +1,6 @@
 import { MAX_CRS_DEPTH, readCrs, readExtent, text } from "./codec.ts";
 import { QgsError } from "./errors.ts";
-import { layerSpec } from "./layer-codec.ts";
+import { layerSpec, writeLayer } from "./layer-codec.ts";
 import {
   projectMetadataSpec,
   projectSpec,
@@ -11,6 +11,7 @@ import { crsStrings, fieldRecords, metadataTags } from "./schema.ts";
 import { captureSpec, restoreSpec } from "./spec.ts";
 import { captureRenderer, restoreRenderer } from "./symbology.ts";
 import type {
+  QgisVersion,
   QgsField,
   QgsLayerTreeNode,
   QgsMapLayer,
@@ -20,7 +21,14 @@ import type {
   XmlElement,
   XmlNode,
 } from "./types.ts";
+import {
+  plainNode,
+  type QgsUnmodeled,
+  type QgsUnmodeledChild,
+  unmodeledPath,
+} from "./unmodeled.ts";
 import { bindVariant } from "./variant.ts";
+import { parseQgisVersion } from "./version.ts";
 import { sameExtent } from "./view-codec.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
 
@@ -374,7 +382,7 @@ export class ExtensionCodec {
     for (const field of fields) this.restore(field, version, "field");
   }
 
-  private layer(layer: QgsMapLayer): void {
+  private layer(layer: QgsMapLayer, target: QgisVersion): void {
     const element = this.source(layer);
     if (!element) return;
     for (const [tag, field] of Object.entries({
@@ -411,12 +419,21 @@ export class ExtensionCodec {
       if (layer.renderer) captureRenderer(layer.renderer, this);
     }
     captureSpec(layerSpec(layer.type), layer as never, element, this, []);
-    this.capture(layer, element, {
-      id: layer.id,
-      name: layer.name,
-      source: layer.source,
-      provider: layer.provider,
-    });
+    const layout = this.content(element) as Layout;
+    // What the model writes is modeled even without a binding, such as an empty container.
+    this.sources.delete(layer);
+    let written: XmlElement | undefined;
+    try {
+      written = writeLayer(layer, this, target);
+    } catch {
+      written = undefined;
+    } finally {
+      this.sources.set(layer, element);
+    }
+    const unmodeled = toUnmodeled(layout, written);
+    if (layer.type === "vector")
+      moveFieldRecords(unmodeled, element, layer.fields);
+    if (Object.keys(unmodeled).length) Object.assign(layer, { unmodeled });
     this.slots.set(element, {
       kind: "slot",
       name: "maplayer",
@@ -446,12 +463,6 @@ export class ExtensionCodec {
       this.attribute(element, "name", { property: ["name"] });
     } else {
       this.attribute(element, "id", { property: ["layerId"] });
-      for (const [attribute, property] of [
-        ["name", "name"],
-        ["source", "source"],
-        ["providerKey", "provider"],
-      ] as const)
-        this.attribute(element, attribute, { property: [property] });
     }
     captureSpec(treeNodeSpec(node.type), node as never, element, this, []);
     this.capture(node, element);
@@ -459,7 +470,8 @@ export class ExtensionCodec {
   }
 
   captureProject(project: QgsProject, document: XmlDocument): void {
-    for (const layer of project.layers) this.layer(layer);
+    const target = parseQgisVersion(document.root.attributes.version ?? "");
+    for (const layer of project.layers) this.layer(layer, target);
     if (project.layerTree) this.tree(project.layerTree);
     const root = document.root;
     this.attribute(root, "version", { property: ["$version"] });
@@ -683,7 +695,6 @@ export class ExtensionCodec {
         if (layer.renderer) restoreRenderer(layer.renderer, this, version);
       }
       restoreSpec(layerSpec(layer.type), layer as never, this, version, 0);
-      this.restore(layer, version, "maplayer");
     }
     const active = new Set<QgsLayerTreeNode>();
     const restoreTree = (group: QgsLayerTreeNode, depth = 1): void => {
@@ -740,5 +751,156 @@ export class ExtensionCodec {
       root,
       after: misc(extensions?.after, false) as XmlDocument["after"],
     };
+  }
+}
+
+function bound(layout: Layout): boolean {
+  return (
+    layout.value !== undefined ||
+    layout.guard !== undefined ||
+    Object.values(layout.attributes).some(
+      (value) => typeof value !== "string",
+    ) ||
+    layout.content.some(
+      (child) =>
+        child.kind === "slot" ||
+        (child.kind === "value" && typeof child.value !== "string") ||
+        (child.kind === "element" && bound(child)),
+    )
+  );
+}
+
+function plain(layout: Layout): XmlElement {
+  return createElement(
+    layout.name,
+    layout.attributes as Record<string, string>,
+    layout.content.flatMap((child): XmlNode[] => {
+      switch (child.kind) {
+        case "element":
+          return [plain(child)];
+        case "value":
+          return [
+            {
+              type: child.cdata ? "cdata" : "text",
+              value: child.value as string,
+            },
+          ];
+        case "comment":
+          return [{ type: "comment", value: child.value }];
+        case "instruction":
+          return [
+            { type: "instruction", target: child.target, body: child.body },
+          ];
+        default:
+          return [];
+      }
+    }),
+  );
+}
+
+/**
+ * Split a captured layout into what the model writes and what it does not.
+ * An element is modeled when a binding or nested owner refers into it, or when
+ * the model writes the same element (the k-th sibling of that name).
+ */
+function toUnmodeled(
+  layout: Layout,
+  written: XmlElement | undefined,
+): QgsUnmodeled {
+  const result: QgsUnmodeled = {};
+  const visit = (
+    element: Layout,
+    counterpart: XmlElement | undefined,
+    path: string,
+  ): void => {
+    const attributes: Record<string, string> = {};
+    const children: QgsUnmodeledChild[] = [];
+    for (const [name, value] of Object.entries(element.attributes))
+      if (
+        typeof value === "string" &&
+        counterpart?.attributes[name] === undefined
+      )
+        attributes[name] = value;
+    const hasElements = element.content.some(
+      (child) => child.kind === "element" || child.kind === "slot",
+    );
+    const writtenText = counterpart?.children.some(
+      (child) => child.type === "text" || child.type === "cdata",
+    );
+    const counts = new Map<string, number>();
+    let after: string | undefined;
+    const push = (node: XmlNode) =>
+      children.push({ ...(after === undefined ? {} : { after }), node });
+    for (const child of element.content) {
+      switch (child.kind) {
+        case "slot":
+          counts.set(child.name, (counts.get(child.name) ?? 0) + 1);
+          after = child.name;
+          break;
+        case "element": {
+          const index = counts.get(child.name) ?? 0;
+          counts.set(child.name, index + 1);
+          const match =
+            counterpart && findChildren(counterpart, child.name)[index];
+          if (match || bound(child)) {
+            visit(child, match, unmodeledPath(path, child.name, index));
+            after = child.name;
+          } else push(plainNode(plain(child)));
+          break;
+        }
+        case "value":
+          if (typeof child.value !== "string" || writtenText) break;
+          if (hasElements && !child.cdata && !child.value.trim()) break;
+          push({ type: child.cdata ? "cdata" : "text", value: child.value });
+          break;
+        case "comment":
+          push({ type: "comment", value: child.value });
+          break;
+        case "instruction":
+          push({ type: "instruction", target: child.target, body: child.body });
+          break;
+      }
+    }
+    if (Object.keys(attributes).length || children.length)
+      result[path] = {
+        ...(Object.keys(attributes).length ? { attributes } : {}),
+        ...(children.length ? { children } : {}),
+      };
+  };
+  visit(layout, written, "");
+  // Parents first, so the data reads top-down.
+  return Object.fromEntries(
+    Object.entries(result).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+  );
+}
+
+/**
+ * Move unmodeled data of per-field records (`aliases/alias[2]`) to the field
+ * the record belongs to (`aliases/alias`), so it follows renames and reordering.
+ */
+function moveFieldRecords(
+  unmodeled: QgsUnmodeled,
+  element: XmlElement,
+  fields: QgsField[],
+): void {
+  for (const table of fieldRecords) {
+    const container = findChild(element, table.container);
+    if (!container) continue;
+    const records = findChildren(container, table.tag);
+    const prefix = `${table.container}/${table.tag}`;
+    for (const [path, entry] of Object.entries(unmodeled)) {
+      const match = /^(?:\[(\d+)\])?(\/.*)?$/u.exec(
+        path.startsWith(prefix) ? path.slice(prefix.length) : "-",
+      );
+      if (!match) continue;
+      const name = records[Number(match[1] ?? 0)]?.attributes[table.key];
+      const field = fields.find((item) => item.name === name);
+      if (!field) continue;
+      field.unmodeled = {
+        ...field.unmodeled,
+        [prefix + (match[2] ?? "")]: entry,
+      };
+      delete unmodeled[path];
+    }
   }
 }
