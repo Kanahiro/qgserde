@@ -44,8 +44,8 @@ import { createElement, findChild, findChildren, getText } from "./xml.ts";
 /** "boolean" is stored as 1/0 and "flag" as true/false. */
 export type Scalar = "string" | "number" | "boolean" | "flag";
 
-/** Typed attributes of an element: model field, XML attribute, and kind. */
-export type AttributeTable = readonly (readonly [string, string, Scalar])[];
+/** Kinds of an element's typed attributes, by attribute name. */
+export type AttributeTable = Readonly<Record<string, Scalar>>;
 
 /** Map field holding attributes a table does not type. */
 export const OTHER = "other";
@@ -94,42 +94,6 @@ function spelledAsFlag(
   return undefined;
 }
 
-/** Entries for a typed attribute group: one per table row, plus the `other` map. */
-export function typedEntries(
-  table: AttributeTable,
-  exclude: readonly string[] = [],
-): Entry[] {
-  return [
-    ...table
-      .filter(([, attribute]) => !exclude.includes(attribute))
-      .map(
-        ([field, attribute, type]): Entry => ({
-          kind: "attribute",
-          field,
-          attribute,
-          type,
-          fallback: OTHER,
-        }),
-      ),
-    { kind: "attributes", field: OTHER, exclude },
-  ];
-}
-
-/** A typed attribute group stored on the element at `at` (or the element itself). */
-export function typedAttributes(
-  field: string,
-  at: readonly string[],
-  table: AttributeTable,
-  exclude: readonly string[] = [],
-): Entry {
-  return {
-    kind: "object",
-    field,
-    at,
-    spec: { tag: at.at(-1) ?? "", entries: typedEntries(table, exclude) },
-  };
-}
-
 /** Element path relative to the spec's element; empty means the element itself. */
 type At = readonly string[];
 
@@ -141,14 +105,16 @@ export type Entry =
       attribute: string;
       type: Scalar;
       at?: At;
-      /**
-       * Map field that receives the raw value when it does not parse as `type`,
-       * so a value QGIS reads differently is kept rather than rejected.
-       */
-      fallback?: string;
     }
   /** Every attribute not claimed by an "attribute" entry at the same path, as strings. */
-  | { kind: "attributes"; field: string; at?: At; exclude?: readonly string[] }
+  | {
+      kind: "attributes";
+      field: string;
+      at?: At;
+      exclude?: readonly string[];
+      /** Typed attributes; the rest go to the map's `other` field. */
+      table?: AttributeTable;
+    }
   /** Text of every leaf child element of `at`, by element name. */
   | { kind: "texts"; field: string; at: At }
   /** Fixed attribute written by the codec, such as a reference name. */
@@ -235,81 +201,103 @@ function readRecord(entry: RecordEntry, item: XmlElement): Model {
     ? Object.fromEntries(
         leaves(item).map((child) => [child.name, getText(child)]),
       )
-    : entry.table
-      ? readTypedRecord(entry.table, item)
-      : { ...item.attributes };
+    : readTyped(Object.entries(item.attributes), entry.table);
   if (entry.text !== undefined && !findChildren(item).length)
     record[entry.text] = getText(item);
   return record;
 }
 
-function readTypedRecord(table: AttributeTable, item: XmlElement): Model {
-  const record: Model = {};
+/**
+ * Attributes as a model map. With a table, typed attributes that parse become
+ * values and every other attribute is kept as text in `other`.
+ */
+function readTyped(
+  attributes: [string, string][],
+  table: AttributeTable | undefined,
+): Model {
+  if (!table) return Object.fromEntries(attributes);
+  const map: Model = {};
   const other: Record<string, string> = {};
-  const known = new Set(table.map(([, attribute]) => attribute));
-  for (const [field, attribute, type] of table) {
-    const raw = item.attributes[attribute];
-    if (raw === undefined) continue;
-    const value = parseTyped(raw, type);
+  for (const [attribute, raw] of attributes) {
+    const type = table[attribute];
+    const value = type === undefined ? undefined : parseTyped(raw, type);
     if (value === undefined) other[attribute] = raw;
-    else record[field] = value;
+    else map[attribute] = value;
   }
-  for (const [attribute, raw] of Object.entries(item.attributes))
-    if (!known.has(attribute)) other[attribute] = raw;
-  if (Object.keys(other).length) record[OTHER] = other;
-  return record;
+  if (Object.keys(other).length) map[OTHER] = other;
+  return map;
 }
 
-function captureTypedRecord(
-  table: AttributeTable,
-  item: XmlElement,
+type Skip = { has(name: string): boolean };
+const none: Skip = { has: () => false };
+
+function captureTyped(
+  element: XmlElement,
+  table: AttributeTable | undefined,
   codec: ExtensionCodec,
   prefix: readonly string[],
+  skip = none,
 ): void {
-  const typed = new Map(table.map((row) => [row[1], row]));
-  for (const [attribute, raw] of Object.entries(item.attributes)) {
-    const row = typed.get(attribute);
-    if (row && parseTyped(raw, row[2]) !== undefined)
+  for (const [attribute, raw] of Object.entries(element.attributes)) {
+    if (skip.has(attribute)) continue;
+    const type = table?.[attribute];
+    if (!table) codec.bindAttribute(element, attribute, [...prefix, attribute]);
+    else if (type !== undefined && parseTyped(raw, type) !== undefined)
       codec.bindAttribute(
-        item,
+        element,
         attribute,
-        [...prefix, row[0]],
-        spelledAsFlag(row[2], raw),
+        [...prefix, attribute],
+        spelledAsFlag(type, raw),
       );
-    else codec.bindAttribute(item, attribute, [...prefix, OTHER, attribute]);
+    else codec.bindAttribute(element, attribute, [...prefix, OTHER, attribute]);
   }
 }
 
-function writeTypedRecord(
-  table: AttributeTable,
-  child: XmlElement,
-  record: Model,
+/** Write a model map's attributes in place, keeping the stored order. */
+function writeTyped(
+  element: XmlElement,
+  value: unknown,
+  table: AttributeTable | undefined,
   name: string,
+  skip = none,
 ): void {
-  const stored = child.attributes;
-  const attributes: Record<string, string> = {};
-  const other =
-    record[OTHER] === undefined
-      ? {}
-      : stringMap(record[OTHER], `${name}.${OTHER}`);
-  for (const [attribute, raw] of Object.entries(other))
-    attributes[attribute] = raw;
-  for (const [field, attribute, type] of table) {
-    const value = record[field];
-    if (value === undefined) continue;
-    attributes[attribute] = typedText(
-      value,
-      type,
-      `${name}.${field}`,
-      stored[attribute],
-    );
+  const wanted = table
+    ? typedMap(value, table, name, element)
+    : stringMap(value, name);
+  for (const attribute of Object.keys(element.attributes))
+    if (!skip.has(attribute) && !Object.hasOwn(wanted, attribute))
+      delete element.attributes[attribute];
+  for (const [attribute, text] of Object.entries(wanted))
+    if (!skip.has(attribute)) element.attributes[attribute] = text;
+}
+
+function typedMap(
+  value: unknown,
+  table: AttributeTable,
+  name: string,
+  element: XmlElement,
+): Record<string, string> {
+  if (!isMap(value))
+    throw new QgsError("INVALID_EDIT", `${name} must be an object`);
+  const { [OTHER]: other, ...typed } = value;
+  const wanted: Record<string, string> =
+    other === undefined ? {} : stringMap(other, `${name}.${OTHER}`);
+  for (const [attribute, item] of Object.entries(typed)) {
+    const type = table[attribute];
+    if (type === undefined)
+      throw new QgsError(
+        "INVALID_EDIT",
+        `${name}.${attribute} is not a typed attribute; put it in ${OTHER}`,
+      );
+    if (item !== undefined)
+      wanted[attribute] = typedText(
+        item,
+        type,
+        `${name}.${attribute}`,
+        element.attributes[attribute],
+      );
   }
-  // Keep the stored attribute order for attributes that remain.
-  const ordered: Record<string, string> = {};
-  for (const attribute of Object.keys(stored))
-    if (Object.hasOwn(attributes, attribute))
-      ordered[attribute] = attributes[attribute] as string;
-  child.attributes = { ...ordered, ...attributes };
+  return wanted;
 }
 
 function writeRecord(
@@ -318,26 +306,18 @@ function writeRecord(
   record: Model,
   name: string,
 ): void {
-  if (entry.table) {
-    const { [entry.text ?? "\u0000"]: own, ...rest } = record;
-    writeTypedRecord(entry.table, child, rest, name);
-    if (entry.text !== undefined) {
-      if (own !== undefined && typeof own !== "string")
-        throw new QgsError(
-          "INVALID_EDIT",
-          `${name}.${entry.text} must be a string`,
-        );
-      putElementText(child, own ?? "");
-    }
-    return;
-  }
-  const map = stringMap(record, name);
-  const { [entry.text ?? ""]: own, ...rest } = map;
+  const { [entry.text ?? "\u0000"]: own, ...rest } = record;
+  if (own !== undefined && typeof own !== "string")
+    throw new QgsError(
+      "INVALID_EDIT",
+      `${name}.${entry.text} must be a string`,
+    );
   if (entry.texts) {
+    const map = stringMap(rest, name);
     for (const leaf of leaves(child))
-      if (!Object.hasOwn(rest, leaf.name)) remove(child, leaf.name);
-    for (const [tag, value] of Object.entries(rest)) putText(child, tag, value);
-  } else child.attributes = { ...rest };
+      if (!Object.hasOwn(map, leaf.name)) remove(child, leaf.name);
+    for (const [tag, value] of Object.entries(map)) putText(child, tag, value);
+  } else writeTyped(child, rest, entry.table, name);
   if (entry.text !== undefined) putElementText(child, own ?? "");
 }
 
@@ -517,28 +497,20 @@ export function readSpec(
       case "attribute": {
         const raw = target.attributes[entry.attribute];
         if (raw === undefined) break;
-        const value =
-          entry.fallback === undefined
-            ? readScalar(raw, entry.type)
-            : parseTyped(raw, entry.type);
+        const value = readScalar(raw, entry.type);
         if (value !== undefined) setPath(model, fieldPath(entry.field), value);
-        else if (entry.fallback !== undefined)
-          setPath(model, [entry.fallback, entry.attribute], raw);
         break;
       }
       case "attributes": {
         const skip = claimed(spec, entry);
-        const map = Object.fromEntries(
+        const map = readTyped(
           Object.entries(target.attributes).filter(([name]) => !skip.has(name)),
+          entry.table,
         );
-        // Typed attributes that did not parse are already in this map.
-        const merged = isMap(model[entry.field])
-          ? { ...(model[entry.field] as Model), ...map }
-          : map;
         // A child element's presence is meaningful; an empty map of the
         // element's own remaining attributes is not.
-        if (entry.at?.length || Object.keys(merged).length)
-          model[entry.field] = merged;
+        if (entry.at?.length || Object.keys(map).length)
+          model[entry.field] = map;
         break;
       }
       case "text": {
@@ -653,32 +625,18 @@ export function captureSpec(
         for (const child of leaves(target))
           codec.bindText(target, child.name, [...at, child.name]);
         break;
-      case "attribute": {
-        const raw =
-          entry.fallback !== undefined && value === undefined
-            ? getPath(model, [entry.fallback, entry.attribute])
-            : undefined;
-        if (typeof raw === "string")
-          codec.bindAttribute(target, entry.attribute, [
-            ...path,
-            entry.fallback as string,
-            entry.attribute,
-          ]);
-        else
-          codec.bindAttribute(
-            target,
-            entry.attribute,
-            at,
-            spelledAsFlag(entry.type, target.attributes[entry.attribute]),
-          );
+      case "attribute":
+        codec.bindAttribute(
+          target,
+          entry.attribute,
+          at,
+          spelledAsFlag(entry.type, target?.attributes[entry.attribute]),
+        );
         break;
-      }
-      case "attributes": {
-        const skip = claimed(spec, entry);
-        for (const name of Object.keys(target.attributes))
-          if (!skip.has(name)) codec.bindAttribute(target, name, [...at, name]);
+      case "attributes":
+        if (target)
+          captureTyped(target, entry.table, codec, at, claimed(spec, entry));
         break;
-      }
       case "text": {
         const parent = locate(element, entry.at.slice(0, -1));
         codec.bindText(parent, entry.at.at(-1) ?? "", at);
@@ -725,11 +683,7 @@ export function captureSpec(
             if (entry.texts)
               for (const child of leaves(item))
                 codec.bindText(item, child.name, [...prefix, child.name]);
-            else if (entry.table)
-              captureTypedRecord(entry.table, item, codec, prefix);
-            else
-              for (const name of Object.keys(item.attributes))
-                codec.bindAttribute(item, name, [...prefix, name]);
+            else captureTyped(item, entry.table, codec, prefix);
             if (entry.text !== undefined)
               codec.bindElementText(item, [...prefix, entry.text]);
           }
@@ -919,12 +873,7 @@ export function writeSpec(
       }
       case "attribute": {
         const host = existing ?? ensurePath(element, entry.at);
-        const raw =
-          entry.fallback !== undefined && value === undefined
-            ? getPath(model, [entry.fallback, entry.attribute])
-            : undefined;
-        if (typeof raw === "string") host.attributes[entry.attribute] = raw;
-        else if (value === undefined) delete host.attributes[entry.attribute];
+        if (value === undefined) delete host.attributes[entry.attribute];
         else
           putAttribute(
             host,
@@ -943,14 +892,13 @@ export function writeSpec(
           removePath(element, entry.at);
           break;
         }
-        const host = existing ?? ensurePath(element, entry.at);
-        const map = value === undefined ? {} : stringMap(value, name);
-        const skip = claimed(spec, entry);
-        for (const attribute of Object.keys(host.attributes))
-          if (!skip.has(attribute) && !Object.hasOwn(map, attribute))
-            delete host.attributes[attribute];
-        for (const [attribute, item] of Object.entries(map))
-          if (!skip.has(attribute)) host.attributes[attribute] = item;
+        writeTyped(
+          existing ?? ensurePath(element, entry.at),
+          value ?? {},
+          entry.table,
+          name,
+          claimed(spec, entry),
+        );
         break;
       }
       case "text": {

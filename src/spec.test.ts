@@ -6,7 +6,6 @@ import {
   readOwned,
   restoreOwned,
   type Spec,
-  typedEntries,
   writeOwned,
 } from "./spec.ts";
 import type { XmlElement } from "./types.ts";
@@ -16,21 +15,22 @@ import { readXml, writeXml } from "./xml.ts";
 const spec: Spec = {
   tag: "item",
   entries: [
-    ...typedEntries([
-      ["size", "size", "number"],
-      ["enabled", "enabled", "boolean"],
-      ["visible", "visible", "flag"],
-      ["name", "name", "string"],
-    ]),
+    {
+      kind: "attributes",
+      field: "attributes",
+      table: {
+        size: "number",
+        enabled: "boolean",
+        visible: "flag",
+        name: "string",
+      },
+    },
     {
       kind: "records",
       field: "rows",
       at: [],
       item: "row",
-      table: [
-        ["width", "w", "number"],
-        ["on", "on", "boolean"],
-      ],
+      table: { w: "number", on: "boolean" },
     },
   ],
 };
@@ -64,15 +64,14 @@ test("typed attributes parse, keep unparsable values in other, and round-trip", 
   assert.deepEqual(
     { ...model, extensions: undefined },
     {
-      size: 2.5,
-      enabled: true,
-      visible: true,
-      name: "a",
-      other: { size2: "x", extra: "y" },
-      rows: [
-        { width: 3, on: false, other: { k: "v" } },
-        { other: { w: "auto" } },
-      ],
+      attributes: {
+        size: 2.5,
+        enabled: true,
+        visible: true,
+        name: "a",
+        other: { size2: "x", extra: "y" },
+      },
+      rows: [{ w: 3, on: false, other: { k: "v" } }, { other: { w: "auto" } }],
       extensions: undefined,
     },
   );
@@ -83,10 +82,11 @@ test("edits keep the stored boolean spelling and typed values win over other", (
   const { xml } = roundTrip(
     `<item size="0x1" enabled="true" visible="1"><row w="3" on="1"/></item>`,
     (model) => {
-      model.size = 4;
-      delete (model.other as Record<string, string>).size;
-      model.enabled = false;
-      model.visible = false;
+      const attributes = model.attributes as Record<string, unknown>;
+      attributes.size = 4;
+      attributes.other = undefined;
+      attributes.enabled = false;
+      attributes.visible = false;
       const [row] = model.rows as Record<string, unknown>[];
       if (row) row.on = false;
     },
