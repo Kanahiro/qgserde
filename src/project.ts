@@ -245,17 +245,11 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
     oldContainer ? findChildren(oldContainer, "maplayer").map(readLayerId) : [],
   );
   const ids = new Set<string>();
-  const renamed = new Map<string, string>();
   for (const layer of project.layers) {
     if (ids.has(layer.id))
       throw new QgsError("INVALID_EDIT", `Duplicate layer ID: ${layer.id}`);
     ids.add(layer.id);
-    const source = codec.source(layer);
-    const previousId = source && readLayerId(source);
-    if (previousId && previousId !== layer.id)
-      renamed.set(previousId, layer.id);
   }
-  const resolve = (id: string): string => renamed.get(id) ?? id;
   if (oldContainer || project.layers.length)
     replaceChildren(
       oldContainer ?? ensure(root, "projectlayers"),
@@ -270,10 +264,7 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
         ),
       ),
     );
-  const addedLayers = project.layers.some((layer) => {
-    const source = codec.source(layer);
-    return !oldIds.has(source ? readLayerId(source) : layer.id);
-  });
+  const addedLayers = project.layers.some((layer) => !oldIds.has(layer.id));
   const tree = project.layerTree ?? (addedLayers ? emptyTree() : undefined);
   if (tree)
     replaceChildren(
@@ -284,7 +275,6 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
           tree,
           project.layers,
           project.layerTree ? oldIds : new Set(),
-          resolve,
           codec,
           target,
         ),
@@ -292,15 +282,12 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
     );
   else remove(root, "layer-tree-group");
   if (project.layerOrder) {
-    const orderIds = project.layerOrder
-      .map(resolve)
-      .filter((id) => ids.has(id) || !oldIds.has(id));
-    for (const layer of project.layers) {
-      const source = codec.source(layer);
-      const oldId = source && readLayerId(source);
-      if (!oldIds.has(oldId ?? layer.id) && !orderIds.includes(layer.id))
+    const orderIds = project.layerOrder.filter(
+      (id) => ids.has(id) || !oldIds.has(id),
+    );
+    for (const layer of project.layers)
+      if (!oldIds.has(layer.id) && !orderIds.includes(layer.id))
         orderIds.push(layer.id);
-    }
     const oldOrder = findChild(root, "layerorder");
     const available = oldOrder ? findChildren(oldOrder, "layer") : [];
     const used = new Set<XmlElement>();
@@ -309,7 +296,7 @@ function encodeProject(project: QgsProject, version: string): XmlDocument {
       ["layer"],
       orderIds.map((id) => {
         const source = available.find(
-          (item) => !used.has(item) && resolve(item.attributes.id ?? "") === id,
+          (item) => !used.has(item) && item.attributes.id === id,
         );
         if (source) used.add(source);
         const element = structuredClone(source ?? createElement("layer"));

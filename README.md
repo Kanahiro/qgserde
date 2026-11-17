@@ -114,8 +114,8 @@ The target QGIS installation must support those features.
   outside the library's scope.
 - File paths and data source URIs are kept as supplied. qgserde does not check
   whether a source exists or rewrite paths for a new project location.
-- Layer ID edits do not update tree references, drawing order, relations,
-  joins, layouts, or plugin settings; keep IDs stable.
+- Layer IDs are read-only: tree, drawing-order, relation, join, layout, and
+  plugin references use them. A layer with another ID is another layer.
 - Layer IDs must contain at least 11 UTF-16 code units. QGIS
   replaces shorter IDs on load, breaking tree and drawing-order references.
   Serialization rejects shorter IDs with `INVALID_EDIT`, including unchanged

@@ -42,10 +42,8 @@ test("keeps unmodeled layer XML as plain data next to its modeled sibling", () =
 
 test("unmodeled data follows copies and goes with removed elements", () => {
   const project = parseQgs(xml);
-  const copy = structuredClone(project.layers[0]!);
-  copy.id = "raster_layer_002";
-  delete copy.crs;
-  project.layers.push(copy);
+  const { crs: _, ...copy } = structuredClone(project.layers[0]!);
+  project.layers.push({ ...copy, id: "raster_layer_002" });
   const output = serializeQgs(project, { version: "4.2" });
   const [first, second] = findChildren(
     findChild(readXml(output).root, "projectlayers")!,

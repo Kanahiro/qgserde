@@ -247,9 +247,8 @@ and order references. Tree references keep their own name, provider, and
 source, which QGIS can store in a provider-generated form such as a UID;
 editing the layer does not change them.
 
-Changing a layer ID does not update tree or drawing-order references, nor
-references inside relations, joins, layouts, or plugin settings. Keep
-layer IDs stable in projects that use those features.
+Layer IDs are read-only: tree, drawing-order, relation, join, layout, and
+plugin references use them. A layer with another ID is another layer.
 
 Layer IDs must have at least 11 UTF-16 code units. QGIS replaces
 shorter IDs on load, leaving tree and drawing-order references unresolved, even

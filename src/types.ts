@@ -1229,8 +1229,13 @@ export type QgsLayerTreeNode =
 
 /** Settings shared by all layer types. Edits do not modify the data source itself. */
 export interface QgsMapLayerBase {
-  /** Unique ID with at least 11 UTF-16 code units. Shorter IDs are rejected on serialization, including when read from XML. */
-  id: string;
+  /**
+   * Unique ID with at least 11 UTF-16 code units, fixed for the layer's life:
+   * tree, drawing-order, and other references use it. A layer with another ID
+   * is another layer. Shorter IDs are rejected on serialization, including
+   * when read from XML.
+   */
+  readonly id: string;
   /** Layer name. Tree references keep their own copy. */
   name: string;
   /** Provider connection string or URI. Source availability is not checked and paths are not rewritten. */

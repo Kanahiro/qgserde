@@ -74,13 +74,12 @@ test("retains namespaces, unknown strings, nested and mixed content, and sibling
   assert.match(serializeQgs(project, { version: "4.2" }), /<\?plugin kept\?>/u);
 });
 
-test("keeps unknown layer and field payloads attached to their identities through rename and reorder", () => {
+test("keeps unknown layer and field payloads attached to their identities through field rename and reorder", () => {
   const xml =
     '<qgis version="4.2.0"><projectlayers><maplayer type="vector" plugin="first"><id>first_layer_001</id><fieldConfiguration><field name="one"><plugin-field/></field><field name="two"/></fieldConfiguration><aliases><alias field="two" name="Two" plugin="two"/><alias field="one" name="One" plugin="one"/></aliases></maplayer><between value="keep"/><maplayer type="vector" plugin="second"><id>second_layer_001</id></maplayer></projectlayers></qgis>';
   const project = JSON.parse(JSON.stringify(parseQgs(xml)));
   project.layers.reverse();
   const first = project.layers[1];
-  first.id = "renamed_layer_001";
   first.fields.reverse();
   first.fields[1].name = "renamed-field";
   const root = readXml(serializeQgs(project, { version: "4.2" })).root;
@@ -192,11 +191,7 @@ test("normalizes layer types and rejects cyclic extension placement data", () =>
   assert.throws(() => serializeQgs(project, { version: "4.2" }), /Cyclic/u);
 });
 
-// ponytail: layer ID edits no longer reach tree and order references (no origin);
-// a renameLayer helper replaces the implicit sync.
-test("retains repeated references in occurrence order and completes missing alias values", {
-  todo: "renameLayer helper",
-}, () => {
+test("retains repeated references in occurrence order and completes missing alias values", () => {
   const xml =
     '<qgis version="4.2.0"><layer-tree-group><layer-tree-layer id="vector_layer_001"/><custom-order enabled="1"><item plugin="first">vector_layer_001</item><gap/><item plugin="second">vector_layer_001</item><item plugin="external">external</item></custom-order></layer-tree-group><projectlayers><maplayer type="vector"><id>vector_layer_001</id><fieldConfiguration><field name="a"/><field name="b"/></fieldConfiguration><aliases><alias field="a" name="A" plugin="first"/><gap/><alias field="a" name="Other" plugin="second"/><alias field="b" plugin="incomplete"/></aliases><defaults><default field="a" expression="first" plugin="first"/><default field="a" expression="second" plugin="second"/></defaults></maplayer></projectlayers><layerorder><layer id="vector_layer_001" plugin="first"/><gap/><layer id="vector_layer_001" plugin="second"/><layer id="external" plugin="external"/></layerorder></qgis>';
   assert.throws(() => parseQgs(xml), /unique field/u);
@@ -206,7 +201,6 @@ test("retains repeated references in occurrence order and completes missing alia
   const project = parseQgs(distinct);
   const layer = project.layers[0]!;
   assert.equal(layer.type === "vector" && layer.fields[1]?.alias, "");
-  project.layers[0]!.id = "renamed_layer_001";
   const root = readXml(serializeQgs(project, { version: "4.2" })).root;
   assert.deepEqual(
     findChildren(findChild(root, "layerorder")!, "layer").map((node) => [
@@ -214,8 +208,8 @@ test("retains repeated references in occurrence order and completes missing alia
       node.attributes.plugin,
     ]),
     [
-      ["renamed_layer_001", "first"],
-      ["renamed_layer_001", "second"],
+      ["vector_layer_001", "first"],
+      ["vector_layer_001", "second"],
       ["external", "external"],
     ],
   );
@@ -229,8 +223,8 @@ test("retains repeated references in occurrence order and completes missing alia
       node.attributes.plugin,
     ]),
     [
-      ["renamed_layer_001", "first"],
-      ["renamed_layer_001", "second"],
+      ["vector_layer_001", "first"],
+      ["vector_layer_001", "second"],
       ["external", "external"],
     ],
   );

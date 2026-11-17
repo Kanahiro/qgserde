@@ -144,9 +144,8 @@ export async function writeQgisFixtures(
     readFileSync(new URL("../fixtures/wms-capabilities.xml", import.meta.url)),
   );
   const wms = parseQgs(
-    '<qgis version="3.44.0"><layer-tree-group><layer-tree-group name="公開 WMS"><layer-tree-layer id="states" name="OpenStreetMap" checked="Qt::Checked"/></layer-tree-group></layer-tree-group><projectlayers><maplayer type="raster"><id>states</id><layername>OpenStreetMap</layername><provider>wms</provider></maplayer></projectlayers></qgis>',
+    '<qgis version="3.44.0"><layer-tree-group><layer-tree-group name="公開 WMS"><layer-tree-layer id="states_wms_layer" name="OpenStreetMap" checked="Qt::Checked"/></layer-tree-group></layer-tree-group><projectlayers><maplayer type="raster"><id>states_wms_layer</id><layername>OpenStreetMap</layername><provider>wms</provider></maplayer></projectlayers></qgis>',
   );
-  wms.layers[0]!.id = "states_wms_layer";
   wms.layers[0]!.source =
     "crs=EPSG:3857&format=image/png&layers=OSM-WMS&styles=&version=1.1.1&url=file:wms-capabilities.xml";
   wms.layers[0]!.crs = { authId: "EPSG:3857" };
