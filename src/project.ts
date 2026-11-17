@@ -119,7 +119,7 @@ function readTitle(document: XmlDocument): string {
 /**
  * Read QGS XML into an editable model independent of the source QGIS version.
  *
- * @param xml - Decoded QGS XML as a Unicode string. Use {@link parseQgz} for `.qgz` archives.
+ * @param xml - Decoded QGS XML as a Unicode string. QGZ archives are not supported.
  * @returns A project with typed properties and internal unknown-data and order information.
  * The original XML is not retained as a backup.
  * @throws {@link QgsError} `INVALID_XML` for malformed XML, `INVALID_PROJECT` for

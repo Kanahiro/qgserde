@@ -1,13 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  createProject,
-  parseQgs,
-  parseQgz,
-  serializeQgs,
-  serializeQgz,
-} from "../../src/index.ts";
+import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
 import {
   createLayerTypesProject,
   editLayerTypesFixture,
@@ -128,29 +122,6 @@ export async function writeQgisFixtures(
   writeFileSync(
     join(directory, "layouts-roundtrip.qgs"),
     serializeQgs(JSON.parse(JSON.stringify(parseQgs(layouts))), { version }),
-  );
-
-  // Archives: an edited QGIS-written .qgz and a new one with a companion file.
-  const archive = await parseQgz(
-    new Uint8Array(
-      readFileSync(new URL("../fixtures/qgis3-archive.qgz", import.meta.url)),
-    ),
-  );
-  archive.project.title = "Archive (edited)";
-  writeFileSync(
-    join(directory, "archive.qgz"),
-    await serializeQgz(archive, { version }),
-  );
-  writeFileSync(
-    join(directory, "archive-new.qgz"),
-    await serializeQgz(
-      {
-        project: { ...project, title: "Archive (edited)" },
-        projectFile: "archive-new.qgs",
-        files: { "notes.txt": new TextEncoder().encode("kept") },
-      },
-      { version },
-    ),
   );
 
   writeFileSync(

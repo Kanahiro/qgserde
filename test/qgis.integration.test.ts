@@ -30,7 +30,7 @@ test("QGIS opens generated, edited and round-tripped projects including vector t
         timeout: 60_000,
       },
     );
-    assert.match(output, /QGIS verified 23 projects/u);
+    assert.match(output, /QGIS verified 21 projects/u);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

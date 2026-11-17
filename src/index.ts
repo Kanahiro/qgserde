@@ -2,8 +2,6 @@ export type { QgsErrorCode } from "./errors.ts";
 export { QgsError } from "./errors.ts";
 export { parseJson, serializeJson } from "./json.ts";
 export { createProject, parseQgs, serializeQgs } from "./project.ts";
-export type { QgzArchive } from "./qgz.ts";
-export { parseQgz, serializeQgz } from "./qgz.ts";
 export type {
   CreateProjectOptions,
   QgisVersion,

@@ -369,25 +369,6 @@ The internal `extensions` property holds the unknown data and order needed for
 reconstruction and has no public editing API. Serialization does not mutate the
 model, including when it fails.
 
-## Read and write QGZ archives
-
-`parseQgz` reads archive bytes and returns the project, the name of the `.qgs`
-file inside the archive, and the other files by name. `serializeQgz` writes them
-back; companion files are kept byte for byte. Both functions are asynchronous
-and use the platform's `CompressionStream`, available in Node.js and browsers.
-
-```ts
-import { parseQgz, serializeQgz } from "qgserde";
-
-const archive = await parseQgz(bytes);
-archive.project.title = "Edited";
-const output = await serializeQgz(archive, { version: "4.2" });
-```
-
-Archives are written with deflate compression and a fixed timestamp, so the
-same input produces the same bytes. Encrypted and ZIP64 archives are rejected
-with `INVALID_ARCHIVE`.
-
 ## Choose an output version
 
 Pass a QGIS 3 or 4 version to every `serializeQgs` call. `"3.40"` is normalized
@@ -428,13 +409,11 @@ try {
 | `INVALID_JSON`    | Malformed JSON or a missing qgserde JSON envelope.                                                    |
 | `INVALID_VERSION` | Invalid version syntax, a missing target, an unsupported target major version, or incompatible JSON.  |
 | `INVALID_EDIT`    | An edit that would lose data, duplicate IDs, cycles, non-finite numbers, or other invalid model data. |
-| `INVALID_ARCHIVE` | A malformed, encrypted, or ZIP64 `.qgz` archive, or invalid archive file names or data.               |
 
 ## Scope and runtime
 
-qgserde handles QGS XML strings and `.qgz` archives. Companion files in an
-archive, such as the QGD auxiliary storage database, are kept byte for byte but
-not interpreted. Geographic data is outside its scope. It does not check data source
+qgserde handles QGS XML strings. QGZ archives, QGD databases, attachments, and
+geographic data are outside its scope. It does not check data source
 availability or rewrite paths for another project location. It validates XML
 and known properties, rather than the full QGIS schema.
 

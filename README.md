@@ -31,8 +31,7 @@ for (const layer of project.layers) {
 const xml = serializeQgs(project, { version: "4.2" });
 ```
 
-QGS input and output are strings, and `.qgz` archives are bytes. Your
-application reads and writes the files.
+Input and output are strings. Your application reads and writes the files.
 
 To start a new project:
 
@@ -67,8 +66,6 @@ Use `parseQgs(xml)` to load an existing project, then edit its properties.
 | `serializeQgs(project, { version })` | Write a model for a QGIS 3 or 4 version.                              |
 | `serializeJson(project)`             | Store a model as JSON tagged with the qgserde version.                |
 | `parseJson(json)`                    | Restore a model stored by `serializeJson`.                            |
-| `parseQgz(bytes)`                    | Read a `.qgz` archive: the project and its companion files.           |
-| `serializeQgz(archive, { version })` | Write a `.qgz` archive with the project and companion files.          |
 | `parseQgisVersion(value)`            | Split a QGIS version into numeric parts and an optional release name. |
 | `QgsError`                           | Identify failures by their `code`.                                    |
 
@@ -111,9 +108,8 @@ The target QGIS installation must support those features.
 
 ## Scope
 
-- QGS XML, and QGZ archives through `parseQgz` and `serializeQgz`. Companion
-  files in an archive, such as QGD databases, are kept byte for byte but not
-  interpreted. Geographic data is outside the library's scope.
+- QGS XML only. QGZ archives, QGD databases, attachments, and geographic data are
+  outside the library's scope.
 - File paths and data source URIs are kept as supplied. qgserde does not check
   whether a source exists or rewrite paths for a new project location.
 - Layer ID edits update tree references and drawing order. References in
