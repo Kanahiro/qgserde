@@ -320,6 +320,11 @@ def check_settings(project):
     assert category.categoryColors[0].name() == "#ff0000"
     assert cities.diagramLayerSettings().priority() == 5
     assert cities.selectionProperties().selectionColor().name() == "#ff00ff"
+    stacked = layers["countries"].diagramRenderer()
+    if hasattr(stacked, "renderers"):  # QGIS 3.40+
+        assert stacked.rendererName() == "Stacked", stacked.rendererName()
+        names = [r.diagramSettings()[0].categoryLabels for r in stacked.renderers()]
+        assert names == [["first"], ["second"]], names
 
 
 def check_project_settings(project):

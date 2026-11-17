@@ -188,6 +188,7 @@ export type {
   QgsDiagramCategory,
   QgsDiagramRenderer,
   QgsDiagramSettings,
+  QgsDiagramSubRenderer,
   QgsEditForm,
   QgsElevationProperties,
   QgsFeatureRendererBase,

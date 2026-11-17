@@ -588,6 +588,26 @@ const diagramTags = [
 const diagramTables: Record<string, AttributeTable> = {
   LinearlyInterpolatedDiagramRenderer: linearDiagramRendererAttributes,
 };
+const diagramEntries = (tag: string): Entry[] => [
+  {
+    kind: "attributes",
+    field: "attributes",
+    table: diagramTables[tag] ?? diagramRendererAttributes,
+  },
+  { kind: "owners", field: "categories", spec: diagramCategory },
+  sizeLegendEntry,
+];
+/** Renderers of a stacked diagram, by element name. */
+const subDiagramSpecs: Record<string, Spec> = Object.fromEntries(
+  diagramTags.map((tag) => [tag, { tag, entries: diagramEntries(tag) }]),
+);
+for (const spec of Object.values(subDiagramSpecs))
+  (spec.entries as Entry[]).push({
+    kind: "nodes",
+    field: "subRenderers",
+    at: ["DiagramRenderers"],
+    specs: subDiagramSpecs,
+  });
 const diagramSpecs = new Map(
   diagramTags.map((tag) => [
     tag,
@@ -595,13 +615,13 @@ const diagramSpecs = new Map(
       tag,
       aliases: diagramTags,
       entries: [
+        ...diagramEntries(tag),
         {
-          kind: "attributes",
-          field: "attributes",
-          table: diagramTables[tag] ?? diagramRendererAttributes,
+          kind: "nodes",
+          field: "subRenderers",
+          at: ["DiagramRenderers"],
+          specs: subDiagramSpecs,
         },
-        { kind: "owners", field: "categories", spec: diagramCategory },
-        sizeLegendEntry,
       ],
     } satisfies Spec,
   ]),

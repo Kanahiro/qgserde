@@ -15,6 +15,35 @@ export function createSettingsProject(): QgsProject {
       source: "Polygon?crs=EPSG:4326&field=id:integer&field=cname:string",
       crs,
       fields: [],
+      diagram: {
+        renderer: "StackedDiagramRenderer",
+        attributes: { diagramType: "Stacked" },
+        categories: [
+          { attributes: { enabled: true, stackedDiagramMode: "Horizontal" } },
+        ],
+        subRenderers: [
+          {
+            kind: "SingleCategoryDiagramRenderer",
+            attributes: { diagramType: "Pie" },
+            categories: [
+              {
+                attributes: { enabled: true, width: 5, height: 5, opacity: 1 },
+                fields: [{ field: '"id"', color: "#00ff00", label: "first" }],
+              },
+            ],
+          },
+          {
+            kind: "SingleCategoryDiagramRenderer",
+            attributes: { diagramType: "Histogram" },
+            categories: [
+              {
+                attributes: { enabled: true, width: 5, height: 5, opacity: 1 },
+                fields: [{ field: '"id"', color: "#00ff00", label: "second" }],
+              },
+            ],
+          },
+        ],
+      },
     },
     {
       type: "vector",

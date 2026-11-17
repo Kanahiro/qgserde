@@ -19,7 +19,6 @@ import type {
   QgsDiagramAttributeAttributes,
   QgsDiagramCategoryAttributes,
   QgsDiagramLayerSettingsAttributes,
-  QgsDiagramRendererAttributes,
   QgsElevationAttributes,
   QgsElevationShadingAttributes,
   QgsExpressionFieldAttributes,
@@ -1150,11 +1149,29 @@ export interface QgsDiagramRenderer {
    */
   renderer: string;
   /** Settings such as `diagramType` (`Pie`, `Histogram`, `Text`) and interpolation bounds. */
-  attributes?:
-    | QgsDiagramRendererAttributes
-    | QgsLinearDiagramRendererAttributes;
+  attributes?: QgsLinearDiagramRendererAttributes;
   /** Categories. */
   categories?: QgsDiagramCategory[];
+  /** Legend of data-defined diagram sizes. */
+  dataDefinedSizeLegend?: QgsSizeLegend;
+  /** Renderers of a stacked diagram (`<DiagramRenderers>`), in drawing order. */
+  subRenderers?: QgsDiagramSubRenderer[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Renderer of a stacked diagram. */
+export interface QgsDiagramSubRenderer {
+  /** Renderer element, such as `SingleCategoryDiagramRenderer`. */
+  kind: string;
+  /** Settings such as `diagramType`. */
+  attributes?: QgsLinearDiagramRendererAttributes;
+  /** Categories. */
+  categories?: QgsDiagramCategory[];
+  /** Legend of data-defined diagram sizes. */
+  dataDefinedSizeLegend?: QgsSizeLegend;
+  /** Nested stacked renderers. */
+  subRenderers?: QgsDiagramSubRenderer[];
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
