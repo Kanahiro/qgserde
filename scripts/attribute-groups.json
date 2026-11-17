@@ -360,7 +360,7 @@
   "MeshVectorSettings": {
     "doc": "Mesh `<vector-settings>` attributes.",
     "keys": [
-      "^qgsmeshrenderersettings\\.cpp\\|vector-settings$",
+      "^(qgsmeshrenderersettings|qgsvectorfield[a-z]*)\\.cpp\\|vector-settings$",
       "^qgsmeshrenderersettings\\.cpp\\|@QgsMeshRendererSettings::writeXml:elemVector$"
     ]
   },
@@ -849,26 +849,26 @@
   },
   "MeshArrowSettings": {
     "doc": "`<vector-arrow-settings>` attributes.",
-    "keys": ["^qgsmeshrenderersettings\\.cpp\\|vector-arrow-settings$"]
+    "keys": ["^(qgsmeshrenderersettings|qgsvectorfield[a-z]*)\\.cpp\\|vector-arrow-settings$"]
   },
   "MeshShaftLength": {
     "doc": "Arrow `<shaft-length>` attributes.",
-    "keys": ["^qgsmeshrenderersettings\\.cpp\\|shaft-length$"],
+    "keys": ["^(qgsmeshrenderersettings|qgsvectorfield[a-z]*)\\.cpp\\|shaft-length$"],
     "kinds": {
       "method": "string"
     }
   },
   "MeshStreamlineSettings": {
     "doc": "`<vector-streamline-settings>` attributes.",
-    "keys": ["^qgsmeshrenderersettings\\.cpp\\|vector-streamline-settings$"]
+    "keys": ["^(qgsmeshrenderersettings|qgsvectorfield[a-z]*)\\.cpp\\|vector-streamline-settings$"]
   },
   "MeshTracesSettings": {
     "doc": "`<vector-traces-settings>` attributes.",
-    "keys": ["^qgsmeshrenderersettings\\.cpp\\|vector-traces-settings$"]
+    "keys": ["^(qgsmeshrenderersettings|qgsvectorfield[a-z]*)\\.cpp\\|vector-traces-settings$"]
   },
   "MeshWindBarbSettings": {
     "doc": "`<vector-windbarb-settings>` attributes.",
-    "keys": ["^qgsmeshrenderersettings\\.cpp\\|vector-windbarb-settings$"]
+    "keys": ["^(qgsmeshrenderersettings|qgsvectorfield[a-z]*)\\.cpp\\|vector-windbarb-settings$"]
   },
   "MeshLayersAveraging": {
     "doc": "`<multi-vertical-layers-settings>` attributes.",
