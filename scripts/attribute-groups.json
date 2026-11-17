@@ -1094,5 +1094,12 @@
   "Layout3DTemporal": {
     "doc": "Layout 3D map `<temporal-settings>`.",
     "keys": ["^qgslayoutitem3dmap\\.cpp\\|temporal-settings$"]
+  },
+  "ReportSection": {
+    "doc": "Report `<Section>` attributes of every section type.",
+    "keys": [
+      "^qgsabstractreportsection\\.cpp\\|Section$",
+      "^qgsreportsection\\w+\\.cpp\\|@QgsReportSection\\w+::writePropertiesToElement:element$"
+    ]
   }
 }

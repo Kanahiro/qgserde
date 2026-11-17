@@ -6132,3 +6132,48 @@ export const layout3DTemporalAttributes = {
   temporalRangeBegin: "string",
   temporalRangeEnd: "string",
 } as const satisfies AttributeTable;
+
+/** Report `<Section>` attributes of every section type. */
+export interface QgsReportSectionAttributes {
+  /** `ascending`, stored as 1 or 0. */
+  ascending?: boolean;
+  /** `bodyEnabled`, stored as 1 or 0. */
+  bodyEnabled?: boolean;
+  /** `coverageLayer`. */
+  coverageLayer?: string;
+  /** `coverageLayerName`. */
+  coverageLayerName?: string;
+  /** `coverageLayerProvider`. */
+  coverageLayerProvider?: string;
+  /** `coverageLayerSource`. */
+  coverageLayerSource?: string;
+  /** `field`. */
+  field?: string;
+  /** `footerEnabled`, stored as 1 or 0. */
+  footerEnabled?: boolean;
+  /** `footerVisibility`. */
+  footerVisibility?: number;
+  /** `headerEnabled`, stored as 1 or 0. */
+  headerEnabled?: boolean;
+  /** `headerVisibility`. */
+  headerVisibility?: number;
+  /** `type`. */
+  type?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const reportSectionAttributes = {
+  ascending: "boolean",
+  bodyEnabled: "boolean",
+  coverageLayer: "string",
+  coverageLayerName: "string",
+  coverageLayerProvider: "string",
+  coverageLayerSource: "string",
+  field: "string",
+  footerEnabled: "boolean",
+  footerVisibility: "number",
+  headerEnabled: "boolean",
+  headerVisibility: "number",
+  type: "string",
+} as const satisfies AttributeTable;

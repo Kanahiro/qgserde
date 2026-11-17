@@ -34,7 +34,7 @@ import {
   relationSpec,
 } from "./layer-settings.ts";
 import { annotationEntries } from "./layer-types.ts";
-import { layoutSpec } from "./layouts.ts";
+import { layoutSpec, reportSpec } from "./layouts.ts";
 import { projectProperties } from "./properties.ts";
 import { mapViews3DEntry } from "./scene3d.ts";
 import type { AttributeTable, Entry, Spec } from "./spec.ts";
@@ -124,6 +124,7 @@ export const projectSpec: Spec = {
     { kind: "custom", field: "properties", custom: projectProperties },
     mapViews3DEntry,
     { kind: "owners", field: "layouts", at: ["Layouts"], spec: layoutSpec },
+    { kind: "owners", field: "reports", at: ["Layouts"], spec: reportSpec },
     {
       kind: "nodes",
       field: "annotations",

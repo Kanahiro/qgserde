@@ -150,6 +150,7 @@ import type {
   QgsRelationAttributes,
   QgsRelationFieldRefAttributes,
   QgsRenderer3DAttributes,
+  QgsReportSectionAttributes,
   QgsRule3DAttributes,
   QgsScene3DCameraAttributes,
   QgsScene3DColorAttributes,
@@ -297,6 +298,8 @@ export interface QgsProject {
   properties?: QgsProjectProperties;
   /** Print layouts. */
   layouts?: QgsLayout[];
+  /** Reports, stored with the layouts. */
+  reports?: QgsReport[];
   /** Map canvas annotations (text, SVG, HTML, and form annotations). */
   annotations?: QgsCanvasAnnotation[];
   /** The project's main annotation layer, drawn above all layers. */
@@ -560,6 +563,32 @@ export interface QgsLegendTextOnSymbol {
   format?: QgsTextFormat;
   /** Text per legend item, by legend key. */
   content?: QgsLegendTextOnSymbolItemAttributes[];
+}
+
+/** Report: nested sections, each with optional header, footer, and body layouts. */
+export interface QgsReport {
+  /** Report name. */
+  name?: string;
+  /** Top-level section. */
+  section?: QgsReportSection;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Report section, such as a single layout or a field group. */
+export interface QgsReportSection {
+  /** Section `type` and its settings, such as a field group's `field` and `coverageLayer`. */
+  attributes?: QgsReportSectionAttributes;
+  /** Layout drawn before the section's content. */
+  header?: QgsLayout;
+  /** Layout drawn after the section's content. */
+  footer?: QgsLayout;
+  /** Layout drawn per feature of a field group, or once for a layout section. */
+  body?: QgsLayout;
+  /** Child sections. */
+  children?: QgsReportSection[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** 3D map view of a project. */

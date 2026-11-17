@@ -187,5 +187,33 @@ export function createLayoutsProject(): QgsProject {
       },
     ],
   });
+  const page = (n: number) => ({
+    type: "65638",
+    attributes: {
+      uuid: `{bbbbbbbb-0000-0000-0000-0000000000${n}}`,
+      position: "0,0,mm",
+      size: "210,297,mm",
+    },
+  });
+  project.reports = [
+    {
+      name: "Points report",
+      section: {
+        attributes: { type: "SectionReport", headerEnabled: true },
+        header: { name: "", pages: [page(10)] },
+        children: [
+          {
+            attributes: {
+              type: "SectionFieldGroup",
+              field: "name",
+              coverageLayer: points.id,
+              bodyEnabled: true,
+            },
+            body: { name: "", pages: [page(11)] },
+          },
+        ],
+      },
+    },
+  ];
   return project;
 }

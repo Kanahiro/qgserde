@@ -466,8 +466,15 @@ def check_layer_types(project):
 
 def check_layouts(project):
     manager = project.layoutManager()
-    names = sorted(layout.name() for layout in manager.layouts())
+    names = sorted(layout.name() for layout in manager.printLayouts())
     assert names == ["Edited layout", "New layout"], names
+    reports = [r for r in manager.layouts() if r.layoutType() == 1]  # Report
+    assert [r.name() for r in reports] == ["Points report"], reports
+    report = reports[0]
+    assert report.headerEnabled() and report.header().pageCollection().pageCount() == 1
+    group = report.childSection(0)
+    assert group.field() == "name" and group.layer().name() == "points"
+    assert group.body().pageCollection().pageCount() == 1
     edited = manager.layoutByName("Edited layout")
     assert edited.itemById("title").text() == "Edited title"
     map_item = edited.itemById("main map")

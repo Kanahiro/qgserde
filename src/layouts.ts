@@ -27,6 +27,7 @@ import {
   plotAttributes,
   plotAxisAttributes,
   profileCustomSourceAttributes,
+  reportSectionAttributes,
   tableColumnWidthAttributes,
   tableRowHeightAttributes,
 } from "./attributes.generated.ts";
@@ -443,6 +444,23 @@ export const layoutMultiFrameSpec: Spec = {
   ],
 };
 
+/** Report `<Section>`; its header, footer, and body are layouts. */
+const reportSection: Spec = { tag: "Section", entries: [] };
+const sectionLayout = (field: string, wrapper: string): Entry => ({
+  kind: "owner",
+  field,
+  at: [wrapper],
+  spec: layoutSpec,
+});
+/** `<Report>`: a report of nested sections. */
+export const reportSpec: Spec = {
+  tag: "Report",
+  entries: [
+    { kind: "attribute", field: "name", attribute: "name", type: "string" },
+    { kind: "owner", field: "section", spec: reportSection },
+  ],
+};
+
 /** `<Layout>`: a print layout. */
 export const layoutSpec: Spec = {
   tag: "Layout",
@@ -471,3 +489,11 @@ export const layoutSpec: Spec = {
     { kind: "custom", field: "customProperties", custom: customProperties },
   ],
 };
+
+(reportSection.entries as Entry[]).push(
+  attributes("attributes", reportSectionAttributes),
+  sectionLayout("header", "header"),
+  sectionLayout("footer", "footer"),
+  sectionLayout("body", "body"),
+  { kind: "owners", field: "children", spec: reportSection },
+);
