@@ -138,7 +138,14 @@ export function replaceChildren(
   parent.children = result;
 }
 
-export function readCrs(parent: XmlElement, name: string): QgsCrs | undefined {
+/** QGIS nests at most one base CRS; deeper nesting stays in extension data. */
+export const MAX_CRS_DEPTH = 4;
+
+export function readCrs(
+  parent: XmlElement,
+  name: string,
+  depth = 0,
+): QgsCrs | undefined {
   const element = findChild(parent, name);
   const srs = element && findChild(element, "spatialrefsys");
   if (!srs) return undefined;
@@ -155,6 +162,13 @@ export function readCrs(parent: XmlElement, name: string): QgsCrs | undefined {
   if (geographic !== undefined) crs.geographic = geographic;
   if (srs.attributes.nativeFormat !== undefined)
     crs.nativeFormat = srs.attributes.nativeFormat;
+  const epoch = number(srs.attributes.coordinateEpoch);
+  if (epoch !== undefined) crs.coordinateEpoch = epoch;
+  const base =
+    depth < MAX_CRS_DEPTH
+      ? readCrs(srs, "topocentricBaseCrs", depth + 1)
+      : undefined;
+  if (base) crs.topocentricBase = base;
   return crs;
 }
 
@@ -162,7 +176,10 @@ export function writeCrs(
   parent: XmlElement,
   name: string,
   crs: QgsCrs | undefined,
+  depth = 0,
 ): void {
+  if (depth > MAX_CRS_DEPTH)
+    throw new QgsError("INVALID_EDIT", "Excessively deep topocentric base CRS");
   if (!crs) {
     // A shared container (e.g. DefaultViewExtent) can also own non-CRS data.
     const container = findChild(parent, name);
@@ -196,6 +213,8 @@ export function writeCrs(
   if (crs.geographic === undefined) remove(srs, "geographicflag");
   else putText(srs, "geographicflag", crs.geographic ? "true" : "false");
   putAttribute(srs, "nativeFormat", crs.nativeFormat);
+  putAttribute(srs, "coordinateEpoch", crs.coordinateEpoch);
+  writeCrs(srs, "topocentricBaseCrs", crs.topocentricBase, depth + 1);
 }
 
 export function readExtent(

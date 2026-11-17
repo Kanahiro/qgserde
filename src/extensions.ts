@@ -1,4 +1,4 @@
-import { readCrs, readExtent, text } from "./codec.ts";
+import { MAX_CRS_DEPTH, readCrs, readExtent, text } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import { layerSpec } from "./layer-codec.ts";
 import {
@@ -215,6 +215,13 @@ export class ExtensionCodec {
     this.attribute(srs, "nativeFormat", {
       property: [...prefix, "nativeFormat"],
     });
+    this.attribute(srs, "coordinateEpoch", {
+      property: [...prefix, "coordinateEpoch"],
+    });
+    // Bind as deep as readCrs models, so deeper nesting stays literal.
+    const depth = prefix.filter((key) => key === "topocentricBase").length;
+    if (depth < MAX_CRS_DEPTH && srs && findChild(srs, "topocentricBaseCrs"))
+      this.crs(srs, "topocentricBaseCrs", [...prefix, "topocentricBase"]);
   }
 
   private extent(

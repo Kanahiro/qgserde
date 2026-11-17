@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseQgs, serializeQgs } from "../src/index.ts";
+import {
+  parseJson,
+  parseQgs,
+  serializeJson,
+  serializeQgs,
+} from "../src/index.ts";
 import { readXml } from "../src/xml.ts";
 
 for (const version of ["3.8", "3.44", "4.2"]) {
@@ -30,3 +35,23 @@ for (const version of ["3.8", "3.44", "4.2"]) {
     );
   });
 }
+
+test("keeps the coordinate epoch and topocentric base CRS", () => {
+  const xml =
+    '<qgis version="4.2.0"><projectCrs><spatialrefsys nativeFormat="Wkt" coordinateEpoch="2024.5"><wkt>TOPO</wkt><topocentricBaseCrs><spatialrefsys nativeFormat="Wkt"><wkt>BASE</wkt><authid>EPSG:4978</authid></spatialrefsys></topocentricBaseCrs></spatialrefsys></projectCrs><properties><SpatialRefSys><ProjectionsEnabled type="int">1</ProjectionsEnabled></SpatialRefSys></properties><projectlayers/></qgis>';
+  const project = parseQgs(xml);
+  assert.equal(project.crs?.coordinateEpoch, 2024.5);
+  assert.deepEqual(project.crs?.topocentricBase, {
+    wkt: "BASE",
+    authId: "EPSG:4978",
+    nativeFormat: "Wkt",
+  });
+  project.crs!.topocentricBase!.wkt = "EDITED";
+  const output = serializeQgs(parseJson(serializeJson(project)), {
+    version: "4.2",
+  });
+  const again = parseQgs(output).crs;
+  assert.equal(again?.coordinateEpoch, 2024.5);
+  assert.equal(again?.topocentricBase?.wkt, "EDITED");
+  assert.equal(again?.wkt, "TOPO");
+});

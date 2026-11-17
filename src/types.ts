@@ -410,6 +410,10 @@ export interface QgsCrs {
   ellipsoidAcronym?: string;
   /** QGIS attribute identifying the source CRS definition format. */
   nativeFormat?: string;
+  /** Coordinate epoch of a dynamic CRS, as a decimal year. */
+  coordinateEpoch?: number;
+  /** Geographic or projected CRS a topocentric CRS is based on (QGIS 4.2+). */
+  topocentricBase?: QgsCrs;
 }
 
 /** Rectangle in CRS coordinate units. All coordinates must be finite. */
