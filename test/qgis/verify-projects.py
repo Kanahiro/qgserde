@@ -550,6 +550,9 @@ def check_styles(project):
     assert manager.currentStyle() == "red"
     assert manager.setCurrentStyle("navy")
     assert layer.renderer().symbol().color().name() == "#000080"
+    name = layer.fields().indexOf("name")
+    assert layer.attributeAlias(name) == "Navy name", layer.attributeAlias(name)
+    assert layer.opacity() == 0.5
     # Headless QGIS 3.44+ does not instantiate legacy canvas annotations.
     annotations = project.annotationManager().annotations()
     assert len(annotations) <= 1

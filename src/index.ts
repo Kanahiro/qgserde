@@ -263,6 +263,7 @@ export type {
   QgsLabelSettings,
   QgsLayerMetadata,
   QgsLayerServerProperties,
+  QgsLayerStyle,
   QgsLayerStyles,
   QgsLayerStyleVariant,
   QgsLayerTreeCustomNode,
