@@ -4,6 +4,11 @@ import os
 import sys
 from pathlib import Path
 
+try:
+    from qgis._3d import Qgs3D, QgsPolygon3DSymbol, QgsVectorLayer3DRenderer
+except ImportError:  # QGIS built without 3D
+    Qgs3D = None
+
 from qgis.core import (
     Qgis,
     QgsApplication,
@@ -22,6 +27,7 @@ from qgis.core import (
     QgsSymbol,
     QgsSymbolLayer,
 )
+from qgis.PyQt import sip
 
 
 def check_memory(project):
@@ -320,6 +326,15 @@ def check_settings(project):
     assert category.categoryColors[0].name() == "#ff0000"
     assert cities.diagramLayerSettings().priority() == 5
     assert cities.selectionProperties().selectionColor().name() == "#ff00ff"
+    if Qgs3D:
+        renderer3d = layers["countries"].renderer3D()
+        assert renderer3d is not None and renderer3d.type() == "vector"
+        # The bindings return the abstract base classes.
+        renderer3d = sip.cast(renderer3d, QgsVectorLayer3DRenderer)
+        symbol3d = sip.cast(renderer3d.symbol(), QgsPolygon3DSymbol)
+        assert symbol3d.extrusionHeight() == 10, symbol3d.extrusionHeight()
+        assert symbol3d.edgesEnabled() and symbol3d.edgeWidth() == 2
+        assert symbol3d.materialSettings().diffuse().name() == "#ff0000"
     stacked = layers["countries"].diagramRenderer()
     if hasattr(stacked, "renderers"):  # QGIS 3.40+
         assert stacked.rendererName() == "Stacked", stacked.rendererName()
@@ -558,6 +573,8 @@ def main():
     assert actual == expected, ("unexpected QGIS runtime", expected, Qgis.QGIS_VERSION)
     app = QgsApplication([], False)
     app.initQgis()
+    if Qgs3D:
+        Qgs3D.initialize()
     try:
         for name, check in [
             ("generated.qgs", check_memory),

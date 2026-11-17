@@ -15,6 +15,16 @@ export function createSettingsProject(): QgsProject {
       source: "Polygon?crs=EPSG:4326&field=id:integer&field=cname:string",
       crs,
       fields: [],
+      renderer3d: {
+        type: "vector",
+        attributes: { layer: "countries_layer_01" },
+        symbol: {
+          attributes: { type: "polygon", material_type: "phong" },
+          data: { "alt-clamping": "absolute", "extrusion-height": 10 },
+          material: { diffuse: "255,0,0,255", shininess: 2 },
+          edges: { enabled: true, width: 2, color: "0,0,0,255" },
+        },
+      },
       diagram: {
         renderer: "StackedDiagramRenderer",
         attributes: { diagramType: "Stacked" },

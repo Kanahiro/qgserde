@@ -8,6 +8,7 @@ import type {
   QgsBookmarkAttributes,
   QgsBrightnessContrastAttributes,
   QgsCanvasAnnotationAttributes,
+  QgsCategory3DAttributes,
   QgsChartSeriesAttributes,
   QgsClassificationExtraAttributes,
   QgsClassificationLabelFormatAttributes,
@@ -75,6 +76,8 @@ import type {
   QgsMapLayerAttributes,
   QgsMapThemeAttributes,
   QgsMapThemeLayerAttributes,
+  QgsMaterial3DAttributes,
+  QgsMesh3DAdvancedAttributes,
   QgsMeshActiveDatasetAttributes,
   QgsMeshArrowSettingsAttributes,
   QgsMeshAveragingAttributes,
@@ -109,10 +112,12 @@ import type {
   QgsPixelListEntryAttributes,
   QgsPlotAttributes,
   QgsPlotAxisAttributes,
+  QgsPointCloud3DCategoryAttributes,
   QgsPointCloudCategoryAttributes,
   QgsPointCloudRendererAttributes,
   QgsPointClusterRendererAttributes,
   QgsPointDisplacementRendererAttributes,
+  QgsPolygonEdges3DAttributes,
   QgsProfileCustomSourceAttributes,
   QgsProjectAttributes,
   QgsProjectDisplaySettingsAttributes,
@@ -128,6 +133,7 @@ import type {
   QgsRelationAttributes,
   QgsRelationFieldRefAttributes,
   QgsRenderer3DAttributes,
+  QgsRule3DAttributes,
   QgsSelectionAttributes,
   QgsSizeLegendAttributes,
   QgsSizeLegendClassAttributes,
@@ -137,6 +143,9 @@ import type {
   QgsSnappingSettingsAttributes,
   QgsStoredExpressionAttributes,
   QgsSvgAnnotationAttributes,
+  QgsSymbol3DAttributes,
+  QgsSymbol3DDataAttributes,
+  QgsSymbol3DTransformAttributes,
   QgsSymmetricModeAttributes,
   QgsTableColumnWidthAttributes,
   QgsTableRowHeightAttributes,
@@ -153,6 +162,7 @@ import type {
   QgsTiledSceneRendererAttributes,
   QgsTileMatrixAttributes,
   QgsTileMatrixSetAttributes,
+  QgsTiling3DAttributes,
   QgsTransformPairAttributes,
   QgsVectorTileLabelingAttributes,
   QgsVectorTileStyleAttributes,
@@ -1026,8 +1036,68 @@ export interface QgsLayerStyleVariant {
 export interface QgsRenderer3d {
   /** Renderer type, such as `vector`, `rulebased`, `mesh`, or `pointcloud`. */
   type?: string;
-  /** Other settings. */
+  /** Other settings, such as the `layer` ID and, for point clouds, `point-budget`. */
   attributes?: QgsRenderer3DAttributes;
+  /** Vector tiling (`<vector-layer-3d-tiling>`). */
+  tiling?: QgsTiling3DAttributes;
+  /** Symbol of the `vector`, `mesh`, or `pointcloud` renderer. */
+  symbol?: QgsSymbol3D;
+  /** Root rule of the `rulebased` renderer. */
+  rootRule?: QgsRule3D;
+  /** Categories of the `categorized` renderer. */
+  categories?: QgsCategory3D[];
+  /** Symbol new categories start from. */
+  sourceSymbol?: QgsSymbol3D;
+  /** Color ramp new categories take colors from. */
+  colorRamp?: QgsColorRamp;
+}
+
+/** 3D symbol. Each `attributes.type` uses some of the parts. */
+export interface QgsSymbol3D {
+  /** Symbol `type` (`polygon`, `line`, `point`, `mesh`, or a point cloud type) and type settings, such as `material_type` and `shape`. */
+  attributes?: QgsSymbol3DAttributes;
+  /** Placement, such as `alt-clamping`, `offset`, and `extrusion-height`. */
+  data?: QgsSymbol3DDataAttributes;
+  /** Material settings of the `material_type`. */
+  material?: QgsMaterial3DAttributes;
+  /** Data-defined properties. */
+  dataDefinedProperties?: QgsDataDefinedProperties;
+  /** Polygon edges. */
+  edges?: QgsPolygonEdges3DAttributes;
+  /** Point shape settings, such as `radius` or `model`. */
+  shapeProperties?: QgsVariant;
+  /** Point transform matrix. */
+  transform?: QgsSymbol3DTransformAttributes;
+  /** Mesh rendering settings. */
+  advanced?: QgsMesh3DAdvancedAttributes;
+  /** Color ramp of a mesh or point cloud symbol. */
+  shader?: QgsColorRampShader;
+  /** Point cloud classes. */
+  categories?: QgsPointCloud3DCategoryAttributes[];
+}
+
+/** Rule of a rule-based 3D renderer. */
+export interface QgsRule3D {
+  /** `key`, `filter`, `description`, and `active`. */
+  attributes?: QgsRule3DAttributes;
+  /** Symbol; rules without one only group children. */
+  symbol?: QgsSymbol3D;
+  /** Child rules. */
+  children?: QgsRule3D[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Category of a categorized 3D renderer. */
+export interface QgsCategory3D {
+  /** Whether the category is drawn. */
+  attributes?: QgsCategory3DAttributes;
+  /** Category value. */
+  value?: QgsVariant;
+  /** Symbol. */
+  symbol?: QgsSymbol3D;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** Layer time settings. */

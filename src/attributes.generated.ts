@@ -5166,3 +5166,384 @@ export interface QgsProfileCustomSourceAttributes {
 export const profileCustomSourceAttributes = {
   id: "string",
 } as const satisfies AttributeTable;
+
+/** 3D `<symbol>` attributes of every symbol type. */
+export interface QgsSymbol3DAttributes {
+  /** `blue`. */
+  blue?: string;
+  /** `color-ramp-shader-max`. */
+  "color-ramp-shader-max"?: number;
+  /** `color-ramp-shader-min`. */
+  "color-ramp-shader-min"?: number;
+  /** `green`. */
+  green?: string;
+  /** `horizontal-filter-threshold`. */
+  "horizontal-filter-threshold"?: number;
+  /** `horizontal-triangle-filter`. */
+  "horizontal-triangle-filter"?: number;
+  /** `material_type`. */
+  material_type?: string;
+  /** `point-size`. */
+  "point-size"?: number;
+  /** `red`. */
+  red?: string;
+  /** `render-as-triangles`. */
+  "render-as-triangles"?: number;
+  /** `rendering-parameter`. */
+  "rendering-parameter"?: string;
+  /** `shape`. */
+  shape?: string;
+  /** `single-color`. */
+  "single-color"?: string;
+  /** `type`. */
+  type?: string;
+  /** `vertical-filter-threshold`. */
+  "vertical-filter-threshold"?: number;
+  /** `vertical-triangle-filter`. */
+  "vertical-triangle-filter"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const symbol3DAttributes = {
+  blue: "string",
+  "color-ramp-shader-max": "number",
+  "color-ramp-shader-min": "number",
+  green: "string",
+  "horizontal-filter-threshold": "number",
+  "horizontal-triangle-filter": "number",
+  material_type: "string",
+  "point-size": "number",
+  red: "string",
+  "render-as-triangles": "number",
+  "rendering-parameter": "string",
+  shape: "string",
+  "single-color": "string",
+  type: "string",
+  "vertical-filter-threshold": "number",
+  "vertical-triangle-filter": "number",
+} as const satisfies AttributeTable;
+
+/** 3D symbol `<data>` attributes. */
+export interface QgsSymbol3DDataAttributes {
+  /** `add-back-faces`, stored as 1 or 0. */
+  "add-back-faces"?: boolean;
+  /** `alt-binding`. */
+  "alt-binding"?: string;
+  /** `alt-clamping`. */
+  "alt-clamping"?: string;
+  /** `culling-mode`. */
+  "culling-mode"?: string;
+  /** `extrusion-height`. */
+  "extrusion-height"?: number;
+  /** `height`. */
+  height?: number;
+  /** `invert-normals`, stored as 1 or 0. */
+  "invert-normals"?: boolean;
+  /** `offset`. */
+  offset?: number;
+  /** `rendered-facade`. */
+  "rendered-facade"?: string;
+  /** `simple-lines`, stored as 1 or 0. */
+  "simple-lines"?: boolean;
+  /** `width`. */
+  width?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const symbol3DDataAttributes = {
+  "add-back-faces": "boolean",
+  "alt-binding": "string",
+  "alt-clamping": "string",
+  "culling-mode": "string",
+  "extrusion-height": "number",
+  height: "number",
+  "invert-normals": "boolean",
+  offset: "number",
+  "rendered-facade": "string",
+  "simple-lines": "boolean",
+  width: "number",
+} as const satisfies AttributeTable;
+
+/** 3D symbol `<material>` attributes of every material type. */
+export interface QgsMaterial3DAttributes {
+  /** `alpha`. */
+  alpha?: number;
+  /** `ambient`. */
+  ambient?: string;
+  /** `ambient_occlusion_texture_path`. */
+  ambient_occlusion_texture_path?: string;
+  /** `anisotropy`. */
+  anisotropy?: number;
+  /** `anisotropy_rotation`. */
+  anisotropy_rotation?: number;
+  /** `base`. */
+  base?: string;
+  /** `base_color_texture_path`. */
+  base_color_texture_path?: string;
+  /** `beta`. */
+  beta?: number;
+  /** `clear_coat_factor`. */
+  clear_coat_factor?: number;
+  /** `clear_coat_roughness`. */
+  clear_coat_roughness?: number;
+  /** `cool`. */
+  cool?: string;
+  /** `diffuse`. */
+  diffuse?: string;
+  /** `diffuse_texture_path`. */
+  diffuse_texture_path?: string;
+  /** `emission_color`. */
+  emission_color?: string;
+  /** `emission_factor`. */
+  emission_factor?: number;
+  /** `emission_texture_path`. */
+  emission_texture_path?: string;
+  /** `height_texture_path`. */
+  height_texture_path?: string;
+  /** `ka`. */
+  ka?: number;
+  /** `kd`. */
+  kd?: number;
+  /** `ks`. */
+  ks?: number;
+  /** `metalness`. */
+  metalness?: number;
+  /** `metalness_texture_path`. */
+  metalness_texture_path?: string;
+  /** `normal_texture_path`. */
+  normal_texture_path?: string;
+  /** `opacity`. */
+  opacity?: number;
+  /** `parallax_scale`. */
+  parallax_scale?: number;
+  /** `reflectance`. */
+  reflectance?: number;
+  /** `roughness`. */
+  roughness?: number;
+  /** `roughness_texture_path`. */
+  roughness_texture_path?: string;
+  /** `shininess`. */
+  shininess?: number;
+  /** `shininess2`. */
+  shininess2?: number;
+  /** `specular`. */
+  specular?: string;
+  /** `texture-rotation`. */
+  "texture-rotation"?: number;
+  /** `texture_offset`. */
+  texture_offset?: string;
+  /** `texture_rotation`. */
+  texture_rotation?: number;
+  /** `texture_scale`. */
+  texture_scale?: number;
+  /** `warm`. */
+  warm?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const material3DAttributes = {
+  alpha: "number",
+  ambient: "string",
+  ambient_occlusion_texture_path: "string",
+  anisotropy: "number",
+  anisotropy_rotation: "number",
+  base: "string",
+  base_color_texture_path: "string",
+  beta: "number",
+  clear_coat_factor: "number",
+  clear_coat_roughness: "number",
+  cool: "string",
+  diffuse: "string",
+  diffuse_texture_path: "string",
+  emission_color: "string",
+  emission_factor: "number",
+  emission_texture_path: "string",
+  height_texture_path: "string",
+  ka: "number",
+  kd: "number",
+  ks: "number",
+  metalness: "number",
+  metalness_texture_path: "string",
+  normal_texture_path: "string",
+  opacity: "number",
+  parallax_scale: "number",
+  reflectance: "number",
+  roughness: "number",
+  roughness_texture_path: "string",
+  shininess: "number",
+  shininess2: "number",
+  specular: "string",
+  "texture-rotation": "number",
+  texture_offset: "string",
+  texture_rotation: "number",
+  texture_scale: "number",
+  warm: "string",
+} as const satisfies AttributeTable;
+
+/** 3D polygon `<edges>` attributes. */
+export interface QgsPolygonEdges3DAttributes {
+  /** `color`. */
+  color?: string;
+  /** `enabled`, stored as 1 or 0. */
+  enabled?: boolean;
+  /** `width`. */
+  width?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const polygonEdges3DAttributes = {
+  color: "string",
+  enabled: "boolean",
+  width: "number",
+} as const satisfies AttributeTable;
+
+/** 3D point `<transform>` attributes. */
+export interface QgsSymbol3DTransformAttributes {
+  /** `matrix`. */
+  matrix?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const symbol3DTransformAttributes = {
+  matrix: "string",
+} as const satisfies AttributeTable;
+
+/** 3D mesh `<advanced-settings>` attributes. */
+export interface QgsMesh3DAdvancedAttributes {
+  /** `arrows-enabled`, stored as 1 or 0. */
+  "arrows-enabled"?: boolean;
+  /** `arrows-fixed-size`, stored as 1 or 0. */
+  "arrows-fixed-size"?: boolean;
+  /** `arrows-spacing`. */
+  "arrows-spacing"?: number;
+  /** `culling-mode`. */
+  "culling-mode"?: string;
+  /** `level-of-detail`. */
+  "level-of-detail"?: number;
+  /** `max-color-ramp-shader`. */
+  "max-color-ramp-shader"?: number;
+  /** `min-color-ramp-shader`. */
+  "min-color-ramp-shader"?: number;
+  /** `renderer-3d-enabled`, stored as 1 or 0. */
+  "renderer-3d-enabled"?: boolean;
+  /** `smoothed-triangle`, stored as 1 or 0. */
+  "smoothed-triangle"?: boolean;
+  /** `texture-single-color`. */
+  "texture-single-color"?: string;
+  /** `texture-type`. */
+  "texture-type"?: number;
+  /** `vertical-group-index`. */
+  "vertical-group-index"?: number;
+  /** `vertical-relative`, stored as 1 or 0. */
+  "vertical-relative"?: boolean;
+  /** `vertical-scale`. */
+  "vertical-scale"?: number;
+  /** `wireframe-enabled`, stored as 1 or 0. */
+  "wireframe-enabled"?: boolean;
+  /** `wireframe-line-color`. */
+  "wireframe-line-color"?: string;
+  /** `wireframe-line-width`. */
+  "wireframe-line-width"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const mesh3DAdvancedAttributes = {
+  "arrows-enabled": "boolean",
+  "arrows-fixed-size": "boolean",
+  "arrows-spacing": "number",
+  "culling-mode": "string",
+  "level-of-detail": "number",
+  "max-color-ramp-shader": "number",
+  "min-color-ramp-shader": "number",
+  "renderer-3d-enabled": "boolean",
+  "smoothed-triangle": "boolean",
+  "texture-single-color": "string",
+  "texture-type": "number",
+  "vertical-group-index": "number",
+  "vertical-relative": "boolean",
+  "vertical-scale": "number",
+  "wireframe-enabled": "boolean",
+  "wireframe-line-color": "string",
+  "wireframe-line-width": "number",
+} as const satisfies AttributeTable;
+
+/** 3D point cloud classification `<category>`. */
+export interface QgsPointCloud3DCategoryAttributes {
+  /** `color`. */
+  color?: string;
+  /** `label`. */
+  label?: string;
+  /** `pointSize`. */
+  pointSize?: number;
+  /** `render`, stored as true or false. */
+  render?: boolean;
+  /** `value`. */
+  value?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const pointCloud3DCategoryAttributes = {
+  color: "string",
+  label: "string",
+  pointSize: "number",
+  render: "flag",
+  value: "number",
+} as const satisfies AttributeTable;
+
+/** `<vector-layer-3d-tiling>` attributes. */
+export interface QgsTiling3DAttributes {
+  /** `max-chunk-features`. */
+  "max-chunk-features"?: number;
+  /** `show-bounding-boxes`, stored as 1 or 0. */
+  "show-bounding-boxes"?: boolean;
+  /** `zoom-levels-count`. */
+  "zoom-levels-count"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const tiling3DAttributes = {
+  "max-chunk-features": "number",
+  "show-bounding-boxes": "boolean",
+  "zoom-levels-count": "number",
+} as const satisfies AttributeTable;
+
+/** 3D rule `<rule>` attributes. */
+export interface QgsRule3DAttributes {
+  /** `active`, stored as 1 or 0. */
+  active?: boolean;
+  /** `description`. */
+  description?: string;
+  /** `filter`. */
+  filter?: string;
+  /** `key`. */
+  key?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const rule3DAttributes = {
+  active: "boolean",
+  description: "string",
+  filter: "string",
+  key: "string",
+} as const satisfies AttributeTable;
+
+/** 3D category `<category>` attributes. */
+export interface QgsCategory3DAttributes {
+  /** `render`, stored as 1 or 0. */
+  render?: boolean;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const category3DAttributes = {
+  render: "boolean",
+} as const satisfies AttributeTable;

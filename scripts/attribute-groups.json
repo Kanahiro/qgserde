@@ -923,5 +923,60 @@
   "ProfileCustomSource": {
     "doc": "Elevation profile `<profileCustomSource>`.",
     "keys": ["^qgslayoutitemelevationprofile\\.cpp\\|profileCustomSource$"]
+  },
+  "Symbol3D": {
+    "doc": "3D `<symbol>` attributes of every symbol type.",
+    "keys": [
+      "^qgs\\w+3dsymbol\\.cpp\\|@Qgs\\w+3DSymbol::(writeXml|writeBaseXml):elem$"
+    ],
+    "kinds": {
+      "type": "string"
+    }
+  },
+  "Symbol3DData": {
+    "doc": "3D symbol `<data>` attributes.",
+    "keys": ["^qgs(line|polygon|point|mesh)3dsymbol\\.cpp\\|data$"]
+  },
+  "Material3D": {
+    "doc": "3D symbol `<material>` attributes of every material type.",
+    "keys": [
+      "^qgs\\w+materialsettings\\.cpp\\|@Qgs\\w+MaterialSettings::writeXml:elem$"
+    ]
+  },
+  "PolygonEdges3D": {
+    "doc": "3D polygon `<edges>` attributes.",
+    "keys": ["^qgspolygon3dsymbol\\.cpp\\|edges$"]
+  },
+  "Symbol3DTransform": {
+    "doc": "3D point `<transform>` attributes.",
+    "keys": ["^qgspoint3dsymbol\\.cpp\\|transform$"]
+  },
+  "Mesh3DAdvanced": {
+    "doc": "3D mesh `<advanced-settings>` attributes.",
+    "keys": ["^qgsmesh3dsymbol\\.cpp\\|advanced-settings$"]
+  },
+  "PointCloud3DCategory": {
+    "doc": "3D point cloud classification `<category>`.",
+    "keys": ["^qgspointcloud3dsymbol\\.cpp\\|category$"]
+  },
+  "Tiling3D": {
+    "doc": "`<vector-layer-3d-tiling>` attributes.",
+    "keys": [
+      "^qgsabstractvectorlayer3drenderer\\.cpp\\|vector-layer-3d-tiling$"
+    ]
+  },
+  "Rule3D": {
+    "doc": "3D rule `<rule>` attributes.",
+    "keys": ["^qgsrulebased3drenderer\\.cpp\\|rule$"],
+    "kinds": {
+      "active": "boolean"
+    }
+  },
+  "Category3D": {
+    "doc": "3D category `<category>` attributes.",
+    "keys": [],
+    "kinds": {
+      "render": "boolean"
+    }
   }
 }

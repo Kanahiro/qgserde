@@ -36,7 +36,6 @@ import {
   metadataUrlAttributes,
   relationAttributes,
   relationFieldRefAttributes,
-  renderer3DAttributes,
   selectionAttributes,
   storedExpressionAttributes,
   temporalAttributes,
@@ -46,6 +45,7 @@ import {
 import { putElementText, remove, replaceChildren } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import { labeling, textFormatSpec } from "./labeling.ts";
+import { renderer3DSpec } from "./scene3d.ts";
 import {
   type AttributeTable,
   type Custom,
@@ -338,18 +338,7 @@ export const commonLayerEntries: Entry[] = [
     kind: "object",
     field: "renderer3d",
     at: ["renderer-3d"],
-    spec: {
-      tag: "renderer-3d",
-      entries: [
-        { kind: "attribute", field: "type", attribute: "type", type: "string" },
-        {
-          kind: "attributes",
-          field: "attributes",
-          table: renderer3DAttributes,
-          exclude: ["type"],
-        },
-      ],
-    },
+    spec: renderer3DSpec,
   },
   { kind: "extent", field: "wgs84Extent", tag: "wgs84extent" },
   { kind: "custom", field: "customProperties", custom: customProperties },
