@@ -2,9 +2,23 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProject, parseQgs, serializeQgs } from "../../src/index.ts";
+import {
+  createLayerTypesProject,
+  editLayerTypesFixture,
+  writeMeshData,
+} from "./layer-types.ts";
+import { createLayoutsProject } from "./layouts.ts";
+import { createProjectSettingsProject } from "./project-settings.ts";
+import { createRasterProject, writeRasterData } from "./raster.ts";
+import { createSettingsProject } from "./settings.ts";
+import { editStylesFixture } from "./styles.ts";
+import { createSymbologyProject } from "./symbology.ts";
 import { createTileGallery } from "./tile-gallery.ts";
 
-export function writeQgisFixtures(directory: string, version: string): void {
+export async function writeQgisFixtures(
+  directory: string,
+  version: string,
+): Promise<void> {
   mkdirSync(directory, { recursive: true });
   const project = createProject({ title: "検証 & 地図" });
   project.layers.push({
@@ -65,6 +79,64 @@ export function writeQgisFixtures(directory: string, version: string): void {
     }),
   );
 
+  const symbology = serializeQgs(createSymbologyProject(), { version });
+  writeFileSync(join(directory, "symbology.qgs"), symbology);
+  writeFileSync(
+    join(directory, "symbology-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(symbology))), { version }),
+  );
+
+  const settings = serializeQgs(createSettingsProject(), { version });
+  writeFileSync(join(directory, "settings.qgs"), settings);
+  writeFileSync(
+    join(directory, "settings-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(settings))), { version }),
+  );
+
+  const projectSettings = serializeQgs(createProjectSettingsProject(), {
+    version,
+  });
+  writeFileSync(join(directory, "project-settings.qgs"), projectSettings);
+  writeFileSync(
+    join(directory, "project-settings-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(projectSettings))), {
+      version,
+    }),
+  );
+
+  writeMeshData(directory);
+  const layerTypes = serializeQgs(createLayerTypesProject(), { version });
+  writeFileSync(join(directory, "layer-types.qgs"), layerTypes);
+  writeFileSync(
+    join(directory, "layer-types-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(layerTypes))), { version }),
+  );
+
+  writeFileSync(
+    join(directory, "layer-types-edited.qgs"),
+    serializeQgs(editLayerTypesFixture(), { version }),
+  );
+
+  const layouts = serializeQgs(createLayoutsProject(), { version });
+  writeFileSync(join(directory, "layouts.qgs"), layouts);
+  writeFileSync(
+    join(directory, "layouts-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(layouts))), { version }),
+  );
+
+  writeFileSync(
+    join(directory, "styles-edited.qgs"),
+    serializeQgs(editStylesFixture(), { version }),
+  );
+
+  writeRasterData(directory);
+  const raster = serializeQgs(createRasterProject(), { version });
+  writeFileSync(join(directory, "raster.qgs"), raster);
+  writeFileSync(
+    join(directory, "raster-roundtrip.qgs"),
+    serializeQgs(JSON.parse(JSON.stringify(parseQgs(raster))), { version }),
+  );
+
   // A real WMS (not XYZ) exercises GetCapabilities without an external service.
   // The verifier runs in this directory so the file URL also works in Docker.
   writeFileSync(
@@ -98,5 +170,5 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     throw new Error(
       "Usage: node test/qgis/fixtures.ts <directory> <QGIS version>",
     );
-  writeQgisFixtures(directory, version);
+  await writeQgisFixtures(directory, version);
 }

@@ -1,11 +1,15 @@
 import { readCrs, readExtent, text } from "./codec.ts";
 import { QgsError } from "./errors.ts";
+import { layerSpec } from "./layer-codec.ts";
 import {
-  crsStrings,
-  metadataTags,
-  rasterAttributes,
-  vectorAttributes,
-} from "./schema.ts";
+  projectMetadataSpec,
+  projectSpec,
+  treeNodeSpec,
+  treeTags,
+} from "./project-settings.ts";
+import { crsStrings, fieldRecords, metadataTags } from "./schema.ts";
+import { captureSpec, restoreSpec } from "./spec.ts";
+import { captureRenderer, restoreRenderer } from "./symbology.ts";
 import type {
   QgsField,
   QgsLayerTreeNode,
@@ -16,6 +20,7 @@ import type {
   XmlElement,
   XmlNode,
 } from "./types.ts";
+import { bindVariant } from "./variant.ts";
 import { sameExtent } from "./view-codec.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
 
@@ -24,6 +29,8 @@ type Property = {
   origin?: true;
   field?: string;
   format?: "boolean" | "checkState" | "pointcloud";
+  /** Stored spelling of a number, such as `1.0`, kept while the value is unchanged. */
+  text?: string;
 };
 type Value = string | Property;
 type Layout = {
@@ -46,7 +53,12 @@ type Content =
   | { kind: "comment"; value: string }
   | { kind: "instruction"; target: string; body: string }
   | { kind: "doctype"; value: string }
-  | { kind: "slot"; name: string; identity?: string };
+  | {
+      kind: "slot";
+      name: string;
+      identity?: string;
+      attributes?: Record<string, string>;
+    };
 
 /** Sparse extension values and placement instructions, rather than a source XML snapshot. */
 export interface QgsExtensions {
@@ -82,6 +94,74 @@ export class ExtensionCodec {
 
   source(owner: object): XmlElement | undefined {
     return this.sources.get(owner);
+  }
+
+  /** Bind an attribute of a nested owner's element to a property path of that owner. */
+  bindAttribute(
+    element: XmlElement | undefined,
+    name: string,
+    path: string[],
+    format?: "boolean",
+    text?: string,
+  ): void {
+    this.attribute(element, name, {
+      property: path,
+      ...(format ? { format } : {}),
+      ...(text === undefined ? {} : { text }),
+    });
+  }
+
+  /** Bind a CRS container (`<name><spatialrefsys>`) to a property path. */
+  bindCrs(parent: XmlElement, name: string, path: string[]): void {
+    this.crs(parent, name, path);
+  }
+
+  /** Bind an extent element to a property path. */
+  bindExtent(parent: XmlElement, name: string, path: string[]): void {
+    this.extent(parent, name, path);
+  }
+
+  /** Bind an element's own text to a property path, unless it has nested markup. */
+  bindElementText(element: XmlElement, path: string[]): void {
+    if (!element.children.some((node) => node.type === "element"))
+      this.bind(element).value = { property: path };
+  }
+
+  /** Bind the text of a scalar child element to a property path of its owner. */
+  bindText(
+    parent: XmlElement | undefined,
+    name: string,
+    path: string[],
+    format?: "boolean",
+    text?: string,
+  ): void {
+    this.value(parent, name, {
+      property: path,
+      ...(format ? { format } : {}),
+      ...(text === undefined ? {} : { text }),
+    });
+  }
+
+  /**
+   * Capture a nested owner. Its children must already be captured. Slot
+   * attributes identify the placeholder among siblings with the same name.
+   */
+  own(
+    owner: object,
+    element: XmlElement,
+    attributes?: Record<string, string>,
+  ): void {
+    this.capture(owner, element);
+    this.slots.set(element, {
+      kind: "slot",
+      name: element.name,
+      ...(attributes ? { attributes } : {}),
+    });
+  }
+
+  /** Restore a nested owner's element so its writer can start from it. */
+  restoreOwner(owner: object, version: string, name: string): void {
+    this.restore(owner, version, name);
   }
 
   private bind(element: XmlElement): Binding {
@@ -225,8 +305,22 @@ export class ExtensionCodec {
     const element = this.source(field);
     if (!element) return;
     this.attribute(element, "name", { property: ["name"], origin: true });
-    this.attribute(findChild(element, "editWidget"), "type", {
-      property: ["editorWidgetType"],
+    const editWidget = findChild(element, "editWidget");
+    this.attribute(editWidget, "type", { property: ["editorWidgetType"] });
+    const config = editWidget && findChild(editWidget, "config");
+    const option = config && findChild(config, "Option");
+    if (option)
+      bindVariant(
+        (target, name, path, format) =>
+          this.attribute(target, name, {
+            property: path,
+            ...(format ? { format } : {}),
+          }),
+        option,
+        ["editorWidgetConfig"],
+      );
+    this.attribute(element, "configurationFlags", {
+      property: ["configurationFlags"],
     });
     this.capture(field, element, { name: field.name });
     this.slots.set(element, {
@@ -270,48 +364,29 @@ export class ExtensionCodec {
       for (const key of ["geometry", "wkbType", "readOnly", "labelsEnabled"])
         this.attribute(element, key, { property: [key] });
       for (const field of layer.fields) this.field(field);
-      for (const [container, tag, values] of [
-        ["aliases", "alias", { name: "alias" }],
-        [
-          "defaults",
-          "default",
-          {
-            expression: "defaultExpression",
-            applyOnUpdate: "applyDefaultOnUpdate",
-          },
-        ],
-      ] as const) {
-        const parent = findChild(element, container);
+      for (const table of fieldRecords) {
+        const parent = findChild(element, table.container);
         const seen = new Set<string>();
         if (parent)
-          for (const record of findChildren(parent, tag)) {
-            const name = record.attributes.field;
+          for (const record of findChildren(parent, table.tag)) {
+            const name = record.attributes[table.key];
             if (
               name === undefined ||
+              seen.has(name) ||
               !layer.fields.some((field) => field.name === name)
             )
               continue;
-            if (seen.has(name)) continue;
             seen.add(name);
-            for (const [attribute, property] of Object.entries(values))
+            for (const [attribute, [property]] of Object.entries(table.values))
               this.attribute(record, attribute, {
                 property: [property],
                 field: name,
               });
           }
       }
-      const renderer = findChild(element, "renderer-v2");
-      for (const [field, attribute] of Object.entries(vectorAttributes))
-        this.attribute(renderer, attribute, { property: ["renderer", field] });
-    } else if (layer.type === "raster") {
-      const pipe = findChild(element, "pipe");
-      const renderer = pipe && findChild(pipe, "rasterrenderer");
-      for (const [field, attribute] of Object.entries({
-        type: "type",
-        ...rasterAttributes,
-      }))
-        this.attribute(renderer, attribute, { property: ["renderer", field] });
+      if (layer.renderer) captureRenderer(layer.renderer, this);
     }
+    captureSpec(layerSpec(layer.type), layer as never, element, this, []);
     this.capture(layer, element, {
       id: layer.id,
       name: layer.name,
@@ -342,6 +417,9 @@ export class ExtensionCodec {
         property: ["customOrder", "enabled"],
       });
       // Item IDs are stable identities for matching extension attributes after reordering.
+    } else if (node.type === "custom") {
+      this.attribute(element, "id", { property: ["id"] });
+      this.attribute(element, "name", { property: ["name"] });
     } else {
       this.attribute(element, "id", { property: ["layerId"] });
       for (const [attribute, property] of [
@@ -351,6 +429,7 @@ export class ExtensionCodec {
       ] as const)
         this.attribute(element, attribute, { property: [property] });
     }
+    captureSpec(treeNodeSpec(node.type), node as never, element, this, []);
     this.capture(node, element);
     this.slots.set(element, { kind: "slot", name: element.name });
   }
@@ -402,6 +481,16 @@ export class ExtensionCodec {
             ? ["rotation"]
             : ["legacyView", "rotation"],
       });
+    const metadataElement = findChild(root, "projectMetadata");
+    if (metadataElement)
+      captureSpec(
+        projectMetadataSpec,
+        project.metadata as never,
+        metadataElement,
+        this,
+        ["metadata"],
+      );
+    captureSpec(projectSpec, project as never, root, this, []);
     this.capture(project, root);
     Object.assign(project.extensions ?? {}, {
       ...(document.declaration
@@ -436,6 +525,12 @@ export class ExtensionCodec {
       current = (current as Record<string, unknown>)[key];
     }
     if (current === undefined) return undefined;
+    if (
+      typeof current === "number" &&
+      value.text !== undefined &&
+      Number(value.text) === current
+    )
+      return value.text;
     if (typeof current === "boolean")
       return value.format === "boolean" ? String(current) : current ? "1" : "0";
     if (value.format === "checkState") {
@@ -498,11 +593,13 @@ export class ExtensionCodec {
         case "slot":
           return createElement(
             content.name,
-            content.identity === undefined
-              ? {}
-              : content.name === "field"
-                ? { name: content.identity }
-                : { id: content.identity },
+            content.attributes
+              ? { ...content.attributes }
+              : content.identity === undefined
+                ? {}
+                : content.name === "field"
+                  ? { name: content.identity }
+                  : { id: content.identity },
           );
         case "comment":
           return { type: "comment", value: content.value };
@@ -552,8 +649,11 @@ export class ExtensionCodec {
 
   restoreProject(project: QgsProject, version: string): XmlDocument {
     for (const layer of project.layers) {
-      if (layer.type === "vector")
+      if (layer.type === "vector") {
         for (const field of layer.fields) this.restore(field, version, "field");
+        if (layer.renderer) restoreRenderer(layer.renderer, this, version);
+      }
+      restoreSpec(layerSpec(layer.type), layer as never, this, version, 0);
       this.restore(layer, version, "maplayer");
     }
     const active = new Set<QgsLayerTreeNode>();
@@ -564,16 +664,22 @@ export class ExtensionCodec {
           "Cyclic or excessively deep layer tree",
         );
       active.add(group);
-      this.restore(
-        group,
-        version,
-        group.type === "group" ? "layer-tree-group" : "layer-tree-layer",
-      );
+      restoreSpec(treeNodeSpec(group.type), group as never, this, version, 0);
+      this.restore(group, version, treeTags[group.type]);
       if (group.type === "group")
         for (const child of group.children) restoreTree(child, depth + 1);
       active.delete(group);
     };
     if (project.layerTree) restoreTree(project.layerTree);
+    if (project.metadata && typeof project.metadata === "object")
+      restoreSpec(
+        projectMetadataSpec,
+        project.metadata as never,
+        this,
+        version,
+        0,
+      );
+    restoreSpec(projectSpec, project as never, this, version, 0);
     const root =
       this.restore(project, version, "qgis") ?? createElement("qgis");
     const extensions = project.extensions;

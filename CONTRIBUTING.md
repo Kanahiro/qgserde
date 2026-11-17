@@ -110,15 +110,25 @@ Each version can only be published once.
 
 ## QGIS integration tests
 
-CI opens seven projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
+CI opens twenty-one projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
 images: a new project, a conversion from an older format, an edited fixture,
 a tile project with nested groups and repeated references, its round trip,
-and a WMS project with a repaired short layer ID and its round trip.
+a project with every modeled vector renderer and labeling and its round
+trip, a project with field, form, join, action, table, and common layer
+settings and its round trip, a project with project-level settings and its
+round trip, a project with vector tile, mesh, annotation, and group layers,
+its round trip, and an edited QGIS-written copy of it, an edited QGIS-written
+layout project with a new layout and its round trip, an edited QGIS-written
+project with style
+variants and a canvas annotation, a raster project with every modeled pipe setting
+and its round trip, and
+a WMS project with a repaired short layer ID and its round trip.
 The conversion and gallery/WMS round trips also exercise incomplete input
 containing authority IDs without CRS lookup markers.
 Checks cover title, CRS, extent, rotation, layer and provider validity,
-vector-tile symbols and zoom ranges, tree references, and the initial visible
-layer.
+vector-tile symbols and zoom ranges, vector renderers, categories, ranges,
+rules, symbol layers, sub-symbols, data-defined properties, tree references,
+and the initial visible layer.
 
 Run the same checks locally:
 
@@ -146,6 +156,26 @@ Set `PYTHONPATH` if needed. Without `QGIS_PYTHON`, only the PyQGIS integration
 test is skipped. `QGIS_VERSION` defaults to `4.2`. The local test and CI share
 the fixture generator and Python verifier; a QGIS version mismatch fails the
 test.
+
+## Attribute groups
+
+`src/attributes.generated.ts` holds the typed attribute groups. Do not edit it
+by hand. `scripts/attribute-groups.json` names each group, the QGIS writers it
+comes from, attributes that other entries type, and kinds the scan gets wrong.
+To regenerate, check out the QGIS 3.44 and 4.2 sources and run:
+
+```sh
+git clone --depth 1 --branch release-3_44 https://github.com/qgis/QGIS.git /tmp/qgis-3.44
+git clone --depth 1 --branch release-4_2 https://github.com/qgis/QGIS.git /tmp/qgis-4.2
+python3 scripts/generate-attributes.py /tmp/qgis-3.44/src /tmp/qgis-4.2/src
+pnpm format
+```
+
+The scan reads `setAttribute` calls. A kind other than string is used only
+when the writer expression shows it, such as `QString::number`, a numeric or
+enum member, or `? "1" : "0"`. Writers that disagree fall back to string. A
+wrong kind loses nothing, because values that do not parse are kept in
+`other`, but the integration tests should not leave typed values there.
 
 ## Format references
 

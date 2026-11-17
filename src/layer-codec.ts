@@ -15,64 +15,148 @@ import {
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
-import { rasterAttributes, vectorAttributes } from "./schema.ts";
+import {
+  commonLayerEntries,
+  rasterLabelingEntry,
+  styleVariants,
+  vectorLayerEntries,
+} from "./layer-settings.ts";
+import {
+  annotationEntries,
+  groupEntries,
+  meshEntries,
+  pointCloudEntries,
+  tiledSceneEntries,
+  vectorTileEntries,
+} from "./layer-types.ts";
+import { rasterLayerSpec } from "./raster.ts";
+import { fieldRecords } from "./schema.ts";
+import { type Entry, readSpec, type Spec, writeSpec } from "./spec.ts";
+import { nestedRenderer, readRenderer, writeRenderer } from "./symbology.ts";
 import type {
+  QgisVersion,
   QgsField,
   QgsMapLayer,
   QgsMapLayerBase,
-  QgsRasterRenderer,
-  QgsVectorRenderer,
   XmlElement,
 } from "./types.ts";
+import { readVariant, writeVariant } from "./variant.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
+
+// Style variants hold the same settings as their layer, plus the renderer
+// and opacity that the layer itself reads by hand.
+const withVariants = (entries: Entry[], extra: Entry[] = []): Spec => ({
+  tag: "maplayer",
+  entries: [...entries, styleVariants([...entries, ...extra])],
+});
+const commonLayerSpec = withVariants(commonLayerEntries);
+const vectorLayerSpec = withVariants(
+  [...commonLayerEntries, ...vectorLayerEntries],
+  [{ kind: "custom", field: "renderer", custom: nestedRenderer }],
+);
+const rasterSpec = withVariants([
+  ...commonLayerEntries,
+  ...rasterLayerSpec.entries,
+  rasterLabelingEntry,
+]);
+const typeSpecs: Record<string, Spec> = Object.fromEntries(
+  Object.entries({
+    "vector-tile": vectorTileEntries,
+    mesh: meshEntries,
+    annotation: annotationEntries,
+    group: groupEntries,
+    "point-cloud": pointCloudEntries,
+    "tiled-scene": tiledSceneEntries,
+  }).map(([type, entries]) => [
+    type,
+    withVariants([...commonLayerEntries, ...entries]),
+  ]),
+);
+
+/** Declarative settings of a layer type; hand-written settings are handled below. */
+export function layerSpec(type: string): Spec {
+  if (type === "vector") return vectorLayerSpec;
+  if (type === "raster") return rasterSpec;
+  return (Object.hasOwn(typeSpecs, type) && typeSpecs[type]) || commonLayerSpec;
+}
 
 export function readLayerId(element: XmlElement): string {
   return text(element, "id") ?? element.attributes.id ?? "";
 }
 
+function recordValue(
+  raw: string | undefined,
+  type: "string" | "number" | "boolean",
+): string | number | boolean | undefined {
+  if (raw === undefined) return undefined;
+  return type === "number"
+    ? number(raw)
+    : type === "boolean"
+      ? boolean(raw)
+      : raw;
+}
+
+/** Records keyed by field name; duplicates are ambiguous and rejected. */
+export function fieldRecordMap(
+  layer: XmlElement,
+  container: string,
+  tag: string,
+  key: string,
+): Map<string, XmlElement> {
+  const parent = findChild(layer, container);
+  const records = new Map<string, XmlElement>();
+  for (const record of parent ? findChildren(parent, tag) : []) {
+    const name = record.attributes[key];
+    if (name === undefined || records.has(name))
+      throw new QgsError(
+        "INVALID_PROJECT",
+        `${container} records require a unique field name`,
+      );
+    records.set(name, record);
+  }
+  return records;
+}
+
 function readFields(layer: XmlElement, codec: ExtensionCodec): QgsField[] {
   const configuration = findChild(layer, "fieldConfiguration");
-  const aliases = findChild(layer, "aliases");
-  const defaults = findChild(layer, "defaults");
   const elements = configuration ? findChildren(configuration, "field") : [];
-  for (const [container, tag] of [
-    [aliases, "alias"],
-    [defaults, "default"],
-  ] as const) {
-    const seen = new Set<string>();
-    for (const record of container ? findChildren(container, tag) : []) {
-      const name = record.attributes.field;
-      if (name === undefined || seen.has(name))
-        throw new QgsError(
-          "INVALID_PROJECT",
-          `${tag} records require a unique field name`,
-        );
-      seen.add(name);
-      if (!elements.some((element) => element.attributes.name === name))
-        elements.push(createElement("field", { name }));
-    }
-  }
+  const tables = fieldRecords.map((table) => ({
+    table,
+    records: fieldRecordMap(layer, table.container, table.tag, table.key),
+  }));
+  for (const { table, records } of tables)
+    if (table.defines)
+      for (const name of records.keys())
+        if (!elements.some((element) => element.attributes.name === name))
+          elements.push(createElement("field", { name }));
   return elements.map((element) => {
     const field: QgsField = {
       name: element.attributes.name ?? "",
     };
-    const editorWidget = findChild(element, "editWidget")?.attributes.type;
-    const alias =
-      aliases &&
-      findChildren(aliases, "alias").find(
-        (alias) => alias.attributes.field === field.name,
-      );
-    const defaultValue =
-      defaults &&
-      findChildren(defaults, "default").find(
-        (value) => value.attributes.field === field.name,
-      );
-    if (editorWidget !== undefined) field.editorWidgetType = editorWidget;
-    if (alias) field.alias = alias.attributes.name ?? "";
-    if (defaultValue)
-      field.defaultExpression = defaultValue.attributes.expression ?? "";
-    const apply = boolean(defaultValue?.attributes.applyOnUpdate);
-    if (apply !== undefined) field.applyDefaultOnUpdate = apply;
+    const editWidget = findChild(element, "editWidget");
+    if (editWidget?.attributes.type !== undefined)
+      field.editorWidgetType = editWidget.attributes.type;
+    const config = editWidget && findChild(editWidget, "config");
+    const option = config && findChild(config, "Option");
+    const widgetConfig = option && readVariant(option);
+    if (widgetConfig !== undefined && widgetConfig !== null)
+      field.editorWidgetConfig = widgetConfig;
+    if (element.attributes.configurationFlags !== undefined)
+      field.configurationFlags = element.attributes.configurationFlags;
+    const target = field as unknown as Record<string, unknown>;
+    for (const { table, records } of tables) {
+      const record = records.get(field.name);
+      if (!record) continue;
+      for (const [attribute, [property, type, fallback]] of Object.entries(
+        table.values,
+      )) {
+        const value = recordValue(
+          record.attributes[attribute] ?? fallback,
+          type,
+        );
+        if (value !== undefined) target[property] = value;
+      }
+    }
     return codec.remember(field, element);
   });
 }
@@ -96,114 +180,57 @@ function writeFields(
         codec.source(field) ?? createElement("field"),
       );
       putAttribute(element, "name", field.name);
-      if (field.editorWidgetType !== undefined)
-        putAttribute(
-          ensure(element, "editWidget"),
-          "type",
-          field.editorWidgetType,
-        );
-      else remove(element, "editWidget");
+      putAttribute(element, "configurationFlags", field.configurationFlags);
+      if (
+        field.editorWidgetType !== undefined ||
+        field.editorWidgetConfig !== undefined
+      ) {
+        const editWidget = ensure(element, "editWidget");
+        putAttribute(editWidget, "type", field.editorWidgetType);
+        const config = findChild(editWidget, "config");
+        const option = config && findChild(config, "Option");
+        if (field.editorWidgetConfig !== undefined)
+          writeVariant(
+            option ?? ensure(ensure(editWidget, "config"), "Option"),
+            field.editorWidgetConfig,
+          );
+        else if (option) writeVariant(option, null);
+      } else remove(element, "editWidget");
       return element;
     }),
   );
-  for (const [containerName, tag] of [
-    ["aliases", "alias"],
-    ["defaults", "default"],
-  ] as const) {
-    const container = findChild(layer, containerName);
-    const previous = container ? findChildren(container, tag) : [];
+  for (const table of fieldRecords) {
+    const container = findChild(layer, table.container);
+    const previous = container ? findChildren(container, table.tag) : [];
     const records = fields.flatMap((field) => {
-      if (tag === "alias" && field.alias === undefined) return [];
-      if (
-        tag === "default" &&
-        field.defaultExpression === undefined &&
-        field.applyDefaultOnUpdate === undefined
-      )
+      const source = field as unknown as Record<string, unknown>;
+      const entries = Object.entries(table.values);
+      if (entries.every(([, [property]]) => source[property] === undefined))
         return [];
       const originalName = codec.source(field)?.attributes.name ?? field.name;
       const index = previous.findIndex(
-        (record) => record.attributes.field === originalName,
+        (record) => record.attributes[table.key] === originalName,
       );
-      const element = structuredClone(previous[index] ?? createElement(tag));
-      putAttribute(element, "field", field.name);
-      if (tag === "alias") putAttribute(element, "name", field.alias);
-      else {
-        putAttribute(element, "expression", field.defaultExpression ?? "");
-        putAttribute(element, "applyOnUpdate", field.applyDefaultOnUpdate);
+      const element = structuredClone(
+        previous[index] ?? createElement(table.tag),
+      );
+      putAttribute(element, table.key, field.name);
+      for (const [attribute, [property, type, fallback]] of entries) {
+        const value = source[property] ?? fallback;
+        if (value !== undefined && typeof value !== type)
+          throw new QgsError("INVALID_EDIT", `${property} must be a ${type}`);
+        putAttribute(element, attribute, value as string | number | boolean);
       }
       return [{ element, index: index < 0 ? Infinity : index }];
     });
     records.sort((left, right) => left.index - right.index);
     if (container || records.length)
       replaceChildren(
-        container ?? ensure(layer, containerName),
-        [tag],
+        container ?? ensure(layer, table.container),
+        [table.tag],
         records.map((record) => record.element),
       );
   }
-}
-
-function readVectorRenderer(layer: XmlElement): QgsVectorRenderer | undefined {
-  const element = findChild(layer, "renderer-v2");
-  if (!element) return undefined;
-  const renderer: QgsVectorRenderer = { type: element.attributes.type ?? "" };
-  if (element.attributes.attr !== undefined)
-    renderer.attribute = element.attributes.attr;
-  const levels = boolean(element.attributes.symbollevels);
-  const force = boolean(element.attributes.forceraster);
-  const scale = number(element.attributes.referencescale);
-  if (levels !== undefined) renderer.symbolLevels = levels;
-  if (force !== undefined) renderer.forceRaster = force;
-  if (scale !== undefined) renderer.referenceScale = scale;
-  return renderer;
-}
-
-function writeVectorRenderer(
-  layer: XmlElement,
-  renderer: QgsVectorRenderer | undefined,
-): void {
-  if (!renderer) {
-    remove(layer, "renderer-v2");
-    return;
-  }
-  const element = ensure(layer, "renderer-v2");
-  for (const [field, attribute] of Object.entries(vectorAttributes))
-    putAttribute(
-      element,
-      attribute,
-      renderer[field as keyof typeof vectorAttributes],
-    );
-}
-function readRasterRenderer(layer: XmlElement): QgsRasterRenderer | undefined {
-  const pipe = findChild(layer, "pipe");
-  const element = pipe && findChild(pipe, "rasterrenderer");
-  if (!element) return undefined;
-  const renderer: QgsRasterRenderer = { type: element.attributes.type ?? "" };
-  for (const [field, attr] of Object.entries(rasterAttributes)) {
-    const value = number(element.attributes[attr]);
-    if (value !== undefined)
-      renderer[field as keyof typeof rasterAttributes] = value;
-  }
-  return renderer;
-}
-
-function writeRasterRenderer(
-  layer: XmlElement,
-  renderer: QgsRasterRenderer | undefined,
-): void {
-  if (!renderer) {
-    const pipe = findChild(layer, "pipe");
-    if (pipe) remove(pipe, "rasterrenderer");
-    return;
-  }
-  const element = ensure(ensure(layer, "pipe"), "rasterrenderer");
-  putAttribute(element, "type", renderer.type);
-  for (const [field, attr] of Object.entries(rasterAttributes))
-    putAttribute(
-      element,
-      attr,
-      renderer[field as keyof typeof rasterAttributes],
-    );
 }
 
 export function readLayer(
@@ -247,21 +274,28 @@ export function readLayer(
         layer.wkbType = element.attributes.wkbType;
       const readOnly = boolean(element.attributes.readOnly);
       const labelsEnabled = boolean(element.attributes.labelsEnabled);
-      const renderer = readVectorRenderer(element);
+      const rendererElement = findChild(element, "renderer-v2");
+      const renderer = rendererElement && readRenderer(rendererElement, codec);
       if (readOnly !== undefined) layer.readOnly = readOnly;
       if (labelsEnabled !== undefined) layer.labelsEnabled = labelsEnabled;
       if (renderer) layer.renderer = renderer;
+      Object.assign(layer, readSpec(vectorLayerSpec, element, codec));
       return codec.remember(layer, element);
     }
-    case "raster": {
-      const renderer = readRasterRenderer(element);
+    case "raster":
       return codec.remember(
-        { ...base, type, ...(renderer ? { renderer } : {}) },
+        { ...base, type, ...readSpec(rasterSpec, element, codec) },
         element,
       );
-    }
     case "pointcloud":
-      return codec.remember({ ...base, type: "point-cloud" }, element);
+      return codec.remember(
+        {
+          ...base,
+          type: "point-cloud",
+          ...readSpec(layerSpec("point-cloud"), element, codec),
+        },
+        element,
+      );
     case "mesh":
     case "vector-tile":
     case "point-cloud":
@@ -269,13 +303,17 @@ export function readLayer(
     case "annotation":
     case "group":
     case "tiled-scene":
-      return codec.remember({ ...base, type }, element);
+      return codec.remember(
+        { ...base, type, ...readSpec(layerSpec(type), element, codec) },
+        element,
+      );
     default:
       return codec.remember(
         {
           ...base,
           type: "unknown",
           xmlType: element.attributes.type ?? "",
+          ...readSpec(commonLayerSpec, element, codec),
         },
         element,
       );
@@ -338,6 +376,7 @@ function defaultTileRenderer(): XmlElement {
 export function writeLayer(
   layer: QgsMapLayer,
   codec: ExtensionCodec,
+  target: QgisVersion,
 ): XmlElement {
   if (typeof layer.id !== "string" || !layer.id.trim())
     throw new QgsError("INVALID_EDIT", "A layer ID must not be empty");
@@ -363,6 +402,14 @@ export function writeLayer(
     ["datasource", layer.source],
     ["provider", layer.provider],
   ] as const) {
+    // Annotation and group layers store no provider; empty means absent there.
+    if (
+      value === "" &&
+      tag === "provider" &&
+      (layer.type === "annotation" || layer.type === "group") &&
+      !findChild(element, tag)
+    )
+      continue;
     putText(element, tag, value);
   }
   if (element.attributes.id !== undefined)
@@ -389,12 +436,16 @@ export function writeLayer(
     putAttribute(element, "readOnly", layer.readOnly);
     putAttribute(element, "labelsEnabled", layer.labelsEnabled);
     writeFields(element, layer.fields, codec);
-    writeVectorRenderer(element, layer.renderer);
-  } else if (layer.type === "raster")
-    writeRasterRenderer(element, layer.renderer);
+    replaceChildren(
+      element,
+      ["renderer-v2"],
+      layer.renderer ? [writeRenderer(layer.renderer, codec, target)] : [],
+    );
+  }
+  writeSpec(layerSpec(layer.type), layer as never, element, codec, target);
   // QGIS 3.x rejects vector tile layer XML without a renderer, even with a valid URI.
   // styleUrl is connection metadata; it does not replace native renderer XML.
-  else if (layer.type === "vector-tile" && !findChild(element, "renderer"))
+  if (layer.type === "vector-tile" && !findChild(element, "renderer"))
     element.children.push(defaultTileRenderer());
   return element;
 }

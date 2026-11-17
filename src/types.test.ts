@@ -1,8 +1,11 @@
 import type {
+  QgsDataDefinedProperty,
   QgsField,
   QgsMapLayer,
   QgsPointCloudLayer,
   QgsProject,
+  QgsSymbol,
+  QgsVariant,
   QgsVectorLayer,
 } from "./index.ts";
 import { createProject, serializeQgs } from "./index.ts";
@@ -59,6 +62,61 @@ export function checkPublicTypes(
     void fields;
     // @ts-expect-error Raster band settings do not belong to vector renderers.
     layer.renderer!.redBand;
+    const renderer = layer.renderer;
+    // @ts-expect-error Categories require narrowing the renderer type.
+    renderer?.categories;
+    switch (renderer?.type) {
+      case "categorizedSymbol": {
+        const symbol: QgsSymbol | undefined = renderer.categories[0]?.symbol;
+        void symbol;
+        break;
+      }
+      case "graduatedSymbol":
+        renderer.ranges[0]!.lower = 1;
+        break;
+      case "RuleRenderer":
+        renderer.rootRule.children.push({ filter: "ELSE", children: [] });
+        break;
+      case "singleSymbol":
+        renderer.symbol = {
+          type: "marker",
+          layers: [{ class: "SimpleMarker", properties: { size: "2" } }],
+        };
+        // @ts-expect-error Symbol types are limited to QGIS symbol types.
+        renderer.symbol.type = "point";
+        break;
+      case "unknown": {
+        const name: string = renderer.xmlType;
+        void name;
+        break;
+      }
+      case "pointCluster":
+      case "pointDisplacement":
+      case "invertedPolygonRenderer":
+      case "mergedFeatureRenderer": {
+        const inner: QgsMapLayer["type"] | string | undefined =
+          renderer.renderer?.type;
+        void inner;
+        break;
+      }
+      case "heatmapRenderer":
+      case "25dRenderer":
+      case "nullSymbol":
+      case undefined:
+        break;
+      default: {
+        const exhaustive: never = renderer;
+        void exhaustive;
+      }
+    }
+    const property: QgsDataDefinedProperty = {
+      active: true,
+      type: 3,
+      expression: '"pop" / 1000',
+    };
+    // @ts-expect-error Variant values are plain data.
+    const invalidVariant: QgsVariant = new Map();
+    void [property, invalidVariant];
   }
   if (layer.type === "raster") {
     const band: number | undefined = layer.renderer?.redBand;
@@ -68,8 +126,11 @@ export function checkPublicTypes(
   }
   if (layer.type === "point-cloud") {
     const pointCloud: QgsPointCloudLayer = layer;
-    void pointCloud;
-    // @ts-expect-error Only vector and raster layers expose renderer settings.
+    const type: string | undefined = layer.renderer?.type;
+    void [pointCloud, type];
+  }
+  if (layer.type === "plugin") {
+    // @ts-expect-error Plugin layers do not expose renderer settings.
     layer.renderer;
   }
   switch (layer.type) {

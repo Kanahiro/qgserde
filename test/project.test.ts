@@ -56,6 +56,23 @@ function canonicalDocument(xml: string) {
         for (const text of child.children)
           if (text.type === "text") text.value = String(Number(text.value));
   };
+  // Graduated range bounds and layout map extents are written as the shortest
+  // spelling of the double.
+  const visit = (element: XmlElement) => {
+    for (const child of findChildren(element)) {
+      if (child.name === "wgs84extent") extentText(child);
+      if (child.name === "Extent")
+        for (const key of ["xmin", "ymin", "xmax", "ymax"])
+          if (child.attributes[key] !== undefined)
+            child.attributes[key] = String(Number(child.attributes[key]));
+      if (child.name === "range")
+        for (const key of ["lower", "upper"])
+          if (child.attributes[key] !== undefined)
+            child.attributes[key] = String(Number(child.attributes[key]));
+      visit(child);
+    }
+  };
+  visit(document.root);
   const canvas = findChild(document.root, "mapcanvas");
   extentText(canvas && findChild(canvas, "extent"));
   const settings = findChild(document.root, "ProjectViewSettings");
@@ -519,6 +536,14 @@ test("QGIS 3 output rewrites QGIS 4 property keys as element names", () => {
 for (const fixture of [
   "qgis3",
   "qgis3-custom-order",
+  "qgis3-labeling",
+  "qgis3-layer-types",
+  "qgis3-layouts",
+  "qgis3-project-settings",
+  "qgis3-raster-styles",
+  "qgis3-renderers",
+  "qgis3-styles",
+  "qgis3-vector-settings",
   "qgis3-raster",
   "qgis3-relations",
   "qgis3-view-settings",

@@ -41,7 +41,7 @@ test("tile fixture contains the expected raster/vector layers and has a single v
     const isVisible = parentVisible && group.checked !== "unchecked";
     for (const child of group.children) {
       if (child.type === "group") visit(child, isVisible, depth + 1);
-      else {
+      else if (child.type === "layer") {
         assert.ok(ids.has(child.layerId), `Missing ${child.layerId}`);
         references.push(child.layerId);
         if (isVisible && child.checked !== "unchecked")

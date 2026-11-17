@@ -223,6 +223,12 @@ export function readExtent(
   return result;
 }
 
+const attributeExtents = new Set([
+  "DefaultViewExtent",
+  "Extent",
+  "PresetFullExtent",
+]);
+
 export function writeExtent(
   parent: XmlElement,
   extent: QgsRectangle | undefined,
@@ -234,8 +240,9 @@ export function writeExtent(
   }
   const element = ensure(parent, name);
   for (const coordinate of ["xmin", "ymin", "xmax", "ymax"] as const) {
+    // QGIS writes these extents as attributes and the others as child text.
     if (
-      name === "DefaultViewExtent" ||
+      attributeExtents.has(name) ||
       element.attributes[coordinate] !== undefined
     )
       putAttribute(element, coordinate, extent[coordinate]);

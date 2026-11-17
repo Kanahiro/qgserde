@@ -70,8 +70,10 @@ Use `parseQgs(xml)` to load an existing project, then edit its properties.
 | `QgsError`                           | Identify failures by their `code`.                                    |
 
 The model contains plain objects and arrays. `QgsMapLayer` is a discriminated
-union: checking `layer.type` gives access to vector fields, raster bands, or the
-common settings of other layer types. See the [guide](https://kanahiro.github.io/qgserde/)
+union: checking `layer.type` gives access to vector fields and renderers, raster
+bands, or the common settings of other layer types. Vector renderers, labeling,
+and layout items are modeled with their symbols, text formats, and settings;
+see the guide for the full coverage. See the [guide](https://kanahiro.github.io/qgserde/)
 for editing rules and the full type reference.
 
 ## Data preservation

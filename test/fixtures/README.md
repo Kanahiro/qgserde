@@ -55,3 +55,68 @@ layer = QgsVectorLayer(
 project.addMapLayer(layer)
 project.write("qgis4.qgs")
 ```
+
+## qgis3-labeling.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package). It
+contains two memory layers: `simple` with simple labeling (text buffer, marker
+background shape, simple callout, and a data-defined size) and `rules` with
+nested rule-based labeling, including an expression label and a disabled
+`ELSE` rule.
+
+## qgis3-raster-styles.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package) from a
+2x2 ASCII grid and a three-band VRT of it, which are not committed. Layers use
+single-band gray (contrast enhancement, brightness, hue/saturation, bilinear
+provider resampling, user no-data), pseudocolor (gradient color ramp shader),
+paletted, multiband color (per-band contrast, RGB transparency), and hillshade
+renderers.
+
+## qgis3-vector-settings.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package). Two
+memory layers, `cities` and `countries`, with a relation between them. `cities`
+has an alias, a default value, editor widgets, constraints, split policies,
+read-only, label-on-top and reuse-last-value fields, a virtual field, a join, a
+data dependency, an action, attribute table and conditional styles, a tabbed
+drag-and-drop form with Python init code, a display expression, a map tip,
+custom properties, server URLs and keywords, layer metadata, temporal and
+elevation settings, and geometry options.
+
+## qgis3-project-settings.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package). Two
+memory layers and a mutually exclusive group with a custom property, project
+variables, WMS properties, ellipsoid and units, transaction mode and flags,
+snapping, a coordinate operation, a relation, a map theme, a bookmark, time
+settings, predefined scales, project metadata, display and style settings.
+
+## qgis3-renderers.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package). Memory
+layers use heatmap, point displacement (embedding a categorized renderer),
+point cluster, inverted polygon, 2.5D, and merged feature renderers, and a
+single-symbol renderer with an order-by clause and paint effect stacks on the
+renderer and its symbol layer.
+
+## qgis3-layer-types.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package): an XYZ
+vector tile layer with a basic renderer style and labeling style, a mesh layer
+read from a one-quad 2DM file (not committed) with a native mesh frame, an
+annotation layer with point text, marker, and line items, and a group layer
+with a memory child layer.
+
+## qgis3-layouts.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package): a
+print layout with a map (grid, locked layer set), label, legend, scale bar,
+picture, shape, polyline, an attribute table with one frame, an enabled atlas,
+and a custom property.
+
+## qgis3-styles.qgs
+
+Generated with PyQGIS from QGIS `3.34.4-Prizren` (Ubuntu 24.04 package): a
+memory layer with two named style variants and a text annotation on the map
+canvas.

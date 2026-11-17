@@ -11,12 +11,12 @@ import { writeQgisFixtures } from "./qgis/fixtures.ts";
 const qgisPython = process.env.QGIS_PYTHON;
 test("QGIS opens generated, edited and round-tripped projects including vector tiles and WMS", {
   skip: !qgisPython,
-}, () => {
+}, async () => {
   assert.ok(qgisPython);
   const directory = mkdtempSync(join(tmpdir(), "qgserde-"));
   const version = process.env.QGIS_VERSION ?? "4.2";
   try {
-    writeQgisFixtures(directory, version);
+    await writeQgisFixtures(directory, version);
     const output = execFileSync(
       qgisPython,
       [
@@ -30,7 +30,7 @@ test("QGIS opens generated, edited and round-tripped projects including vector t
         timeout: 60_000,
       },
     );
-    assert.match(output, /QGIS verified 7 projects/u);
+    assert.match(output, /QGIS verified 21 projects/u);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
