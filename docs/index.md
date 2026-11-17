@@ -228,9 +228,9 @@ options, and relations kept with the layer.
 
 Every layer type models its named style variants (`styles`): the current
 style name and each variant's stored settings in `style`, with the same names
-as on the layer, such as `renderer` and `labeling`. QGIS stores the current
-variant empty because the layer itself holds it, and does not re-apply
-`current` on load. Field settings inside variants stay in extension data.
+and types as on the layer, such as `renderer`, `labeling`, `opacity`, and, for
+vector layers, `fields`. QGIS stores the current variant empty because the
+layer itself holds it, and does not re-apply `current` on load.
 Layers also model their 3D renderer (`renderer3d`: symbols with placement,
 material, and edges; rules; categories), other `<maplayer>` attributes,
 `flags`, `customProperties`, `blendMode`, map tip, `notes`, legend settings and
@@ -277,6 +277,9 @@ If a CRS read from XML contains only an authority ID, serialization adds
 the missing `srsid` lookup marker required by QGIS. Existing IDs, WKT and PROJ
 definitions are preserved as modeled values. User-defined (`USER:`) IDs are not completed; serializing one without WKT or PROJ causes `INVALID_EDIT`.
 
+A CRS also keeps its `coordinateEpoch` and, for a topocentric CRS, its
+`topocentricBase` CRS.
+
 `project.extent` can carry its own CRS in `extent.crs`. An extent without one
 uses the project CRS. Rotation is clockwise, in degrees.
 
@@ -314,7 +317,7 @@ annotations, the QGIS 2 legend of older projects, other root attributes such as
 `saveUser`, and
 project metadata keywords, contacts, links, history, and dates. It also models
 3D map views (`mapViews3D`) with their scene settings, camera, and animation;
-`reports`; `sensors`; the preset full extent; labeling engine rules; and, for
+`reports`; `sensors`; stored `processingModels`; the preset full extent; labeling engine rules; and, for
 QGIS 4.2, `elevationProfiles` and selective masking source sets. Layer-tree
 nodes model their other attributes, such as `mutually-exclusive`, legend patch
 shapes, and custom properties; QGIS 4.2 custom nodes have `type: "custom"`.

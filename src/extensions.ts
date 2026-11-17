@@ -1,4 +1,4 @@
-import { readCrs, readExtent, text } from "./codec.ts";
+import { MAX_CRS_DEPTH, readCrs, readExtent, text } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import { layerSpec } from "./layer-codec.ts";
 import {
@@ -28,6 +28,8 @@ type Property = {
   property: string[];
   origin?: true;
   field?: string;
+  /** Path from the owner to the field list `field` refers to; `fields` by default. */
+  fieldsAt?: string[];
   format?: "boolean" | "checkState" | "pointcloud";
   /** Stored spelling of a number, such as `1.0`, kept while the value is unchanged. */
   text?: string;
@@ -215,6 +217,13 @@ export class ExtensionCodec {
     this.attribute(srs, "nativeFormat", {
       property: [...prefix, "nativeFormat"],
     });
+    this.attribute(srs, "coordinateEpoch", {
+      property: [...prefix, "coordinateEpoch"],
+    });
+    // Bind as deep as readCrs models, so deeper nesting stays literal.
+    const depth = prefix.filter((key) => key === "topocentricBase").length;
+    if (depth < MAX_CRS_DEPTH && srs && findChild(srs, "topocentricBaseCrs"))
+      this.crs(srs, "topocentricBaseCrs", [...prefix, "topocentricBase"]);
   }
 
   private extent(
@@ -330,6 +339,41 @@ export class ExtensionCodec {
     });
   }
 
+  /**
+   * Capture fields and the per-field records of `element`, a layer or a style
+   * document. `path` leads from the owner to the field list.
+   */
+  captureFields(fields: QgsField[], element: XmlElement, path: string[]): void {
+    for (const field of fields) this.field(field);
+    const at = path.join("/") === "fields" ? {} : { fieldsAt: path };
+    for (const table of fieldRecords) {
+      const parent = findChild(element, table.container);
+      const seen = new Set<string>();
+      if (parent)
+        for (const record of findChildren(parent, table.tag)) {
+          const name = record.attributes[table.key];
+          if (
+            name === undefined ||
+            seen.has(name) ||
+            !fields.some((field) => field.name === name)
+          )
+            continue;
+          seen.add(name);
+          for (const [attribute, [property]] of Object.entries(table.values))
+            this.attribute(record, attribute, {
+              property: [property],
+              field: name,
+              ...at,
+            });
+        }
+    }
+  }
+
+  /** Restore fields captured with {@link captureFields}. */
+  restoreFields(fields: QgsField[], version: string): void {
+    for (const field of fields) this.restore(field, version, "field");
+  }
+
   private layer(layer: QgsMapLayer): void {
     const element = this.source(layer);
     if (!element) return;
@@ -363,27 +407,7 @@ export class ExtensionCodec {
     if (layer.type === "vector") {
       for (const key of ["geometry", "wkbType", "readOnly", "labelsEnabled"])
         this.attribute(element, key, { property: [key] });
-      for (const field of layer.fields) this.field(field);
-      for (const table of fieldRecords) {
-        const parent = findChild(element, table.container);
-        const seen = new Set<string>();
-        if (parent)
-          for (const record of findChildren(parent, table.tag)) {
-            const name = record.attributes[table.key];
-            if (
-              name === undefined ||
-              seen.has(name) ||
-              !layer.fields.some((field) => field.name === name)
-            )
-              continue;
-            seen.add(name);
-            for (const [attribute, [property]] of Object.entries(table.values))
-              this.attribute(record, attribute, {
-                property: [property],
-                field: name,
-              });
-          }
-      }
+      this.captureFields(layer.fields, element, ["fields"]);
       if (layer.renderer) captureRenderer(layer.renderer, this);
     }
     captureSpec(layerSpec(layer.type), layer as never, element, this, []);
@@ -514,8 +538,13 @@ export class ExtensionCodec {
     let current: unknown = owner;
     if (value.origin) current = owner.extensions?.origin;
     if (value.field) {
-      const fields = (owner as QgsMapLayer & { fields?: QgsField[] }).fields;
-      current = fields?.find(
+      let fields: unknown = owner;
+      for (const key of value.fieldsAt ?? ["fields"])
+        fields =
+          fields && typeof fields === "object"
+            ? (fields as Record<string, unknown>)[key]
+            : undefined;
+      current = (Array.isArray(fields) ? (fields as QgsField[]) : []).find(
         (field) =>
           (field.extensions?.origin?.name ?? field.name) === value.field,
       );
@@ -650,7 +679,7 @@ export class ExtensionCodec {
   restoreProject(project: QgsProject, version: string): XmlDocument {
     for (const layer of project.layers) {
       if (layer.type === "vector") {
-        for (const field of layer.fields) this.restore(field, version, "field");
+        this.restoreFields(layer.fields, version);
         if (layer.renderer) restoreRenderer(layer.renderer, this, version);
       }
       restoreSpec(layerSpec(layer.type), layer as never, this, version, 0);

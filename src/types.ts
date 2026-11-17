@@ -313,6 +313,8 @@ export interface QgsProject {
   layouts?: QgsLayout[];
   /** Reports, stored with the layouts. */
   reports?: QgsReport[];
+  /** Processing models stored in the project (`<projectModels>`). */
+  processingModels?: QgsProcessingModel[];
   /** Sensors (`<Sensors>`), such as TCP or serial port feeds. */
   sensors?: QgsSensor[];
   /** Elevation profiles (QGIS 4.2+). */
@@ -408,6 +410,10 @@ export interface QgsCrs {
   ellipsoidAcronym?: string;
   /** QGIS attribute identifying the source CRS definition format. */
   nativeFormat?: string;
+  /** Coordinate epoch of a dynamic CRS, as a decimal year. */
+  coordinateEpoch?: number;
+  /** Geographic or projected CRS a topocentric CRS is based on (QGIS 4.2+). */
+  topocentricBase?: QgsCrs;
 }
 
 /** Rectangle in CRS coordinate units. All coordinates must be finite. */
@@ -582,6 +588,39 @@ export interface QgsLegendTextOnSymbol {
   format?: QgsTextFormat;
   /** Text per legend item, by legend key. */
   content?: QgsLegendTextOnSymbolItemAttributes[];
+}
+
+/**
+ * Processing model as QGIS stores it. Keys other than these, and the contents
+ * of algorithms and parameters, are kept as variants.
+ */
+export interface QgsProcessingModel extends QgsVariantMap {
+  /** Model name. */
+  model_name?: string;
+  /** Model group. */
+  model_group?: string;
+  /** Help texts, by key such as `ALG_DESC`. */
+  help?: QgsVariantMap;
+  /** Model format version, such as `Version2`. */
+  internal_version?: string;
+  /** Child algorithms, by child ID. */
+  children?: QgsVariantMap;
+  /** Model inputs, by parameter name. */
+  parameters?: QgsVariantMap;
+  /** Input parameter definitions, by parameter name. */
+  parameterDefinitions?: QgsVariantMap;
+  /** Designer group boxes. */
+  groupBoxes?: QgsVariant[];
+  /** Model variables. */
+  modelVariables?: QgsVariantMap;
+  /** Parameter values last used in the designer. */
+  designerParameterValues?: QgsVariantMap;
+  /** Input order. */
+  parameterOrder?: string[];
+  /** Output order. */
+  outputOrder?: string[];
+  /** Group of model outputs. */
+  outputGroup?: string;
 }
 
 /** Sensor of a project. */
@@ -1231,26 +1270,50 @@ export interface QgsMapLayerBase {
 }
 
 /** Named style variants of a layer (`<map-layer-style-manager>`). */
-export interface QgsLayerStyles {
+export interface QgsLayerStyles<S = QgsLayerStyle> {
   /** Name of the current style. The layer's own settings are that style; QGIS does not re-apply it on load. */
   current?: string;
   /** Style variants; each keeps its stored style document. */
-  variants?: QgsLayerStyleVariant[];
+  variants?: QgsLayerStyleVariant<S>[];
 }
 
 /** Style variant of a layer. */
-export interface QgsLayerStyleVariant {
+export interface QgsLayerStyleVariant<S = QgsLayerStyle> {
   /** Style name. */
   name?: string;
   /**
-   * Settings stored in the variant, with the same names as on its layer, such
-   * as `renderer`, `labeling`, or `opacity`-related settings. Field settings
-   * of a variant stay in extension data.
+   * Settings stored in the variant, with the same names and types as on its
+   * layer, such as `renderer`, `labeling`, `opacity`, and, for vector layers,
+   * `fields`. QGIS stores only the style categories saved with the variant.
    */
-  style?: Record<string, unknown>;
+  style?: S;
   /** @internal */
   readonly extensions?: QgsExtensions;
 }
+
+/**
+ * Layer settings a style variant can hold. The layer's identity, data source,
+ * type, CRS, and extent stay with the layer.
+ */
+export type QgsLayerStyle<L extends QgsMapLayerBase = QgsMapLayerBase> =
+  Partial<
+    Omit<
+      L,
+      | "type"
+      | "xmlType"
+      | "id"
+      | "name"
+      | "source"
+      | "provider"
+      | "providerEncoding"
+      | "crs"
+      | "extent"
+      | "geometry"
+      | "wkbType"
+      | "styles"
+      | "extensions"
+    >
+  >;
 
 /** 3D renderer of a layer. */
 export interface QgsRenderer3d {
@@ -1446,6 +1509,8 @@ export interface QgsLayerMetadata extends QgsMetadataBase {
 
 /** Vector layer settings. Feature data and attribute values are not included. */
 export interface QgsVectorLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsVectorLayer>>;
   /** Discriminant for a vector layer. */
   type: "vector";
   /** QGIS geometry type name, such as `Point`. */
@@ -1724,6 +1789,8 @@ export interface QgsRelation {
 
 /** Raster layer and band display settings. */
 export interface QgsRasterLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsRasterLayer>>;
   /** Discriminant for a raster layer. */
   type: "raster";
   /** Renderer and its type-specific settings. */
@@ -1752,6 +1819,8 @@ export interface QgsRasterLayer extends QgsMapLayerBase {
 
 /** Mesh layer. */
 export interface QgsMeshLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsMeshLayer>>;
   /** Discriminant for a mesh layer. */
   type: "mesh";
   /** Mesh rendering settings. */
@@ -1854,6 +1923,8 @@ export interface QgsMeshDatasetGroups {
 
 /** Vector tile layer. */
 export interface QgsVectorTileLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsVectorTileLayer>>;
   /** Discriminant for a vector tile layer. */
   type: "vector-tile";
   /** Tile matrix set read from the tile source. */
@@ -1932,6 +2003,8 @@ export type QgsVectorTileLabeling =
 
 /** Point cloud layer. */
 export interface QgsPointCloudLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsPointCloudLayer>>;
   /** Discriminant for a point cloud layer. The input spelling `pointcloud` is normalized to `point-cloud`. */
   type: "point-cloud";
   /** Point cloud renderer. */
@@ -1960,12 +2033,16 @@ export interface QgsPointCloudRenderer {
 
 /** Plugin layer. Type-specific settings stay in extension data. */
 export interface QgsPluginLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsPluginLayer>>;
   /** Discriminant for a plugin layer. */
   type: "plugin";
 }
 
 /** Annotation layer. */
 export interface QgsAnnotationLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsAnnotationLayer>>;
   /** Discriminant for an annotation layer. */
   type: "annotation";
   /** Annotation items. */
@@ -1994,6 +2071,8 @@ export interface QgsAnnotationItem {
 
 /** Group layer, which renders other layers as one. */
 export interface QgsGroupLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsGroupLayer>>;
   /** Discriminant for a group layer. */
   type: "group";
   /** IDs of the child layers. */
@@ -2002,6 +2081,8 @@ export interface QgsGroupLayer extends QgsMapLayerBase {
 
 /** Tiled scene layer. */
 export interface QgsTiledSceneLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsTiledSceneLayer>>;
   /** Discriminant for a tiled scene layer. */
   type: "tiled-scene";
   /** Tiled scene renderer. */
@@ -2022,6 +2103,8 @@ export interface QgsTiledSceneRenderer {
 
 /** Unrecognized layer type, kept separate so known layer types can still be narrowed. */
 export interface QgsUnknownLayer extends QgsMapLayerBase {
+  /** Named style variants holding this layer type's settings. */
+  styles?: QgsLayerStyles<QgsLayerStyle<QgsUnknownLayer>>;
   /** Discriminant for an unrecognized layer type. */
   type: "unknown";
   /** Original XML type name, restored on serialization. */

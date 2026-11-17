@@ -11,13 +11,17 @@ export function editStylesFixture(): QgsProject {
     ),
   );
   const layer = project.layers[0]!;
+  if (layer.type !== "vector") throw new Error("Expected a vector layer");
   const blue = layer.styles?.variants?.find((item) => item.name === "blue");
   if (!blue || !layer.styles) throw new Error("Missing style variant");
   blue.name = "navy";
-  const renderer = blue.style?.renderer as
-    | { symbol?: { layers: { properties: Record<string, string> }[] } }
-    | undefined;
-  renderer!.symbol!.layers[0]!.properties.color = "0,0,128,255";
+  const renderer = blue.style?.renderer;
+  if (renderer?.type !== "singleSymbol") throw new Error("Expected a symbol");
+  renderer.symbol!.layers[0]!.properties.color = "0,0,128,255";
+  const name = blue.style?.fields?.find((field) => field.name === "name");
+  if (!name) throw new Error("Expected the name field in the variant");
+  name.alias = "Navy name";
+  blue.style!.opacity = 0.5;
   const note = project.annotations?.[0];
   if (!note?.item?.attributes) throw new Error("Missing annotation");
   note.item.attributes.mapPosX = 5;

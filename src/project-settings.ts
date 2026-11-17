@@ -129,6 +129,7 @@ export const projectSpec: Spec = {
     },
     { kind: "custom", field: "properties", custom: projectProperties },
     mapViews3DEntry,
+    { kind: "variants", field: "processingModels", at: ["projectModels"] },
     { kind: "owners", field: "layouts", at: ["Layouts"], spec: layoutSpec },
     { kind: "owners", field: "reports", at: ["Layouts"], spec: reportSpec },
     {

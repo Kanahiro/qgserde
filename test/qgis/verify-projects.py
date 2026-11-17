@@ -26,12 +26,14 @@ from qgis.core import (
     QgsLayoutItemShape,
     QgsMapLayer,
     QgsPalLayerSettings,
+    QgsProcessingModelAlgorithm,
     QgsProject,
     QgsRasterDataProvider,
     QgsReadWriteContext,
     QgsSingleBandGrayRenderer,
     QgsSymbol,
     QgsSymbolLayer,
+    QgsXmlUtils,
 )
 from qgis.PyQt import sip
 from qgis.PyQt.QtXml import QDomDocument
@@ -349,6 +351,13 @@ def check_settings(project):
         assert names == [["first"], ["second"]], names
 
 
+def document_root(project):
+    document = QDomDocument()
+    with open(project.fileName(), encoding="utf-8") as file:
+        assert document.setContent(file.read())
+    return document.documentElement()
+
+
 def check_project_settings(project):
     assert project.title() == "Project settings"
     scope = QgsExpressionContextUtils.projectScope(project)
@@ -380,10 +389,7 @@ def check_project_settings(project):
     assert project.viewSettings().useProjectScales()
     assert sorted(project.viewSettings().mapScales()) == [1000, 5000]
     # The views manager exposes no getters to Python; read the stored view.
-    document = QDomDocument()
-    with open(project.fileName(), encoding="utf-8") as file:
-        assert document.setContent(file.read())
-    docks = document.documentElement().firstChildElement("mapViewDocks3D")
+    docks = document_root(project).firstChildElement("mapViewDocks3D")
     view = docks.firstChildElement("view")
     assert view.attribute("name") == "3D Map 1"
     if Qgs3D:
@@ -395,6 +401,11 @@ def check_project_settings(project):
         assert [layer.id() for layer in scene.layers()] == ["points_layer_0001"]
         assert scene.eyeDomeLightingEnabled()
         assert len(scene.lightSources()) == 1
+    models = document_root(project).firstChildElement("projectModels")
+    model = QgsProcessingModelAlgorithm()
+    assert model.loadVariant(QgsXmlUtils.readVariant(models.firstChildElement()))
+    assert model.name() == "Buffer points" and model.group() == "Tests"
+    assert model.variables() == {"distance": 5}, model.variables()
     sensors = project.sensorManager().sensors()
     assert [s.name() for s in sensors] == ["GPS feed"], sensors
     assert sensors[0].type() == "tcp_socket"
@@ -539,6 +550,9 @@ def check_styles(project):
     assert manager.currentStyle() == "red"
     assert manager.setCurrentStyle("navy")
     assert layer.renderer().symbol().color().name() == "#000080"
+    name = layer.fields().indexOf("name")
+    assert layer.attributeAlias(name) == "Navy name", layer.attributeAlias(name)
+    assert layer.opacity() == 0.5
     # Headless QGIS 3.44+ does not instantiate legacy canvas annotations.
     annotations = project.annotationManager().annotations()
     assert len(annotations) <= 1

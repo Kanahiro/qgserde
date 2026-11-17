@@ -137,6 +137,23 @@ export function createProjectSettingsProject(): QgsProject {
       cameraPose: { x: 140, y: 0, z: -36, dist: 5000, pitch: 30, heading: 10 },
     },
   ];
+  project.processingModels = [
+    {
+      model_name: "Buffer points",
+      model_group: "Tests",
+      help: {},
+      internal_version: "Version2",
+      children: {},
+      parameters: {},
+      parameterDefinitions: {},
+      groupBoxes: [],
+      modelVariables: { distance: 5 },
+      designerParameterValues: {},
+      parameterOrder: [],
+      outputOrder: [],
+      outputGroup: "",
+    },
+  ];
   project.sensors = [
     {
       attributes: {

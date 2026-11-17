@@ -31,7 +31,13 @@ import {
 } from "./layer-types.ts";
 import { rasterLayerSpec } from "./raster.ts";
 import { fieldRecords } from "./schema.ts";
-import { type Entry, readSpec, type Spec, writeSpec } from "./spec.ts";
+import {
+  type Custom,
+  type Entry,
+  readSpec,
+  type Spec,
+  writeSpec,
+} from "./spec.ts";
 import { nestedRenderer, readRenderer, writeRenderer } from "./symbology.ts";
 import type {
   QgisVersion,
@@ -43,16 +49,70 @@ import type {
 import { readVariant, writeVariant } from "./variant.ts";
 import { createElement, findChild, findChildren } from "./xml.ts";
 
-// Style variants hold the same settings as their layer, plus the renderer
-// and opacity that the layer itself reads by hand.
+/** Fields and their records in a style document; absent unless it stores fields. */
+const styleFields: Custom = {
+  read(element, codec) {
+    const stored =
+      findChild(element, "fieldConfiguration") ||
+      fieldRecords.some((table) => findChild(element, table.container));
+    return stored ? readFields(element, codec) : undefined;
+  },
+  capture(value, element, codec, path) {
+    if (Array.isArray(value)) codec.captureFields(value, element, path);
+  },
+  restore(value, codec, version) {
+    if (Array.isArray(value)) codec.restoreFields(value, version);
+  },
+  write(value, element, codec) {
+    if (value === undefined) return;
+    if (!Array.isArray(value))
+      throw new QgsError("INVALID_EDIT", "Style fields must be an array");
+    writeFields(element, value as QgsField[], codec);
+  },
+};
+
+const scale = (field: string, attribute: string): Entry => ({
+  kind: "attribute",
+  field,
+  attribute,
+  type: "number",
+});
+// Style variants hold the same settings as their layer, plus those the layer
+// itself reads by hand, such as its renderer and opacity.
+const styleExtras: Entry[] = [
+  { kind: "text", field: "opacity", at: ["layerOpacity"], type: "number" },
+  scale("minScale", "minScale"),
+  scale("maxScale", "maxScale"),
+  {
+    kind: "attribute",
+    field: "scaleBasedVisibility",
+    attribute: "hasScaleBasedVisibilityFlag",
+    type: "boolean",
+  },
+];
 const withVariants = (entries: Entry[], extra: Entry[] = []): Spec => ({
   tag: "maplayer",
-  entries: [...entries, styleVariants([...entries, ...extra])],
+  entries: [...entries, styleVariants([...entries, ...styleExtras, ...extra])],
 });
 const commonLayerSpec = withVariants(commonLayerEntries);
 const vectorLayerSpec = withVariants(
   [...commonLayerEntries, ...vectorLayerEntries],
-  [{ kind: "custom", field: "renderer", custom: nestedRenderer }],
+  [
+    { kind: "custom", field: "renderer", custom: nestedRenderer },
+    { kind: "custom", field: "fields", custom: styleFields },
+    {
+      kind: "attribute",
+      field: "labelsEnabled",
+      attribute: "labelsEnabled",
+      type: "boolean",
+    },
+    {
+      kind: "attribute",
+      field: "readOnly",
+      attribute: "readOnly",
+      type: "boolean",
+    },
+  ],
 );
 const rasterSpec = withVariants([
   ...commonLayerEntries,
