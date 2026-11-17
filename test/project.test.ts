@@ -109,8 +109,12 @@ function withoutLayers(xml: string) {
       {
         name: textOf(layer, "layername"),
         source: textOf(layer, "datasource"),
-        // Annotation and group layers store no provider.
-        providerKey: textOf(layer, "provider"),
+        // Annotation and group layers store no provider; QGIS names theirs annotation.
+        providerKey:
+          textOf(layer, "provider") ||
+          (["annotation", "group"].includes(layer.attributes.type ?? "")
+            ? "annotation"
+            : ""),
       },
     ]),
   );

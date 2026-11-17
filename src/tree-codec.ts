@@ -83,6 +83,17 @@ export function readTree(
 }
 
 /**
+ * The data provider name QGIS writes for a layer. Annotation and group layers
+ * store no `<provider>`, but QGIS gives both an `annotation` data provider.
+ */
+function providerKey(layer: QgsMapLayer): string {
+  return !layer.provider &&
+    (layer.type === "annotation" || layer.type === "group")
+    ? "annotation"
+    : layer.provider;
+}
+
+/**
  * Write the tree for the typed layers without changing caller data. References
  * to removed layers (in `originalIds`) are dropped; new layers are appended.
  */
@@ -140,7 +151,7 @@ export function writeTree(
         for (const [attribute, value] of [
           ["name", layer.name],
           ["source", layer.source],
-          ["providerKey", layer.provider],
+          ["providerKey", providerKey(layer)],
         ] as const)
           putAttribute(element, attribute, value);
       return element;
@@ -189,7 +200,7 @@ export function writeTree(
           id: layer.id,
           name: layer.name,
           source: layer.source,
-          providerKey: layer.provider,
+          providerKey: providerKey(layer),
           checked: "Qt::Checked",
           expanded: "1",
         }),
