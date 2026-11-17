@@ -200,9 +200,11 @@ each renderer type uses: contrast enhancements, min/max origin, a pseudocolor
 `shader` with color `items`, a paletted `palette`, pixel `transparency`, and
 legend settings. Settings QGIS stores as attributes, such as
 `classificationMin`, are typed attribute groups; settings stored as child text,
-such as `minValue`, are string maps. The layer's
+such as `minValue`, are typed child-text groups. The layer's
 `brightnessContrast`, `hueSaturation`, `resampler`, `resamplingStage`,
 `providerResampling`, and per-band `noData` hold the other pipe stages.
+Raster layers also model file-based `attributeTables` and, for QGIS 4, pixel
+value `labeling`.
 
 Removing an optional setting removes the element that stores it; a list stored
 in its own container, such as `noData`, removes the container.
@@ -212,11 +214,12 @@ in its own container, such as `noData`, removes the container.
 QGIS stores per-field settings in layer-level lists keyed by field name. Each
 `QgsField` collects them: alias, `editorWidgetType` and `editorWidgetConfig`,
 default value, constraints and their strengths, split, duplicate, and merge
-policies, and `editable`, `labelOnTop`, and `reuseLastValue`. Renaming a field
-renames all of its records.
+policies, `comment`, and `editable`, `labelOnTop`, and `reuseLastValue`.
+Renaming a field renames all of its records.
 
-Vector layers also model `diagram` renderers (pie, histogram, and text, with
-categories and their fields) and `diagramSettings`, virtual `expressionFields`,
+Vector layers also model `diagram` renderers (pie, histogram, text, and
+stacked `subRenderers`, with categories, their fields, and a data-defined size
+legend) and `diagramSettings`, virtual `expressionFields`,
 `joins`, data and layer
 dependencies, `actions`, the attribute table, conditional styles, stored
 expressions, the attribute `form` (including drag-and-drop `items` with
@@ -228,10 +231,12 @@ style name and each variant's stored settings in `style`, with the same names
 as on the layer, such as `renderer` and `labeling`. QGIS stores the current
 variant empty because the layer itself holds it, and does not re-apply
 `current` on load. Field settings inside variants stay in extension data.
-Layers also model their 3D renderer type and settings, other `<maplayer>`
-attributes, `flags`,
-`customProperties`, `blendMode`, map tip, legend settings, `temporal` and
-`elevation` settings, `metadata`, and `server` publishing settings. Custom
+Layers also model their 3D renderer (`renderer3d`: symbols with placement,
+material, and edges; rules; categories), other `<maplayer>` attributes,
+`flags`, `customProperties`, `blendMode`, map tip, `notes`, legend settings and
+text on legend symbols, `temporal` and `elevation` settings, `metadata`
+(including temporal extents), and `server` publishing settings, such as WMS
+dimensions. Custom
 properties are written as `<property>` elements for QGIS before 3.20, which
 cannot store nested values, and as an `<Option>` map afterwards. QGIS writes
 `<expressionfields>` twice; both copies are kept identical.
@@ -307,9 +312,12 @@ context, snapping, server data-defined properties, elevation shading,
 predefined scales, style, time, terrain, display, and GPS settings, map canvas
 annotations, the QGIS 2 legend of older projects, other root attributes such as
 `saveUser`, and
-project metadata keywords, contacts, links, history, and dates. Layer-tree
-nodes model their other attributes, such as `mutually-exclusive`, and custom
-properties.
+project metadata keywords, contacts, links, history, and dates. It also models
+3D map views (`mapViews3D`) with their scene settings, camera, and animation;
+`reports`; `sensors`; the preset full extent; labeling engine rules; and, for
+QGIS 4.2, `elevationProfiles` and selective masking source sets. Layer-tree
+nodes model their other attributes, such as `mutually-exclusive`, legend patch
+shapes, and custom properties; QGIS 4.2 custom nodes have `type: "custom"`.
 
 ### Layouts
 
@@ -319,9 +327,12 @@ properties. A `QgsLayoutItem` has the QGIS item type number in `type` (for
 example `65639` for maps and `65641` for labels) and its settings in
 `attributes`, such as `labelText`, `position`, and `size`. Items also model
 their colors, data-defined and custom properties, symbols, text formats, map
-extents, CRS, locked layers, grids and overviews, polyline nodes, legend
-styles, and scale bar symbols. QGIS reads only the parts an item type uses.
-Legend trees and other unmodeled item children stay with their item.
+extents, CRS, locked layers and style overrides, label-blocking items, grids
+and overviews, polyline nodes, group members, legend styles, trees, and map
+filters, scale bar symbols and number formats, elevation profile and chart
+plots, and 3D map scenes. Manual tables model their headers, cells, row
+heights, and column widths. QGIS reads only the parts an item type uses.
+Unmodeled item children stay with their item.
 
 ## Attribute groups
 
