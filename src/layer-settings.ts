@@ -56,6 +56,7 @@ import {
   type Spec,
   writeOwned,
 } from "./spec.ts";
+import { sizeLegendEntry } from "./symbology.ts";
 import type { QgsVariant, QgsVariantMap, XmlElement } from "./types.ts";
 import { bindVariant, isMap, readVariant, writeVariant } from "./variant.ts";
 import { createElement, findChild, findChildren, getText } from "./xml.ts";
@@ -582,6 +583,7 @@ const diagramSpecs = new Map(
           table: diagramTables[tag] ?? diagramRendererAttributes,
         },
         { kind: "owners", field: "categories", spec: diagramCategory },
+        sizeLegendEntry,
       ],
     } satisfies Spec,
   ]),

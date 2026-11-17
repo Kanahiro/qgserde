@@ -115,6 +115,10 @@ import type {
   QgsRelationFieldRefAttributes,
   QgsRenderer3DAttributes,
   QgsSelectionAttributes,
+  QgsSizeLegendAttributes,
+  QgsSizeLegendClassAttributes,
+  QgsSizeLegendFontAttributes,
+  QgsSizeLegendTextStyleAttributes,
   QgsSnappingLayerSettingsAttributes,
   QgsSnappingSettingsAttributes,
   QgsStoredExpressionAttributes,
@@ -1795,12 +1799,32 @@ export interface QgsFeatureRendererBase {
   readonly extensions?: QgsExtensions;
 }
 
+/** Legend of data-defined symbol sizes, drawn collapsed or as separate items. */
+export interface QgsSizeLegend {
+  /** `type` (`collapsed` or `separated`), `valign`, and `title`. */
+  attributes?: QgsSizeLegendAttributes;
+  /** Symbol drawn at each size. */
+  symbol?: QgsSymbol;
+  /** Leader line symbol of a collapsed legend. */
+  lineSymbol?: QgsSymbol;
+  /** Size scale transformer, as QGIS stores it. */
+  transformer?: QgsVariant;
+  /** Label color and alignment. */
+  textStyle?: QgsSizeLegendTextStyleAttributes;
+  /** Label font. */
+  font?: QgsSizeLegendFontAttributes;
+  /** Manual size classes; without them QGIS picks sizes. */
+  classes?: QgsSizeLegendClassAttributes[];
+}
+
 /** Draws every feature with one symbol. */
 export interface QgsSingleSymbolRenderer extends QgsFeatureRendererBase {
   /** Discriminant, matching the QGIS renderer name. */
   type: "singleSymbol";
   /** Symbol for every feature. Without one, QGIS uses a default renderer. */
   symbol?: QgsSymbol;
+  /** Legend of data-defined symbol sizes (`<data-defined-size-legend>`). */
+  dataDefinedSizeLegend?: QgsSizeLegend;
 }
 
 /** Category value. A list matches any of its values; `null` is the fallback category. */
@@ -1831,6 +1855,8 @@ export interface QgsRendererCategory {
 export interface QgsCategorizedRenderer extends QgsFeatureRendererBase {
   /** Discriminant, matching the QGIS renderer name. */
   type: "categorizedSymbol";
+  /** Legend of data-defined symbol sizes (`<data-defined-size-legend>`). */
+  dataDefinedSizeLegend?: QgsSizeLegend;
   /** Field name or expression. */
   attribute: string;
   /** Categories in legend order. */
@@ -1863,6 +1889,8 @@ export interface QgsRendererRange {
 export interface QgsGraduatedRenderer extends QgsFeatureRendererBase {
   /** Discriminant, matching the QGIS renderer name. */
   type: "graduatedSymbol";
+  /** Legend of data-defined symbol sizes (`<data-defined-size-legend>`). */
+  dataDefinedSizeLegend?: QgsSizeLegend;
   /** Field name or expression. */
   attribute: string;
   /** Ranges in legend order. */

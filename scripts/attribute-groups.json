@@ -825,5 +825,26 @@
       "name": "string",
       "active": "boolean"
     }
+  },
+  "SizeLegend": {
+    "doc": "`<data-defined-size-legend>` attributes.",
+    "keys": [
+      "^qgsdatadefinedsizelegend\\.cpp\\|@QgsDataDefinedSizeLegend::writeXml:elem$"
+    ]
+  },
+  "SizeLegendTextStyle": {
+    "doc": "Size legend `<text-style>` attributes.",
+    "keys": ["^qgsdatadefinedsizelegend\\.cpp\\|text-style$"]
+  },
+  "SizeLegendFont": {
+    "doc": "Size legend `<font>` attributes.",
+    "keys": ["^qgsdatadefinedsizelegend\\.cpp\\|font$"],
+    "kinds": {
+      "family": "string"
+    }
+  },
+  "SizeLegendClass": {
+    "doc": "Size legend `<class>`.",
+    "keys": ["^qgsdatadefinedsizelegend\\.cpp\\|class$"]
   }
 }

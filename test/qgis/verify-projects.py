@@ -205,6 +205,10 @@ def check_symbology(project):
 
     graduated = layers["graduated"].renderer()
     assert graduated.type() == "graduatedSymbol", graduated.type()
+    legend = graduated.dataDefinedSizeLegend()
+    assert legend is not None and legend.title() == "Sizes"
+    assert [c.label for c in legend.classes()] == ["small", "large"]
+    assert legend.textColor().name() == "#ff0000"
     ranges = graduated.ranges()
     assert [(r.lowerValue(), r.upperValue()) for r in ranges] == [(0, 10), (10, 20)]
     marker = ranges[1].symbol().symbolLayer(0)

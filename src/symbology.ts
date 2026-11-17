@@ -6,6 +6,10 @@ import {
   orderByClauseAttributes,
   pointClusterRendererAttributes,
   pointDisplacementRendererAttributes,
+  sizeLegendAttributes,
+  sizeLegendClassAttributes,
+  sizeLegendFontAttributes,
+  sizeLegendTextStyleAttributes,
   symmetricModeAttributes,
 } from "./attributes.generated.ts";
 import {
@@ -331,8 +335,55 @@ const embedded: Entry = {
   custom: nestedRenderer,
 };
 
+/** `<data-defined-size-legend>` of a renderer or diagram. */
+export const sizeLegendEntry: Entry = {
+  kind: "object",
+  field: "dataDefinedSizeLegend",
+  at: ["data-defined-size-legend"],
+  spec: {
+    tag: "data-defined-size-legend",
+    entries: [
+      {
+        kind: "attributes",
+        field: "attributes",
+        table: sizeLegendAttributes,
+      },
+      { kind: "symbol", field: "symbol", name: "source" },
+      {
+        kind: "symbol",
+        field: "lineSymbol",
+        name: "lineSymbol",
+        at: ["lineSymbol"],
+      },
+      { kind: "variant", field: "transformer", at: ["transformer"] },
+      {
+        kind: "attributes",
+        field: "textStyle",
+        table: sizeLegendTextStyleAttributes,
+        at: ["text-style"],
+      },
+      {
+        kind: "attributes",
+        field: "font",
+        table: sizeLegendFontAttributes,
+        at: ["text-style", "font"],
+      },
+      {
+        kind: "records",
+        field: "classes",
+        at: ["classes"],
+        item: "class",
+        table: sizeLegendClassAttributes,
+      },
+    ],
+  },
+};
+
 const rendererExtrasByType: Record<string, Entry[]> = {
+  singleSymbol: [sizeLegendEntry],
+  categorizedSymbol: [sizeLegendEntry],
   graduatedSymbol: [
+    sizeLegendEntry,
     {
       kind: "object",
       field: "classificationMethod",

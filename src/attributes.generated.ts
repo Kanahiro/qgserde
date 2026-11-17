@@ -4800,3 +4800,72 @@ export const labelEngineRuleAttributes = {
   targetLayerProvider: "string",
   targetLayerSource: "string",
 } as const satisfies AttributeTable;
+
+/** `<data-defined-size-legend>` attributes. */
+export interface QgsSizeLegendAttributes {
+  /** `title`. */
+  title?: string;
+  /** `type`. */
+  type?: string;
+  /** `valign`. */
+  valign?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const sizeLegendAttributes = {
+  title: "string",
+  type: "string",
+  valign: "string",
+} as const satisfies AttributeTable;
+
+/** Size legend `<text-style>` attributes. */
+export interface QgsSizeLegendTextStyleAttributes {
+  /** `align`. */
+  align?: number;
+  /** `color`. */
+  color?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const sizeLegendTextStyleAttributes = {
+  align: "number",
+  color: "string",
+} as const satisfies AttributeTable;
+
+/** Size legend `<font>` attributes. */
+export interface QgsSizeLegendFontAttributes {
+  /** `family`. */
+  family?: string;
+  /** `italic`, stored as 1 or 0. */
+  italic?: boolean;
+  /** `size`. */
+  size?: number;
+  /** `weight`. */
+  weight?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const sizeLegendFontAttributes = {
+  family: "string",
+  italic: "boolean",
+  size: "number",
+  weight: "number",
+} as const satisfies AttributeTable;
+
+/** Size legend `<class>`. */
+export interface QgsSizeLegendClassAttributes {
+  /** `label`. */
+  label?: string;
+  /** `size`. */
+  size?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const sizeLegendClassAttributes = {
+  label: "string",
+  size: "number",
+} as const satisfies AttributeTable;

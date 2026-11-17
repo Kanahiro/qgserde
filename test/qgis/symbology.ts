@@ -94,6 +94,15 @@ export function createSymbologyProject(): QgsProject {
         type: "graduatedSymbol",
         attribute: "value",
         graduatedMethod: "GraduatedColor",
+        dataDefinedSizeLegend: {
+          attributes: { type: "collapsed", valign: "bottom", title: "Sizes" },
+          textStyle: { color: "255,0,0,255", align: 1 },
+          font: { family: "Arial", size: 9 },
+          classes: [
+            { size: 2, label: "small" },
+            { size: 6, label: "large" },
+          ],
+        },
         ranges: [0, 10].map((lower) => ({
           lower,
           upper: lower + 10,
