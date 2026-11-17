@@ -1,0 +1,79 @@
+# Weekly early warning for QGIS changes the pinned CI matrix does not cover.
+# A failure here is a signal to review, not a broken main.
+name: QGIS upstream
+on:
+  schedule:
+    - cron: "23 3 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qgis:
+    name: QGIS ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # stable: newest release, possibly newer than ci.yaml's matrix.
+        # latest: nightly master build.
+        image: ["qgis/qgis:stable", "qgis/qgis:latest"]
+    env:
+      QGIS_IMAGE: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Pull QGIS
+        run: docker pull "$QGIS_IMAGE"
+      - name: Detect QGIS version
+        run: |
+          version=$(docker run --rm --entrypoint python3 "$QGIS_IMAGE" -c \
+            "from qgis.core import Qgis; v = Qgis.QGIS_VERSION_INT; print(f'{v // 10000}.{v // 100 % 100}')")
+          echo "QGIS_VERSION=$version" >> "$GITHUB_ENV"
+          echo "### $QGIS_IMAGE is QGIS $version" >> "$GITHUB_STEP_SUMMARY"
+      - name: Generate QGIS projects with qgserde
+        run: node test/qgis/fixtures.ts "$RUNNER_TEMP/qgis-projects" "$QGIS_VERSION"
+      - name: Read projects in QGIS
+        run: |
+          docker run --rm --network none \
+            --env QT_QPA_PLATFORM=offscreen \
+            --volume "$GITHUB_WORKSPACE:/workspace:ro" \
+            --volume "$RUNNER_TEMP/qgis-projects:/projects:ro" \
+            --workdir /workspace \
+            --entrypoint python3 \
+            "$QGIS_IMAGE" test/qgis/verify-projects.py /projects "$QGIS_VERSION"
+  attributes:
+    name: Attribute groups against QGIS master
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6.1.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Fetch QGIS sources
+        run: |
+          for branch in release-3_44 master; do
+            git clone --quiet --depth 1 --filter=blob:none --sparse \
+              --branch "$branch" https://github.com/qgis/QGIS.git "$RUNNER_TEMP/qgis-$branch"
+            git -C "$RUNNER_TEMP/qgis-$branch" sparse-checkout set src
+          done
+      # A missing writer fails the generator; new or changed attributes show as a diff.
+      - name: Regenerate attribute groups
+        run: |
+          python3 scripts/generate-attributes.py \
+            "$RUNNER_TEMP/qgis-release-3_44/src" "$RUNNER_TEMP/qgis-master/src"
+          pnpm exec biome format --write src/attributes.generated.ts
+          git diff --exit-code -- src/attributes.generated.ts
