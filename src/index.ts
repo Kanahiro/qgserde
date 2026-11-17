@@ -313,6 +313,7 @@ export type {
   QgsPointCloudRenderer,
   QgsPointClusterRenderer,
   QgsPointDisplacementRenderer,
+  QgsProcessingModel,
   QgsProfileSource,
   QgsProject,
   QgsProjectDisplaySettings,

@@ -313,6 +313,8 @@ export interface QgsProject {
   layouts?: QgsLayout[];
   /** Reports, stored with the layouts. */
   reports?: QgsReport[];
+  /** Processing models stored in the project (`<projectModels>`). */
+  processingModels?: QgsProcessingModel[];
   /** Sensors (`<Sensors>`), such as TCP or serial port feeds. */
   sensors?: QgsSensor[];
   /** Elevation profiles (QGIS 4.2+). */
@@ -582,6 +584,39 @@ export interface QgsLegendTextOnSymbol {
   format?: QgsTextFormat;
   /** Text per legend item, by legend key. */
   content?: QgsLegendTextOnSymbolItemAttributes[];
+}
+
+/**
+ * Processing model as QGIS stores it. Keys other than these, and the contents
+ * of algorithms and parameters, are kept as variants.
+ */
+export interface QgsProcessingModel extends QgsVariantMap {
+  /** Model name. */
+  model_name?: string;
+  /** Model group. */
+  model_group?: string;
+  /** Help texts, by key such as `ALG_DESC`. */
+  help?: QgsVariantMap;
+  /** Model format version, such as `Version2`. */
+  internal_version?: string;
+  /** Child algorithms, by child ID. */
+  children?: QgsVariantMap;
+  /** Model inputs, by parameter name. */
+  parameters?: QgsVariantMap;
+  /** Input parameter definitions, by parameter name. */
+  parameterDefinitions?: QgsVariantMap;
+  /** Designer group boxes. */
+  groupBoxes?: QgsVariant[];
+  /** Model variables. */
+  modelVariables?: QgsVariantMap;
+  /** Parameter values last used in the designer. */
+  designerParameterValues?: QgsVariantMap;
+  /** Input order. */
+  parameterOrder?: string[];
+  /** Output order. */
+  outputOrder?: string[];
+  /** Group of model outputs. */
+  outputGroup?: string;
 }
 
 /** Sensor of a project. */
