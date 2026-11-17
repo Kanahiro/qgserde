@@ -867,7 +867,7 @@ function toUnmodeled(
         ...(children.length ? { children } : {}),
       };
   };
-  visit(layout, written, "");
+  visit(layout, written, ".");
   // Parents first, so the data reads top-down.
   return Object.fromEntries(
     Object.entries(result).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),

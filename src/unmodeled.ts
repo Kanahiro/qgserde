@@ -6,7 +6,7 @@ import { createElement, findChildren } from "./xml.ts";
 /**
  * XML that qgserde does not model, kept with the object that owns it.
  *
- * Keys are paths of modeled elements relative to the owner's element: `""` is
+ * Keys are paths of modeled elements relative to the owner's element: `"."` is
  * the owner itself, `"srs/spatialrefsys"` a descendant, and `"name[1]"` the
  * second modeled sibling of that name. Plain data: edit, copy, or delete it
  * like any other property. Data at a path the model no longer writes is dropped.
@@ -35,12 +35,12 @@ const SEGMENT = /^([^/[\]]+)(?:\[(\d+)\])?$/u;
 
 export function unmodeledPath(parent: string, name: string, index: number) {
   const segment = index ? `${name}[${index}]` : name;
-  return parent ? `${parent}/${segment}` : segment;
+  return parent === "." ? segment : `${parent}/${segment}`;
 }
 
 function locate(root: XmlElement, path: string): XmlElement | undefined {
   let current: XmlElement | undefined = root;
-  for (const segment of path ? path.split("/") : []) {
+  for (const segment of path === "." ? [] : path.split("/")) {
     const match = SEGMENT.exec(segment);
     if (!match)
       throw new QgsError("INVALID_EDIT", `Invalid unmodeled path: ${path}`);

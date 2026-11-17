@@ -380,7 +380,8 @@ The interfaces and their attribute kinds are generated from the QGIS 3.44 and
 
 XML a layer's model does not cover is kept in its `unmodeled` property as plain
 data: attributes and child nodes keyed by the path of the modeled element that
-holds them, each child with the modeled sibling it follows. Edit, copy, or
+holds them (`"."` for the `<maplayer>` itself, `"srs/spatialrefsys"` for a
+descendant), each child with the modeled sibling it follows. Edit, copy, or
 delete it like any other property; copying a layer copies it. Data under an
 element the model no longer writes, such as a removed CRS, is dropped with it.
 Modeled values take precedence over unmodeled attributes of the same name.
