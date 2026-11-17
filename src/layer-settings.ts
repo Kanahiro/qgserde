@@ -71,6 +71,20 @@ const attributes = (
   ...at: string[]
 ): Entry => ({ kind: "attributes", field, table, at });
 
+/** Numeric format (`<tag id>` with an `<Option>` map of settings). */
+export const numericFormat = (field: string, tag: string): Entry => ({
+  kind: "object",
+  field,
+  at: [tag],
+  spec: {
+    tag,
+    entries: [
+      { kind: "attribute", field: "id", attribute: "id", type: "string" },
+      { kind: "variant", field: "settings", at: ["Option"] },
+    ],
+  },
+});
+
 /** `<customproperties>`: an <Option> map since QGIS 3.20, `<property>` elements before. */
 export const customProperties: Custom = {
   read(element) {

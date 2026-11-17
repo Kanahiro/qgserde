@@ -29,6 +29,7 @@ import {
   commonLayerEntries,
   customProperties,
   metadataBase,
+  numericFormat,
   relationSpec,
 } from "./layer-settings.ts";
 import { annotationEntries } from "./layer-types.ts";
@@ -48,19 +49,6 @@ const legendNodes = (container: string, item: string): Spec => ({
     { kind: "attribute", field: "layerId", attribute: "id", type: "string" },
     { kind: "values", field: "nodes", at: [], item, attribute: "id" },
   ],
-});
-
-const numericFormat = (field: string, tag: string): Entry => ({
-  kind: "object",
-  field,
-  at: [tag],
-  spec: {
-    tag,
-    entries: [
-      { kind: "attribute", field: "id", attribute: "id", type: "string" },
-      { kind: "variant", field: "settings", at: ["Option"] },
-    ],
-  },
 });
 
 const annotationItem: Spec = {

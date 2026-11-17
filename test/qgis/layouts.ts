@@ -78,6 +78,92 @@ export function createLayoutsProject(): QgsProject {
             provider: points.provider,
           },
         ],
+        layerStyleOverrides: [
+          {
+            layerid: points.id,
+            name: points.name,
+            source: points.source,
+            provider: points.provider,
+          },
+        ],
+        labelBlockingItems: ["{aaaaaaaa-0000-0000-0000-000000000002}"],
+      },
+      {
+        type: "65642",
+        attributes: {
+          id: "legend",
+          uuid: "{aaaaaaaa-0000-0000-0000-000000000004}",
+          position: "170,40,mm",
+          size: "50,50,mm",
+          positionOnPage: "170,40,mm",
+          legendFilterByMap: "1",
+          visibility: "1",
+        },
+        filterByMaps: ["{aaaaaaaa-0000-0000-0000-000000000003}"],
+      },
+      {
+        type: "65646",
+        attributes: {
+          id: "scale",
+          uuid: "{aaaaaaaa-0000-0000-0000-000000000005}",
+          position: "10,150,mm",
+          size: "60,10,mm",
+          positionOnPage: "10,150,mm",
+          mapUuid: "{aaaaaaaa-0000-0000-0000-000000000003}",
+          visibility: "1",
+        },
+        numericFormat: {
+          id: "basic",
+          settings: { decimals: 3, show_thousand_separator: false },
+        },
+      },
+      {
+        type: "65637",
+        attributes: {
+          id: "group",
+          uuid: "{aaaaaaaa-0000-0000-0000-000000000006}",
+          position: "10,10,mm",
+          size: "150,130,mm",
+          positionOnPage: "10,10,mm",
+          visibility: "1",
+        },
+        groupItems: [
+          "{aaaaaaaa-0000-0000-0000-000000000002}",
+          "{aaaaaaaa-0000-0000-0000-000000000003}",
+        ],
+      },
+      {
+        type: "65647",
+        attributes: {
+          id: "",
+          uuid: "{aaaaaaaa-0000-0000-0000-000000000007}",
+          position: "170,100,mm",
+          size: "60,30,mm",
+          positionOnPage: "170,100,mm",
+          multiFrame: "{aaaaaaaa-0000-0000-0000-000000000008}",
+          visibility: "1",
+        },
+      },
+    ],
+    multiFrames: [
+      {
+        type: "65652",
+        attributes: {
+          uuid: "{aaaaaaaa-0000-0000-0000-000000000008}",
+          includeHeader: true,
+        },
+        frames: [{ uuid: "{aaaaaaaa-0000-0000-0000-000000000007}" }],
+        columns: [
+          { attributes: { heading: "A" } },
+          { attributes: { heading: "B" } },
+        ],
+        headers: [
+          { attributes: { heading: "A" } },
+          { attributes: { heading: "B" } },
+        ],
+        rows: [{ cells: [{ content: "1" }, { content: "two" }] }],
+        rowHeights: [{ height: 0 }],
+        columnWidths: [{ width: 20 }, { width: 0 }],
       },
     ],
   });

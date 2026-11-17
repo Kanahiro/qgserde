@@ -55,6 +55,7 @@ import type {
   QgsLayoutGridAttributes,
   QgsLayoutGuideAttributes,
   QgsLayoutItemAttributes,
+  QgsLayoutLayerStyleAttributes,
   QgsLayoutMapLayerAttributes,
   QgsLayoutMapOverviewAttributes,
   QgsLayoutMultiFrameAttributes,
@@ -118,6 +119,8 @@ import type {
   QgsStoredExpressionAttributes,
   QgsSvgAnnotationAttributes,
   QgsSymmetricModeAttributes,
+  QgsTableColumnWidthAttributes,
+  QgsTableRowHeightAttributes,
   QgsTemporalAttributes,
   QgsTemporalRangeAttributes,
   QgsTerrainProviderAttributes,
@@ -423,6 +426,20 @@ export interface QgsLayoutItem {
   overviews?: QgsLayoutMapOverview[];
   /** Map atlas settings (`atlasDriven`, `scalingMode`, `margin`). */
   atlasMap?: QgsLayoutAtlasMapAttributes;
+  /**
+   * Map layer style overrides (`<LayerStyles>`), each naming the layer by
+   * `layerid`, `name`, `source`, and `provider`. The style document itself is
+   * kept with each override.
+   */
+  layerStyleOverrides?: QgsLayoutLayerStyleAttributes[];
+  /** UUIDs of items whose area map labels avoid. */
+  labelBlockingItems?: string[];
+  /** UUIDs of a group's member items. */
+  groupItems?: string[];
+  /** UUIDs of maps a legend is filtered by. */
+  filterByMaps?: string[];
+  /** Scale bar number format. */
+  numericFormat?: QgsNumericFormat;
   /** Polyline or polygon nodes, each with `x` and `y`. */
   nodes?: QgsLayoutNodeAttributes[];
   /** Legend text styles. */
@@ -461,6 +478,14 @@ export interface QgsLegendTextOnSymbol {
   format?: QgsTextFormat;
   /** Text per legend item, by legend key. */
   content?: QgsLegendTextOnSymbolItemAttributes[];
+}
+
+/** Row of a manual layout table. */
+export interface QgsLayoutTableRow {
+  /** Cells, each a map with `content` and optional formatting, as QGIS stores them. */
+  cells?: QgsVariant[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** Node of a layout legend tree. */
@@ -505,6 +530,14 @@ export interface QgsLayoutMultiFrame {
   columns?: QgsLayoutTableColumn[];
   /** Sort columns. */
   sortColumns?: QgsLayoutTableColumn[];
+  /** Manual table header cells. */
+  headers?: QgsLayoutTableColumn[];
+  /** Manual table rows. */
+  rows?: QgsLayoutTableRow[];
+  /** Manual table row heights in millimeters; 0 is automatic. */
+  rowHeights?: QgsTableRowHeightAttributes[];
+  /** Manual table column widths in millimeters; 0 is automatic. */
+  columnWidths?: QgsTableColumnWidthAttributes[];
   /** Table cell styles by part, such as `oddRows` or `headerRow`, each with `enabled` and `cellBackgroundColor`. */
   cellStyles?: Record<string, QgsLayoutTableCellStyleAttributes>;
   /** @internal */

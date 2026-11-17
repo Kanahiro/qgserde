@@ -802,5 +802,17 @@
       "key": "string",
       "value": "string"
     }
+  },
+  "LayoutLayerStyle": {
+    "doc": "Map item style override `<LayerStyle>`; the style itself stays in the element.",
+    "keys": ["^qgslayoutitemmap\\.cpp\\|LayerStyle$"]
+  },
+  "TableRowHeight": {
+    "doc": "Manual table `<rowHeights>` `<row>`.",
+    "keys": ["^qgslayoutitemmanualtable\\.cpp\\|row$"]
+  },
+  "TableColumnWidth": {
+    "doc": "Manual table `<columnWidths>` `<column>`.",
+    "keys": ["^qgslayoutitemmanualtable\\.cpp\\|column$"]
   }
 }

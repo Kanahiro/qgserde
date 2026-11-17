@@ -431,6 +431,21 @@ def check_layouts(project):
     assert overview.extent().xMaximum() == 150
     assert overview.crs().authid() == "EPSG:4326"
     assert [layer.name() for layer in overview.layers()] == ["points"]
+    assert list(overview.layerStyleOverrides()) == [
+        project.mapLayersByName("points")[0].id()
+    ]
+    assert overview.isLabelBlockingItem(heading)
+    legend = created.itemById("legend")
+    assert [m.id() for m in legend.filterByMapItems()] == ["overview map"]
+    scale = created.itemById("scale")
+    assert scale.numericFormat().numberDecimalPlaces() == 3
+    groups = [i for i in created.items() if i.type() == 65637]
+    assert len(groups) == 1 and len(groups[0].items()) == 2, groups
+    tables = [f for f in created.multiFrames() if f.type() == 65652]
+    assert len(tables) == 1 and tables[0].frameCount() == 1
+    contents = tables[0].tableContents()
+    assert [cell.content() for cell in contents[0]] == ["1", "two"], contents
+    assert tables[0].columnWidths() == [20, 0]
 
 
 def check_styles(project):

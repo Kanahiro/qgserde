@@ -146,6 +146,8 @@ export type Entry =
   | { kind: "owner" | "owners"; field: string; at?: At; spec: Spec }
   /** <Option> variant at `at` (the path ends with the Option element). */
   | { kind: "variant"; field: string; at: At }
+  /** Every `<Option>` child of `at`, as a list of variants. */
+  | { kind: "variants"; field: string; at: At }
   /** Symbol-layer-style properties (<prop> or an <Option> map) of the element at `at`. */
   | { kind: "properties"; field: string; at?: At }
   /** Data-defined property collection in the child element `tag` of `at`. */
@@ -601,6 +603,11 @@ export function readSpec(
       case "variant":
         model[entry.field] = readVariant(target);
         break;
+      case "variants":
+        model[entry.field] = findChildren(target, "Option").map((child) =>
+          readVariant(child),
+        );
+        break;
       case "properties":
         if (findChild(target, "Option") || findChild(target, "prop"))
           model[entry.field] = readProperties(target);
@@ -717,6 +724,10 @@ export function captureSpec(
         break;
       case "variant":
         bindVariant(binder(codec), target, at);
+        break;
+      case "variants":
+        for (const [index, child] of findChildren(target, "Option").entries())
+          bindVariant(binder(codec), child, [...at, String(index)]);
         break;
       case "properties":
         bindProperties(binder(codec), target, at);
@@ -1014,6 +1025,24 @@ export function writeSpec(
           (value ?? []).map((item: Model) =>
             writeOwned(entry.spec, item, codec, target, depth + 1),
           ),
+        );
+        break;
+      }
+      case "variants": {
+        if (value !== undefined && !Array.isArray(value))
+          throw new QgsError("INVALID_EDIT", `${name} must be an array`);
+        const host = existing ?? ensurePath(element, entry.at);
+        const items = findChildren(host, "Option");
+        replaceChildren(
+          host,
+          ["Option"],
+          ((value ?? []) as QgsVariant[]).map((item, index) => {
+            const child = structuredClone(
+              items[index] ?? createElement("Option"),
+            );
+            writeVariant(child, item);
+            return child;
+          }),
         );
         break;
       }

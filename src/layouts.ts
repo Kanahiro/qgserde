@@ -9,6 +9,7 @@ import {
   layoutGridAttributes,
   layoutGuideAttributes,
   layoutItemAttributes,
+  layoutLayerStyleAttributes,
   layoutMapLayerAttributes,
   layoutMapOverviewAttributes,
   layoutMultiFrameAttributes,
@@ -20,9 +21,11 @@ import {
   legendTreeGroupAttributes,
   legendTreeLayerAttributes,
   mapGridAttributes,
+  tableColumnWidthAttributes,
+  tableRowHeightAttributes,
 } from "./attributes.generated.ts";
 import { textFormatSpec } from "./labeling.ts";
-import { customProperties } from "./layer-settings.ts";
+import { customProperties, numericFormat } from "./layer-settings.ts";
 import type { AttributeTable, Entry, Spec } from "./spec.ts";
 
 const attributes = (
@@ -133,6 +136,35 @@ export const layoutItemSpec: Spec = {
     attributes("atlasMap", layoutAtlasMapAttributes, "AtlasMap"),
     {
       kind: "records",
+      field: "layerStyleOverrides",
+      at: ["LayerStyles"],
+      item: "LayerStyle",
+      table: layoutLayerStyleAttributes,
+    },
+    {
+      kind: "values",
+      field: "labelBlockingItems",
+      at: ["labelBlockingItems"],
+      item: "item",
+      attribute: "uuid",
+    },
+    {
+      kind: "values",
+      field: "groupItems",
+      at: [],
+      item: "ComposerItemGroupElement",
+      attribute: "uuid",
+    },
+    {
+      kind: "values",
+      field: "filterByMaps",
+      at: ["filterByMaps"],
+      item: "map",
+      attribute: "uuid",
+    },
+    numericFormat("numericFormat", "numericFormat"),
+    {
+      kind: "records",
       field: "nodes",
       at: ["nodes"],
       item: "node",
@@ -215,6 +247,35 @@ export const layoutMultiFrameSpec: Spec = {
       field: "sortColumns",
       at: ["sortColumns"],
       spec: tableColumn("column"),
+    },
+    {
+      kind: "owners",
+      field: "headers",
+      at: ["headers"],
+      spec: tableColumn("header"),
+    },
+    {
+      kind: "owners",
+      field: "rows",
+      at: ["contents"],
+      spec: {
+        tag: "row",
+        entries: [{ kind: "variants", field: "cells", at: [] }],
+      },
+    },
+    {
+      kind: "records",
+      field: "rowHeights",
+      at: ["rowHeights"],
+      item: "row",
+      table: tableRowHeightAttributes,
+    },
+    {
+      kind: "records",
+      field: "columnWidths",
+      at: ["columnWidths"],
+      item: "column",
+      table: tableColumnWidthAttributes,
     },
     {
       kind: "object",

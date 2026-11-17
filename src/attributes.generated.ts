@@ -4701,3 +4701,48 @@ export const legendTextOnSymbolItemAttributes = {
   key: "string",
   value: "string",
 } as const satisfies AttributeTable;
+
+/** Map item style override `<LayerStyle>`; the style itself stays in the element. */
+export interface QgsLayoutLayerStyleAttributes {
+  /** `layerid`. */
+  layerid?: string;
+  /** `name`. */
+  name?: string;
+  /** `provider`. */
+  provider?: string;
+  /** `source`. */
+  source?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const layoutLayerStyleAttributes = {
+  layerid: "string",
+  name: "string",
+  provider: "string",
+  source: "string",
+} as const satisfies AttributeTable;
+
+/** Manual table `<rowHeights>` `<row>`. */
+export interface QgsTableRowHeightAttributes {
+  /** `height`. */
+  height?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const tableRowHeightAttributes = {
+  height: "number",
+} as const satisfies AttributeTable;
+
+/** Manual table `<columnWidths>` `<column>`. */
+export interface QgsTableColumnWidthAttributes {
+  /** `width`. */
+  width?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const tableColumnWidthAttributes = {
+  width: "number",
+} as const satisfies AttributeTable;
