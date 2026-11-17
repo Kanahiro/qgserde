@@ -5547,3 +5547,588 @@ export interface QgsCategory3DAttributes {
 export const category3DAttributes = {
   render: "boolean",
 } as const satisfies AttributeTable;
+
+/** 3D scene `<origin>`. */
+export interface QgsScene3DOriginAttributes {
+  /** `x`. */
+  x?: number;
+  /** `y`. */
+  y?: number;
+  /** `z`. */
+  z?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const scene3DOriginAttributes = {
+  x: "number",
+  y: "number",
+  z: "number",
+} as const satisfies AttributeTable;
+
+/** 3D scene `<extent>`. */
+export interface QgsScene3DExtentAttributes {
+  /** `showIn2dView`, stored as 1 or 0. */
+  showIn2dView?: boolean;
+  /** `xMax`. */
+  xMax?: number;
+  /** `xMin`. */
+  xMin?: number;
+  /** `yMax`. */
+  yMax?: number;
+  /** `yMin`. */
+  yMin?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const scene3DExtentAttributes = {
+  showIn2dView: "boolean",
+  xMax: "number",
+  xMin: "number",
+  yMax: "number",
+  yMin: "number",
+} as const satisfies AttributeTable;
+
+/** 3D scene `<camera>` settings. */
+export interface QgsScene3DCameraAttributes {
+  /** `camera-movement-speed`. */
+  "camera-movement-speed"?: number;
+  /** `camera-navigation-mode`. */
+  "camera-navigation-mode"?: string;
+  /** `field-of-view`. */
+  "field-of-view"?: number;
+  /** `projection-type`. */
+  "projection-type"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const scene3DCameraAttributes = {
+  "camera-movement-speed": "number",
+  "camera-navigation-mode": "string",
+  "field-of-view": "number",
+  "projection-type": "number",
+} as const satisfies AttributeTable;
+
+/** 3D scene `<color>` settings. */
+export interface QgsScene3DColorAttributes {
+  /** `background`. */
+  background?: string;
+  /** `selection`. */
+  selection?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const scene3DColorAttributes = {
+  background: "string",
+  selection: "string",
+} as const satisfies AttributeTable;
+
+/** 3D scene `<terrain>` settings, including those of the terrain type. */
+export interface QgsScene3DTerrainAttributes {
+  /** `elevation-offset`. */
+  "elevation-offset"?: number;
+  /** `exaggeration`. */
+  exaggeration?: number;
+  /** `layer`. */
+  layer?: string;
+  /** `map-theme`. */
+  "map-theme"?: string;
+  /** `max-ground-error`. */
+  "max-ground-error"?: number;
+  /** `max-terrain-error`. */
+  "max-terrain-error"?: number;
+  /** `resolution`. */
+  resolution?: number;
+  /** `shading-enabled`. */
+  "shading-enabled"?: number;
+  /** `show-labels`. */
+  "show-labels"?: number;
+  /** `skirt-height`. */
+  "skirt-height"?: number;
+  /** `terrain-rendering-enabled`. */
+  "terrain-rendering-enabled"?: number;
+  /** `texture-size`. */
+  "texture-size"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const scene3DTerrainAttributes = {
+  "elevation-offset": "number",
+  exaggeration: "number",
+  layer: "string",
+  "map-theme": "string",
+  "max-ground-error": "number",
+  "max-terrain-error": "number",
+  resolution: "number",
+  "shading-enabled": "number",
+  "show-labels": "number",
+  "skirt-height": "number",
+  "terrain-rendering-enabled": "number",
+  "texture-size": "number",
+} as const satisfies AttributeTable;
+
+/** 3D terrain `<generator>`. */
+export interface QgsScene3DGeneratorAttributes {
+  /** `type`. */
+  type?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const scene3DGeneratorAttributes = {
+  type: "string",
+} as const satisfies AttributeTable;
+
+/** 3D `<point-light>`. */
+export interface QgsPointLight3DAttributes {
+  /** `attenuation-0`. */
+  "attenuation-0"?: number;
+  /** `attenuation-1`. */
+  "attenuation-1"?: number;
+  /** `attenuation-2`. */
+  "attenuation-2"?: number;
+  /** `color`. */
+  color?: string;
+  /** `id`. */
+  id?: string;
+  /** `intensity`. */
+  intensity?: number;
+  /** `x`. */
+  x?: number;
+  /** `y`. */
+  y?: number;
+  /** `z`. */
+  z?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const pointLight3DAttributes = {
+  "attenuation-0": "number",
+  "attenuation-1": "number",
+  "attenuation-2": "number",
+  color: "string",
+  id: "string",
+  intensity: "number",
+  x: "number",
+  y: "number",
+  z: "number",
+} as const satisfies AttributeTable;
+
+/** 3D `<directional-light>`. */
+export interface QgsDirectionalLight3DAttributes {
+  /** `color`. */
+  color?: string;
+  /** `id`. */
+  id?: string;
+  /** `intensity`. */
+  intensity?: number;
+  /** `x`. */
+  x?: number;
+  /** `y`. */
+  y?: number;
+  /** `z`. */
+  z?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const directionalLight3DAttributes = {
+  color: "string",
+  id: "string",
+  intensity: "number",
+  x: "number",
+  y: "number",
+  z: "number",
+} as const satisfies AttributeTable;
+
+/** 3D scene `<background>` (QGIS 4) or `<skybox>` (QGIS 3) settings. */
+export interface QgsBackground3DAttributes {
+  /** `bottom-color`. */
+  "bottom-color"?: string;
+  /** `environment-light-strength`. */
+  "environment-light-strength"?: number;
+  /** `environmental-lighting`, stored as 1 or 0. */
+  "environmental-lighting"?: boolean;
+  /** `mapping`. */
+  mapping?: string;
+  /** `negX-texture-path`. */
+  "negX-texture-path"?: string;
+  /** `negY-texture-path`. */
+  "negY-texture-path"?: string;
+  /** `negZ-texture-path`. */
+  "negZ-texture-path"?: string;
+  /** `panoramic-texture-path`. */
+  "panoramic-texture-path"?: string;
+  /** `posX-texture-path`. */
+  "posX-texture-path"?: string;
+  /** `posY-texture-path`. */
+  "posY-texture-path"?: string;
+  /** `posZ-texture-path`. */
+  "posZ-texture-path"?: string;
+  /** `skybox-enabled`, stored as 1 or 0. */
+  "skybox-enabled"?: boolean;
+  /** `skybox-type`. */
+  "skybox-type"?: string;
+  /** `top-color`. */
+  "top-color"?: string;
+  /** `type`. */
+  type?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const background3DAttributes = {
+  "bottom-color": "string",
+  "environment-light-strength": "number",
+  "environmental-lighting": "boolean",
+  mapping: "string",
+  "negX-texture-path": "string",
+  "negY-texture-path": "string",
+  "negZ-texture-path": "string",
+  "panoramic-texture-path": "string",
+  "posX-texture-path": "string",
+  "posY-texture-path": "string",
+  "posZ-texture-path": "string",
+  "skybox-enabled": "boolean",
+  "skybox-type": "string",
+  "top-color": "string",
+  type: "string",
+} as const satisfies AttributeTable;
+
+/** 3D `<shadow-rendering>` settings. */
+export interface QgsShadow3DAttributes {
+  /** `light-source`. */
+  "light-source"?: string;
+  /** `max-shadow-rendering-distance`. */
+  "max-shadow-rendering-distance"?: number;
+  /** `selected-directional-light`. */
+  "selected-directional-light"?: number;
+  /** `shadow-bias`. */
+  "shadow-bias"?: number;
+  /** `shadow-map-resolution`. */
+  "shadow-map-resolution"?: number;
+  /** `shadow-rendering-enabled`, stored as 1 or 0. */
+  "shadow-rendering-enabled"?: boolean;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const shadow3DAttributes = {
+  "light-source": "string",
+  "max-shadow-rendering-distance": "number",
+  "selected-directional-light": "number",
+  "shadow-bias": "number",
+  "shadow-map-resolution": "number",
+  "shadow-rendering-enabled": "boolean",
+} as const satisfies AttributeTable;
+
+/** 3D `<screen-space-ambient-occlusion>` settings. */
+export interface QgsAmbientOcclusion3DAttributes {
+  /** `enabled`, stored as 1 or 0. */
+  enabled?: boolean;
+  /** `intensity`. */
+  intensity?: number;
+  /** `radius`. */
+  radius?: number;
+  /** `threshold`. */
+  threshold?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const ambientOcclusion3DAttributes = {
+  enabled: "boolean",
+  intensity: "number",
+  radius: "number",
+  threshold: "number",
+} as const satisfies AttributeTable;
+
+/** 3D `<bloom>` settings. */
+export interface QgsBloom3DAttributes {
+  /** `enabled`, stored as 1 or 0. */
+  enabled?: boolean;
+  /** `intensity`. */
+  intensity?: number;
+  /** `radius`. */
+  radius?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const bloom3DAttributes = {
+  enabled: "boolean",
+  intensity: "number",
+  radius: "number",
+} as const satisfies AttributeTable;
+
+/** 3D `<color-grading>` settings. */
+export interface QgsColorGrading3DAttributes {
+  /** `exposure`. */
+  exposure?: number;
+  /** `tone-mapping`. */
+  "tone-mapping"?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const colorGrading3DAttributes = {
+  exposure: "number",
+  "tone-mapping": "string",
+} as const satisfies AttributeTable;
+
+/** 3D `<debug>` settings. */
+export interface QgsDebug3DAttributes {
+  /** `bounding-boxes`. */
+  "bounding-boxes"?: number;
+  /** `camera-rotation-center`. */
+  "camera-rotation-center"?: number;
+  /** `camera-view-center`. */
+  "camera-view-center"?: number;
+  /** `debug-panel`. */
+  "debug-panel"?: number;
+  /** `flags`. */
+  flags?: string;
+  /** `show-fps-counter`. */
+  "show-fps-counter"?: number;
+  /** `show-light-sources`. */
+  "show-light-sources"?: number;
+  /** `stop-updates`. */
+  "stop-updates"?: number;
+  /** `terrain-tile-info`. */
+  "terrain-tile-info"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const debug3DAttributes = {
+  "bounding-boxes": "number",
+  "camera-rotation-center": "number",
+  "camera-view-center": "number",
+  "debug-panel": "number",
+  flags: "string",
+  "show-fps-counter": "number",
+  "show-light-sources": "number",
+  "stop-updates": "number",
+  "terrain-tile-info": "number",
+} as const satisfies AttributeTable;
+
+/** 3D `<eye-dome-lighting>` settings. */
+export interface QgsEyeDome3DAttributes {
+  /** `enabled`. */
+  enabled?: number;
+  /** `eye-dome-lighting-distance`. */
+  "eye-dome-lighting-distance"?: number;
+  /** `eye-dome-lighting-strength`. */
+  "eye-dome-lighting-strength"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const eyeDome3DAttributes = {
+  enabled: "number",
+  "eye-dome-lighting-distance": "number",
+  "eye-dome-lighting-strength": "number",
+} as const satisfies AttributeTable;
+
+/** 3D `<navigation-sync>` settings. */
+export interface QgsNavigationSync3DAttributes {
+  /** `view-frustum-visualization-enabled`. */
+  "view-frustum-visualization-enabled"?: number;
+  /** `view-sync-mode`. */
+  "view-sync-mode"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const navigationSync3DAttributes = {
+  "view-frustum-visualization-enabled": "number",
+  "view-sync-mode": "number",
+} as const satisfies AttributeTable;
+
+/** 3D `<debug-settings>`. */
+export interface QgsDebugSettings3DAttributes {
+  /** `depthmap-corner`. */
+  "depthmap-corner"?: number;
+  /** `depthmap-enabled`, stored as 1 or 0. */
+  "depthmap-enabled"?: boolean;
+  /** `depthmap-size`. */
+  "depthmap-size"?: number;
+  /** `shadowmap-corner`. */
+  "shadowmap-corner"?: number;
+  /** `shadowmap-enabled`, stored as 1 or 0. */
+  "shadowmap-enabled"?: boolean;
+  /** `shadowmap-size`. */
+  "shadowmap-size"?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const debugSettings3DAttributes = {
+  "depthmap-corner": "number",
+  "depthmap-enabled": "boolean",
+  "depthmap-size": "number",
+  "shadowmap-corner": "number",
+  "shadowmap-enabled": "boolean",
+  "shadowmap-size": "number",
+} as const satisfies AttributeTable;
+
+/** 3D `<temporal-range>`. */
+export interface QgsTemporalRange3DAttributes {
+  /** `end`. */
+  end?: string;
+  /** `start`. */
+  start?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const temporalRange3DAttributes = {
+  end: "string",
+  start: "string",
+} as const satisfies AttributeTable;
+
+/** 3D `<axis3d>` settings. */
+export interface QgsAxis3DAttributes {
+  /** `defaultViewportSize`. */
+  defaultViewportSize?: string;
+  /** `horizontal`. */
+  horizontal?: string;
+  /** `maxViewportRatio`. */
+  maxViewportRatio?: string;
+  /** `minViewportRatio`. */
+  minViewportRatio?: string;
+  /** `mode`. */
+  mode?: string;
+  /** `vertical`. */
+  vertical?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const axis3DAttributes = {
+  defaultViewportSize: "string",
+  horizontal: "string",
+  maxViewportRatio: "string",
+  minViewportRatio: "string",
+  mode: "string",
+  vertical: "string",
+} as const satisfies AttributeTable;
+
+/** 3D `<map-overlay>`. */
+export interface QgsMapOverlay3DAttributes {
+  /** `enabled`. */
+  enabled?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const mapOverlay3DAttributes = {
+  enabled: "number",
+} as const satisfies AttributeTable;
+
+/** 3D `<camera-pose>`. */
+export interface QgsCameraPoseAttributes {
+  /** `dist`. */
+  dist?: number;
+  /** `heading`. */
+  heading?: number;
+  /** `pitch`. */
+  pitch?: number;
+  /** `x`. */
+  x?: number;
+  /** `y`. */
+  y?: number;
+  /** `z`. */
+  z?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const cameraPoseAttributes = {
+  dist: "number",
+  heading: "number",
+  pitch: "number",
+  x: "number",
+  y: "number",
+  z: "number",
+} as const satisfies AttributeTable;
+
+/** 3D `<animation3d>` settings. */
+export interface QgsAnimation3DAttributes {
+  /** `interpolation`. */
+  interpolation?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const animation3DAttributes = {
+  interpolation: "number",
+} as const satisfies AttributeTable;
+
+/** 3D animation `<keyframe>`. */
+export interface QgsKeyframe3DAttributes {
+  /** `dist`. */
+  dist?: number;
+  /** `pitch`. */
+  pitch?: number;
+  /** `time`. */
+  time?: number;
+  /** `x`. */
+  x?: number;
+  /** `y`. */
+  y?: number;
+  /** `yaw`. */
+  yaw?: number;
+  /** `z`. */
+  z?: number;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const keyframe3DAttributes = {
+  dist: "number",
+  pitch: "number",
+  time: "number",
+  x: "number",
+  y: "number",
+  yaw: "number",
+  z: "number",
+} as const satisfies AttributeTable;
+
+/** 3D map view `<view>` attributes. */
+export interface QgsMapView3DAttributes {
+  /** `isOpen`, stored as 1 or 0. */
+  isOpen?: boolean;
+  /** `name`. */
+  name?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const mapView3DAttributes = {
+  isOpen: "boolean",
+  name: "string",
+} as const satisfies AttributeTable;
+
+/** Layout 3D map `<temporal-settings>`. */
+export interface QgsLayout3DTemporalAttributes {
+  /** `isTemporal`. */
+  isTemporal?: number;
+  /** `temporalRangeBegin`. */
+  temporalRangeBegin?: string;
+  /** `temporalRangeEnd`. */
+  temporalRangeEnd?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const layout3DTemporalAttributes = {
+  isTemporal: "number",
+  temporalRangeBegin: "string",
+  temporalRangeEnd: "string",
+} as const satisfies AttributeTable;

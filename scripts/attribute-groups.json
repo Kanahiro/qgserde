@@ -978,5 +978,121 @@
     "kinds": {
       "render": "boolean"
     }
+  },
+  "Scene3DOrigin": {
+    "doc": "3D scene `<origin>`.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|origin$"]
+  },
+  "Scene3DExtent": {
+    "doc": "3D scene `<extent>`.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|extent$"]
+  },
+  "Scene3DCamera": {
+    "doc": "3D scene `<camera>` settings.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|camera$"]
+  },
+  "Scene3DColor": {
+    "doc": "3D scene `<color>` settings.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|color$"]
+  },
+  "Scene3DTerrain": {
+    "doc": "3D scene `<terrain>` settings, including those of the terrain type.",
+    "keys": [
+      "^qgs3dmapsettings\\.cpp\\|terrain$",
+      "^qgs\\w*terrainsettings\\.cpp\\|@Qgs\\w*TerrainSettings::(writeXml|writeCommonProperties):element$"
+    ]
+  },
+  "Scene3DGenerator": {
+    "doc": "3D terrain `<generator>`.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|generator$"]
+  },
+  "PointLight3D": {
+    "doc": "3D `<point-light>`.",
+    "keys": ["^qgspointlightsettings\\.cpp\\|point-light$"]
+  },
+  "DirectionalLight3D": {
+    "doc": "3D `<directional-light>`.",
+    "keys": ["^qgsdirectionallightsettings\\.cpp\\|directional-light$"]
+  },
+  "Background3D": {
+    "doc": "3D scene `<background>` (QGIS 4) or `<skybox>` (QGIS 3) settings.",
+    "keys": [
+      "^qgs3dmapsettings\\.cpp\\|background$",
+      "^qgs3dmapsettings\\.cpp\\|skybox$",
+      "^qgsskyboxsettings\\.cpp\\|@QgsSkyboxSettings::writeXml:element$",
+      "^qgsfixedgradientbackgroundsettings\\.cpp\\|@QgsFixedGradientBackgroundSettings::writeXml:element$"
+    ]
+  },
+  "Shadow3D": {
+    "doc": "3D `<shadow-rendering>` settings.",
+    "keys": ["^qgsshadowsettings\\.cpp\\|@QgsShadowSettings::writeXml:element$"]
+  },
+  "AmbientOcclusion3D": {
+    "doc": "3D `<screen-space-ambient-occlusion>` settings.",
+    "keys": [
+      "^qgsambientocclusionsettings\\.cpp\\|@QgsAmbientOcclusionSettings::writeXml:element$"
+    ]
+  },
+  "Bloom3D": {
+    "doc": "3D `<bloom>` settings.",
+    "keys": ["^qgsbloomsettings\\.cpp\\|@QgsBloomSettings::writeXml:element$"]
+  },
+  "ColorGrading3D": {
+    "doc": "3D `<color-grading>` settings.",
+    "keys": [
+      "^qgscolorgradingsettings\\.cpp\\|@QgsColorGradingSettings::writeXml:element$"
+    ]
+  },
+  "Debug3D": {
+    "doc": "3D `<debug>` settings.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|debug$"]
+  },
+  "EyeDome3D": {
+    "doc": "3D `<eye-dome-lighting>` settings.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|eye-dome-lighting$"]
+  },
+  "NavigationSync3D": {
+    "doc": "3D `<navigation-sync>` settings.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|navigation-sync$"]
+  },
+  "DebugSettings3D": {
+    "doc": "3D `<debug-settings>`.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|debug-settings$"]
+  },
+  "TemporalRange3D": {
+    "doc": "3D `<temporal-range>`.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|temporal-range$"]
+  },
+  "Axis3D": {
+    "doc": "3D `<axis3d>` settings.",
+    "keys": ["^qgs3daxissettings\\.cpp\\|@Qgs3DAxisSettings::writeXml:element$"]
+  },
+  "MapOverlay3D": {
+    "doc": "3D `<map-overlay>`.",
+    "keys": ["^qgs3dmapsettings\\.cpp\\|map-overlay$"]
+  },
+  "CameraPose": {
+    "doc": "3D `<camera-pose>`.",
+    "keys": ["^qgscamerapose\\.cpp\\|camera-pose$"]
+  },
+  "Animation3D": {
+    "doc": "3D `<animation3d>` settings.",
+    "keys": ["^qgs3danimationsettings\\.cpp\\|animation3d$"]
+  },
+  "Keyframe3D": {
+    "doc": "3D animation `<keyframe>`.",
+    "keys": ["^qgs3danimationsettings\\.cpp\\|keyframe$"]
+  },
+  "MapView3D": {
+    "doc": "3D map view `<view>` attributes.",
+    "keys": [],
+    "kinds": {
+      "name": "string",
+      "isOpen": "boolean"
+    }
+  },
+  "Layout3DTemporal": {
+    "doc": "Layout 3D map `<temporal-settings>`.",
+    "keys": ["^qgslayoutitem3dmap\\.cpp\\|temporal-settings$"]
   }
 }

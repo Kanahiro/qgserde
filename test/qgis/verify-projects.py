@@ -5,7 +5,12 @@ import sys
 from pathlib import Path
 
 try:
-    from qgis._3d import Qgs3D, QgsPolygon3DSymbol, QgsVectorLayer3DRenderer
+    from qgis._3d import (
+        Qgs3D,
+        Qgs3DMapSettings,
+        QgsPolygon3DSymbol,
+        QgsVectorLayer3DRenderer,
+    )
 except ImportError:  # QGIS built without 3D
     Qgs3D = None
 
@@ -23,11 +28,13 @@ from qgis.core import (
     QgsPalLayerSettings,
     QgsProject,
     QgsRasterDataProvider,
+    QgsReadWriteContext,
     QgsSingleBandGrayRenderer,
     QgsSymbol,
     QgsSymbolLayer,
 )
 from qgis.PyQt import sip
+from qgis.PyQt.QtXml import QDomDocument
 
 
 def check_memory(project):
@@ -372,6 +379,22 @@ def check_project_settings(project):
     assert snapping.enabled() and snapping.tolerance() == 20
     assert project.viewSettings().useProjectScales()
     assert sorted(project.viewSettings().mapScales()) == [1000, 5000]
+    # The views manager exposes no getters to Python; read the stored view.
+    document = QDomDocument()
+    with open(project.fileName(), encoding="utf-8") as file:
+        assert document.setContent(file.read())
+    docks = document.documentElement().firstChildElement("mapViewDocks3D")
+    view = docks.firstChildElement("view")
+    assert view.attribute("name") == "3D Map 1"
+    if Qgs3D:
+        scene = Qgs3DMapSettings()
+        scene.readXml(view.firstChildElement("qgis3d"), QgsReadWriteContext())
+        scene.resolveReferences(project)
+        assert scene.fieldOfView() == 50, scene.fieldOfView()
+        assert scene.backgroundColor().name() == "#0a141e"
+        assert [layer.id() for layer in scene.layers()] == ["points_layer_0001"]
+        assert scene.eyeDomeLightingEnabled()
+        assert len(scene.lightSources()) == 1
     full = project.viewSettings().presetFullExtent()
     assert full.xMaximum() == 141 and full.crs().authid() == "EPSG:4326", full
     engine = project.labelingEngineSettings()

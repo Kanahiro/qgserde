@@ -100,6 +100,34 @@ export function createProjectSettingsProject(): QgsProject {
   };
   project.useProjectScales = true;
   project.scales = ["5000", "1000"];
+  project.mapViews3D = [
+    {
+      attributes: { name: "3D Map 1", isOpen: false },
+      settings: {
+        origin: { x: 140, y: 36, z: 0 },
+        camera: { "field-of-view": 50, "projection-type": 1 },
+        color: { background: "10,20,30,255", selection: "255,255,0,255" },
+        crs: { authId: "EPSG:4326" },
+        terrain: { "terrain-rendering-enabled": 1, "map-theme": "" },
+        layers: ["points_layer_0001"],
+        terrainGenerator: { type: "flat" },
+        lights: [
+          {
+            kind: "directional",
+            attributes: {
+              x: 0,
+              y: -1,
+              z: 0,
+              color: "255,255,255,255",
+              intensity: 0.8,
+            },
+          },
+        ],
+        eyeDomeLighting: { enabled: 1, "eye-dome-lighting-strength": 1000 },
+      },
+      cameraPose: { x: 140, y: 0, z: -36, dist: 5000, pitch: 30, heading: 10 },
+    },
+  ];
   project.loadProjectExtent = true;
   project.presetFullExtent = { xmin: 139, ymin: 35, xmax: 141, ymax: 37 };
   project.presetFullExtentCrs = { authId: "EPSG:4326" };

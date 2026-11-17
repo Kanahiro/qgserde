@@ -1,18 +1,42 @@
 import {
+  ambientOcclusion3DAttributes,
+  animation3DAttributes,
+  axis3DAttributes,
+  background3DAttributes,
+  bloom3DAttributes,
+  cameraPoseAttributes,
   category3DAttributes,
+  colorGrading3DAttributes,
+  debug3DAttributes,
+  debugSettings3DAttributes,
+  directionalLight3DAttributes,
+  eyeDome3DAttributes,
+  keyframe3DAttributes,
+  mapOverlay3DAttributes,
+  mapView3DAttributes,
   material3DAttributes,
   mesh3DAdvancedAttributes,
+  navigationSync3DAttributes,
   pointCloud3DCategoryAttributes,
+  pointLight3DAttributes,
   polygonEdges3DAttributes,
   renderer3DAttributes,
   rule3DAttributes,
+  scene3DCameraAttributes,
+  scene3DColorAttributes,
+  scene3DExtentAttributes,
+  scene3DGeneratorAttributes,
+  scene3DOriginAttributes,
+  scene3DTerrainAttributes,
+  shadow3DAttributes,
   symbol3DAttributes,
   symbol3DDataAttributes,
   symbol3DTransformAttributes,
+  temporalRange3DAttributes,
   tiling3DAttributes,
 } from "./attributes.generated.ts";
 import { colorRampShaderSpec } from "./raster.ts";
-import type { Entry, Spec } from "./spec.ts";
+import type { AttributeTable, Entry, Spec } from "./spec.ts";
 
 /** `<colorramp>` stored by name, such as a categorized renderer's source ramp. */
 export const colorRampEntry: Entry = {
@@ -152,4 +176,104 @@ export const renderer3DSpec: Spec = {
     symbolEntry("sourceSymbol", "source-symbol"),
     colorRampEntry,
   ],
+};
+
+const group = (
+  field: string,
+  table: AttributeTable,
+  ...at: string[]
+): Entry => ({ kind: "attributes", field, table, at });
+
+/** `<qgis3d>`: settings of a 3D map view or layout 3D map. */
+export const scene3DSpec: Spec = {
+  tag: "qgis3d",
+  entries: [
+    group("origin", scene3DOriginAttributes, "origin"),
+    group("extent", scene3DExtentAttributes, "extent"),
+    group("camera", scene3DCameraAttributes, "camera"),
+    group("color", scene3DColorAttributes, "color"),
+    { kind: "crs", field: "crs", tag: "crs" },
+    group("terrain", scene3DTerrainAttributes, "terrain"),
+    group(
+      "terrainShadingMaterial",
+      material3DAttributes,
+      "terrain",
+      "shading-material",
+    ),
+    {
+      kind: "values",
+      field: "layers",
+      at: ["terrain", "layers"],
+      item: "layer",
+      attribute: "id",
+    },
+    group(
+      "terrainGenerator",
+      scene3DGeneratorAttributes,
+      "terrain",
+      "generator",
+    ),
+    {
+      kind: "nodes",
+      field: "lights",
+      at: ["lights"],
+      specs: {
+        point: {
+          tag: "point-light",
+          entries: [group("attributes", pointLight3DAttributes)],
+        },
+        directional: {
+          tag: "directional-light",
+          entries: [group("attributes", directionalLight3DAttributes)],
+        },
+      },
+    },
+    group("background", background3DAttributes, "background"),
+    group("skybox", background3DAttributes, "skybox"),
+    group("shadows", shadow3DAttributes, "shadow-rendering"),
+    group(
+      "ambientOcclusion",
+      ambientOcclusion3DAttributes,
+      "screen-space-ambient-occlusion",
+    ),
+    group("bloom", bloom3DAttributes, "bloom"),
+    group("colorGrading", colorGrading3DAttributes, "color-grading"),
+    group("debug", debug3DAttributes, "debug"),
+    group("eyeDomeLighting", eyeDome3DAttributes, "eye-dome-lighting"),
+    group("navigationSync", navigationSync3DAttributes, "navigation-sync"),
+    group("debugSettings", debugSettings3DAttributes, "debug-settings"),
+    group("temporalRange", temporalRange3DAttributes, "temporal-range"),
+    group("axis", axis3DAttributes, "axis3d"),
+    group("mapOverlay", mapOverlay3DAttributes, "map-overlay"),
+  ],
+};
+
+/** `<camera-pose>` of a 3D view or layout 3D map. */
+export const cameraPoseEntry: Entry = group(
+  "cameraPose",
+  cameraPoseAttributes,
+  "camera-pose",
+);
+
+/** `<mapViewDocks3D>`: the project's 3D map views. */
+export const mapViews3DEntry: Entry = {
+  kind: "owners",
+  field: "mapViews3D",
+  at: ["mapViewDocks3D"],
+  spec: {
+    tag: "view",
+    entries: [
+      group("attributes", mapView3DAttributes),
+      { kind: "object", field: "settings", at: ["qgis3d"], spec: scene3DSpec },
+      cameraPoseEntry,
+      group("animation", animation3DAttributes, "animation3d"),
+      {
+        kind: "records",
+        field: "keyframes",
+        at: ["animation3d", "keyframes"],
+        item: "keyframe",
+        table: keyframe3DAttributes,
+      },
+    ],
+  },
 };

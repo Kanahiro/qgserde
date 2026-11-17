@@ -1,29 +1,40 @@
 import type {
   QgsActionAttributes,
   QgsActiveAttributes,
+  QgsAmbientOcclusion3DAttributes,
+  QgsAnimation3DAttributes,
   QgsAnnotationLayerItemAttributes,
   QgsAttributeTableColumnAttributes,
   QgsAttributeTableConfigAttributes,
   QgsAuxiliaryLayerAttributes,
+  QgsAxis3DAttributes,
+  QgsBackground3DAttributes,
+  QgsBloom3DAttributes,
   QgsBookmarkAttributes,
   QgsBrightnessContrastAttributes,
+  QgsCameraPoseAttributes,
   QgsCanvasAnnotationAttributes,
   QgsCategory3DAttributes,
   QgsChartSeriesAttributes,
   QgsClassificationExtraAttributes,
   QgsClassificationLabelFormatAttributes,
   QgsColorAttributes,
+  QgsColorGrading3DAttributes,
   QgsColorRampItemAttributes,
   QgsColorRampShaderAttributes,
   QgsConditionalStyleAttributes,
   QgsContrastEnhancementAttributes,
+  QgsDebug3DAttributes,
+  QgsDebugSettings3DAttributes,
   QgsDefaultActionAttributes,
   QgsDiagramAttributeAttributes,
   QgsDiagramCategoryAttributes,
   QgsDiagramLayerSettingsAttributes,
+  QgsDirectionalLight3DAttributes,
   QgsElevationAttributes,
   QgsElevationShadingAttributes,
   QgsExpressionFieldAttributes,
+  QgsEyeDome3DAttributes,
   QgsFontAttributes,
   QgsFormActionAttributes,
   QgsFormAnnotationAttributes,
@@ -40,6 +51,7 @@ import type {
   QgsHueSaturationAttributes,
   QgsInvertedPolygonRendererAttributes,
   QgsJoinAttributes,
+  QgsKeyframe3DAttributes,
   QgsLabelEngineRuleAttributes,
   QgsLabelFormattingAttributes,
   QgsLabelPlacementAttributes,
@@ -50,6 +62,7 @@ import type {
   QgsLayerRefAttributes,
   QgsLayerTreeGroupAttributes,
   QgsLayerTreeLayerAttributes,
+  QgsLayout3DTemporalAttributes,
   QgsLayoutAtlasAttributes,
   QgsLayoutAtlasMapAttributes,
   QgsLayoutAttributes,
@@ -74,8 +87,10 @@ import type {
   QgsLinearDiagramRendererAttributes,
   QgsMapGridAttributes,
   QgsMapLayerAttributes,
+  QgsMapOverlay3DAttributes,
   QgsMapThemeAttributes,
   QgsMapThemeLayerAttributes,
+  QgsMapView3DAttributes,
   QgsMaterial3DAttributes,
   QgsMesh3DAdvancedAttributes,
   QgsMeshActiveDatasetAttributes,
@@ -106,6 +121,7 @@ import type {
   QgsMetadataSpatialExtentAttributes,
   QgsMetadataUrlAttributes,
   QgsMinMaxOriginAttributes,
+  QgsNavigationSync3DAttributes,
   QgsNoDataRangeAttributes,
   QgsOrderByClauseAttributes,
   QgsPaletteEntryAttributes,
@@ -117,6 +133,7 @@ import type {
   QgsPointCloudRendererAttributes,
   QgsPointClusterRendererAttributes,
   QgsPointDisplacementRendererAttributes,
+  QgsPointLight3DAttributes,
   QgsPolygonEdges3DAttributes,
   QgsProfileCustomSourceAttributes,
   QgsProjectAttributes,
@@ -134,7 +151,14 @@ import type {
   QgsRelationFieldRefAttributes,
   QgsRenderer3DAttributes,
   QgsRule3DAttributes,
+  QgsScene3DCameraAttributes,
+  QgsScene3DColorAttributes,
+  QgsScene3DExtentAttributes,
+  QgsScene3DGeneratorAttributes,
+  QgsScene3DOriginAttributes,
+  QgsScene3DTerrainAttributes,
   QgsSelectionAttributes,
+  QgsShadow3DAttributes,
   QgsSizeLegendAttributes,
   QgsSizeLegendClassAttributes,
   QgsSizeLegendFontAttributes,
@@ -150,6 +174,7 @@ import type {
   QgsTableColumnWidthAttributes,
   QgsTableRowHeightAttributes,
   QgsTemporalAttributes,
+  QgsTemporalRange3DAttributes,
   QgsTemporalRangeAttributes,
   QgsTerrainProviderAttributes,
   QgsTextAnnotationAttributes,
@@ -316,6 +341,8 @@ export interface QgsProject {
   presetFullExtent?: QgsRectangle;
   /** CRS of {@link QgsProject.presetFullExtent}. */
   presetFullExtentCrs?: QgsCrs;
+  /** 3D map views (`<mapViewDocks3D>`). */
+  mapViews3D?: QgsMapView3D[];
   /** Labeling engine rules (QGIS 3.40+), such as a minimum distance between labels and features. */
   labelEngineRules?: QgsLabelEngineRuleAttributes[];
   /** Default symbol and style database settings. */
@@ -477,6 +504,12 @@ export interface QgsLayoutItem {
   filterByMaps?: string[];
   /** Scale bar number format. */
   numericFormat?: QgsNumericFormat;
+  /** Scene settings of a 3D map item. */
+  scene3D?: QgsScene3D;
+  /** Camera of a 3D map item. */
+  cameraPose?: QgsCameraPoseAttributes;
+  /** Time range of a 3D map item. */
+  temporalSettings3D?: QgsLayout3DTemporalAttributes;
   /** Plot of an elevation profile or chart. */
   plot?: QgsLayoutPlot;
   /** Elevation profile curve as WKT. */
@@ -527,6 +560,82 @@ export interface QgsLegendTextOnSymbol {
   format?: QgsTextFormat;
   /** Text per legend item, by legend key. */
   content?: QgsLegendTextOnSymbolItemAttributes[];
+}
+
+/** 3D map view of a project. */
+export interface QgsMapView3D {
+  /** View `name` and whether it `isOpen`. */
+  attributes?: QgsMapView3DAttributes;
+  /** Scene settings. */
+  settings?: QgsScene3D;
+  /** Camera. */
+  cameraPose?: QgsCameraPoseAttributes;
+  /** Animation settings. */
+  animation?: QgsAnimation3DAttributes;
+  /** Animation keyframes. */
+  keyframes?: QgsKeyframe3DAttributes[];
+  /** @internal */
+  readonly extensions?: QgsExtensions;
+}
+
+/** Settings of a 3D scene (`<qgis3d>`). QGIS 3 and 4 store some of them differently. */
+export interface QgsScene3D {
+  /** Scene origin in map coordinates. */
+  origin?: QgsScene3DOriginAttributes;
+  /** Scene extent. */
+  extent?: QgsScene3DExtentAttributes;
+  /** Camera settings, such as `field-of-view`. */
+  camera?: QgsScene3DCameraAttributes;
+  /** Background and selection colors. */
+  color?: QgsScene3DColorAttributes;
+  /** Scene CRS. */
+  crs?: QgsCrs;
+  /** Terrain settings, including those of the terrain type. */
+  terrain?: QgsScene3DTerrainAttributes;
+  /** Terrain shading material. */
+  terrainShadingMaterial?: QgsMaterial3DAttributes;
+  /** IDs of the layers draped on the terrain. */
+  layers?: string[];
+  /** Terrain generator `type`, such as `flat` or `dem`. */
+  terrainGenerator?: QgsScene3DGeneratorAttributes;
+  /** Light sources. */
+  lights?: QgsLight3D[];
+  /** Background (QGIS 4). */
+  background?: QgsBackground3DAttributes;
+  /** Skybox (QGIS 3). */
+  skybox?: QgsBackground3DAttributes;
+  /** Shadow rendering. */
+  shadows?: QgsShadow3DAttributes;
+  /** Screen-space ambient occlusion. */
+  ambientOcclusion?: QgsAmbientOcclusion3DAttributes;
+  /** Bloom (QGIS 4.2+). */
+  bloom?: QgsBloom3DAttributes;
+  /** Color grading (QGIS 4.2+). */
+  colorGrading?: QgsColorGrading3DAttributes;
+  /** Debugging aids. */
+  debug?: QgsDebug3DAttributes;
+  /** Eye-dome lighting. */
+  eyeDomeLighting?: QgsEyeDome3DAttributes;
+  /** Synchronization with the 2D map. */
+  navigationSync?: QgsNavigationSync3DAttributes;
+  /** Depth and shadow map debugging. */
+  debugSettings?: QgsDebugSettings3DAttributes;
+  /** Time range. */
+  temporalRange?: QgsTemporalRange3DAttributes;
+  /** Axis widget. */
+  axis?: QgsAxis3DAttributes;
+  /** 2D map overlay. */
+  mapOverlay?: QgsMapOverlay3DAttributes;
+}
+
+/** Light source of a 3D scene. */
+export interface QgsLight3D {
+  /** `point` (`<point-light>`) or `directional` (`<directional-light>`). */
+  kind: "point" | "directional";
+  /** Position or direction, `color`, and `intensity`. */
+  attributes?: QgsPointLight3DAttributes & QgsDirectionalLight3DAttributes;
+  /** @internal */
+  readonly extensions?: QgsExtensions;
 }
 
 /** Plot of an elevation profile or chart item. */

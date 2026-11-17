@@ -2,6 +2,7 @@ import {
   chartSeriesAttributes,
   fontAttributes,
   layerRefAttributes,
+  layout3DTemporalAttributes,
   layoutAtlasAttributes,
   layoutAtlasMapAttributes,
   layoutAttributes,
@@ -31,6 +32,7 @@ import {
 } from "./attributes.generated.ts";
 import { textFormatSpec } from "./labeling.ts";
 import { customProperties, numericFormat } from "./layer-settings.ts";
+import { cameraPoseEntry, scene3DSpec } from "./scene3d.ts";
 import type { AttributeTable, Entry, Spec } from "./spec.ts";
 
 const attributes = (
@@ -262,6 +264,13 @@ export const layoutItemSpec: Spec = {
     },
     numericFormat("numericFormat", "numericFormat"),
     plot,
+    { kind: "object", field: "scene3D", at: ["qgis3d"], spec: scene3DSpec },
+    cameraPoseEntry,
+    attributes(
+      "temporalSettings3D",
+      layout3DTemporalAttributes,
+      "temporal-settings",
+    ),
     { kind: "text", field: "curve", at: ["curve"], type: "string" },
     {
       kind: "records",
