@@ -790,5 +790,17 @@
       "postalcode": "string",
       "country": "string"
     }
+  },
+  "WmsDimension": {
+    "doc": "Server WMS `<dimension>`.",
+    "keys": ["^qgsmaplayerserverproperties\\.cpp\\|dimension$"]
+  },
+  "LegendTextOnSymbolItem": {
+    "doc": "Legend text-on-symbol content `<item>`.",
+    "keys": [],
+    "kinds": {
+      "key": "string",
+      "value": "string"
+    }
   }
 }

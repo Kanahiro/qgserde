@@ -63,6 +63,7 @@ import type {
   QgsLayoutTableCellStyleAttributes,
   QgsLayoutTableColumnAttributes,
   QgsLegendStyleAttributes,
+  QgsLegendTextOnSymbolItemAttributes,
   QgsLegendTreeGroupAttributes,
   QgsLegendTreeLayerAttributes,
   QgsLinearDiagramRendererAttributes,
@@ -133,6 +134,7 @@ import type {
   QgsTransformPairAttributes,
   QgsVectorTileLabelingAttributes,
   QgsVectorTileStyleAttributes,
+  QgsWmsDimensionAttributes,
 } from "./attributes.generated.ts";
 import type { QgsExtensions } from "./extensions.ts";
 
@@ -451,6 +453,14 @@ export interface QgsLayoutItem {
   atlasClippingLayers?: string[];
   /** @internal */
   readonly extensions?: QgsExtensions;
+}
+
+/** Text drawn on legend symbols, such as a category's label. */
+export interface QgsLegendTextOnSymbol {
+  /** Text format. */
+  format?: QgsTextFormat;
+  /** Text per legend item, by legend key. */
+  content?: QgsLegendTextOnSymbolItemAttributes[];
 }
 
 /** Node of a layout legend tree. */
@@ -828,6 +838,12 @@ export interface QgsMapLayerBase {
   mapTipEnabled?: boolean;
   /** Legend settings (`<legend>`), such as `type` and `showLabelLegend`. */
   legend?: QgsLayerLegendAttributes;
+  /** Text drawn on legend symbols (`<legend><text-on-symbol>`), vector layers only. */
+  legendTextOnSymbol?: QgsLegendTextOnSymbol;
+  /** User notes (`<userNotes value>`), often HTML. */
+  notes?: string;
+  /** Data timestamp (`<timestamp>`) in ISO 8601, written by some providers. */
+  timestamp?: string;
   /** Time settings (`<temporal>`). */
   temporal?: QgsTemporalProperties;
   /** Elevation and profile settings (`<elevation>`). */
@@ -919,6 +935,8 @@ export interface QgsLayerServerProperties {
     /** URL, stored as the element text. */
     url?: string;
   })[];
+  /** WMS dimensions served by QGIS Server (`<wmsDimensions>`). */
+  wmsDimensions?: QgsWmsDimensionAttributes[];
 }
 
 /** Contact in metadata. */

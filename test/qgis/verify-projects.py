@@ -11,6 +11,7 @@ from qgis.core import (
     QgsDataSourceUri,
     QgsExpressionContextUtils,
     QgsFieldConstraints,
+    QgsLayerNotesUtils,
     QgsLayerTreeGroup,
     QgsLayoutItemShape,
     QgsMapLayer,
@@ -289,6 +290,14 @@ def check_settings(project):
     assert served("keywordList").replace(" ", "") == "one,two"
     assert served("dataUrl") == "https://example.com/data"
     assert served("attributionUrl") == "https://example.com"
+    if hasattr(server, "wmsDimensions"):
+        dimensions = server.wmsDimensions()
+        assert [d.name for d in dimensions] == ["population"], dimensions
+        assert dimensions[0].fieldName == "pop"
+    assert QgsLayerNotesUtils.layerNotes(cities) == "<p>Checked</p>"
+    legend = cities.legend()
+    if hasattr(legend, "textOnSymbolContent"):
+        assert legend.textOnSymbolContent() == {"0": "C"}, legend.textOnSymbolContent()
     metadata = cities.metadata()
     assert metadata.title() == "Cities metadata"
     assert metadata.keywords() == {"gmd:topicCategory": ["location"]}

@@ -63,6 +63,7 @@ export type {
   QgsLayoutTableCellStyleAttributes,
   QgsLayoutTableColumnAttributes,
   QgsLegendStyleAttributes,
+  QgsLegendTextOnSymbolItemAttributes,
   QgsLegendTreeGroupAttributes,
   QgsLegendTreeLayerAttributes,
   QgsLinearDiagramRendererAttributes,
@@ -135,6 +136,7 @@ export type {
   QgsTransformPairAttributes,
   QgsVectorTileLabelingAttributes,
   QgsVectorTileStyleAttributes,
+  QgsWmsDimensionAttributes,
 } from "./attributes.generated.ts";
 export type { QgsErrorCode } from "./errors.ts";
 export { QgsError } from "./errors.ts";
@@ -201,6 +203,7 @@ export type {
   QgsLegacyLegend,
   QgsLegacyLegendNode,
   QgsLegendNode,
+  QgsLegendTextOnSymbol,
   QgsMainAnnotationLayer,
   QgsMapLayer,
   QgsMapLayerBase,

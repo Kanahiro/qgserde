@@ -4656,3 +4656,48 @@ export const metadataAddressAttributes = {
   postalcode: "string",
   type: "string",
 } as const satisfies AttributeTable;
+
+/** Server WMS `<dimension>`. */
+export interface QgsWmsDimensionAttributes {
+  /** `defaultDisplayType`. */
+  defaultDisplayType?: number;
+  /** `endFieldName`. */
+  endFieldName?: string;
+  /** `fieldName`. */
+  fieldName?: string;
+  /** `name`. */
+  name?: string;
+  /** `referenceValue`. */
+  referenceValue?: string;
+  /** `unitSymbol`. */
+  unitSymbol?: string;
+  /** `units`. */
+  units?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const wmsDimensionAttributes = {
+  defaultDisplayType: "number",
+  endFieldName: "string",
+  fieldName: "string",
+  name: "string",
+  referenceValue: "string",
+  unitSymbol: "string",
+  units: "string",
+} as const satisfies AttributeTable;
+
+/** Legend text-on-symbol content `<item>`. */
+export interface QgsLegendTextOnSymbolItemAttributes {
+  /** `key`. */
+  key?: string;
+  /** `value`. */
+  value?: string;
+  /** Other attributes, and values that do not parse as their kind. */
+  other?: Record<string, string>;
+}
+
+export const legendTextOnSymbolItemAttributes = {
+  key: "string",
+  value: "string",
+} as const satisfies AttributeTable;

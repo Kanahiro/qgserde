@@ -158,6 +158,22 @@ export function createSettingsProject(): QgsProject {
         dataUrlFormat: "text/html",
         attribution: "Example",
         attributionUrl: "https://example.com",
+        wmsDimensions: [
+          {
+            name: "population",
+            fieldName: "pop",
+            endFieldName: "",
+            units: "people",
+            unitSymbol: "p",
+            defaultDisplayType: 0,
+            referenceValue: "",
+          },
+        ],
+      },
+      notes: "<p>Checked</p>",
+      legendTextOnSymbol: {
+        format: { style: { fontSize: 7 } },
+        content: [{ key: "0", value: "C" }],
       },
       metadata: {
         title: "Cities metadata",

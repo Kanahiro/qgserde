@@ -24,6 +24,7 @@ import {
   joinAttributes,
   layerFlagsAttributes,
   layerLegendAttributes,
+  legendTextOnSymbolItemAttributes,
   linearDiagramRendererAttributes,
   mapLayerAttributes,
   metadataAddressAttributes,
@@ -40,10 +41,11 @@ import {
   storedExpressionAttributes,
   temporalAttributes,
   temporalRangeAttributes,
+  wmsDimensionAttributes,
 } from "./attributes.generated.ts";
 import { putElementText, remove, replaceChildren } from "./codec.ts";
 import { QgsError } from "./errors.ts";
-import { labeling } from "./labeling.ts";
+import { labeling, textFormatSpec } from "./labeling.ts";
 import {
   type AttributeTable,
   type Custom,
@@ -330,6 +332,37 @@ export const commonLayerEntries: Entry[] = [
   attributes("legend", layerLegendAttributes, "legend"),
   {
     kind: "object",
+    field: "legendTextOnSymbol",
+    at: ["legend", "text-on-symbol"],
+    spec: {
+      tag: "text-on-symbol",
+      entries: [
+        {
+          kind: "object",
+          field: "format",
+          at: ["text-style"],
+          spec: textFormatSpec,
+        },
+        {
+          kind: "records",
+          field: "content",
+          at: ["content"],
+          item: "item",
+          table: legendTextOnSymbolItemAttributes,
+        },
+      ],
+    },
+  },
+  {
+    kind: "attribute",
+    field: "notes",
+    attribute: "value",
+    type: "string",
+    at: ["userNotes"],
+  },
+  text("timestamp", "timestamp"),
+  {
+    kind: "object",
     field: "temporal",
     at: ["temporal"],
     spec: {
@@ -417,6 +450,13 @@ export const commonLayerEntries: Entry[] = [
           item: "metadataUrl",
           table: metadataUrlAttributes,
           text: "url",
+        },
+        {
+          kind: "records",
+          field: "wmsDimensions",
+          at: ["wmsDimensions"],
+          item: "dimension",
+          table: wmsDimensionAttributes,
         },
       ],
     },
