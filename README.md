@@ -131,7 +131,7 @@ The target QGIS installation must support those features.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, documentation builds, and QGIS
 integration tests. CI runs on Node.js 24 and 26 and opens generated projects in
-QGIS 3.44, 4.0, and 4.2.
+QGIS 3.44, 4.0, 4.2, and 4.4.
 
 ## License
 

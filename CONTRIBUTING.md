@@ -110,8 +110,8 @@ Each version can only be published once.
 
 ## QGIS integration tests
 
-CI opens twenty-one projects in each of the official QGIS 3.44, 4.0, and 4.2 Docker
-images: a new project, a conversion from an older format, an edited fixture,
+CI opens twenty-one projects in each of the official QGIS 3.44, 4.0, 4.2, and
+4.4 Docker images: a new project, a conversion from an older format, an edited fixture,
 a tile project with nested groups and repeated references, its round trip,
 a project with every modeled vector renderer and labeling and its round
 trip, a project with field, form, join, action, table, and common layer
@@ -140,8 +140,8 @@ docker run --rm --network none -e QT_QPA_PLATFORM=offscreen \
   test/qgis/verify-projects.py /projects 3.44
 ```
 
-For QGIS 4.0, use `qgis/qgis:4.0-trixie`; for 4.2, use
-`qgis/qgis:4.2-trixie`. Set the version in both the generation and verification
+For QGIS 4.0, 4.2, and 4.4, use `qgis/qgis:4.0-trixie`, `qgis/qgis:4.2-trixie`,
+and `qgis/qgis:4.4-trixie`. Set the version in both the generation and verification
 commands to match the image. Containers run without network access. Tests read
 projects without fetching tiles or rendering maps. WMS capabilities come from
 a local XML fixture.
@@ -149,11 +149,11 @@ a local XML fixture.
 With a local PyQGIS installation, the test runner can use its Python executable:
 
 ```sh
-QGIS_PYTHON=/path/to/python-with-qgis QGIS_VERSION=4.2 pnpm test
+QGIS_PYTHON=/path/to/python-with-qgis QGIS_VERSION=4.4 pnpm test
 ```
 
 Set `PYTHONPATH` if needed. Without `QGIS_PYTHON`, only the PyQGIS integration
-test is skipped. `QGIS_VERSION` defaults to `4.2`. The local test and CI share
+test is skipped. `QGIS_VERSION` defaults to `4.4`. The local test and CI share
 the fixture generator and Python verifier; a QGIS version mismatch fails the
 test.
 
@@ -173,12 +173,12 @@ the files that `scripts/attribute-groups.json` names.
 `src/attributes.generated.ts` holds the typed attribute groups. Do not edit it
 by hand. `scripts/attribute-groups.json` names each group, the QGIS writers it
 comes from, attributes that other entries type, and kinds the scan gets wrong.
-To regenerate, check out the QGIS 3.44 and 4.2 sources and run:
+To regenerate, check out the QGIS 3.44 and 4.4 sources and run:
 
 ```sh
 git clone --depth 1 --branch release-3_44 https://github.com/qgis/QGIS.git /tmp/qgis-3.44
-git clone --depth 1 --branch release-4_2 https://github.com/qgis/QGIS.git /tmp/qgis-4.2
-python3 scripts/generate-attributes.py /tmp/qgis-3.44/src /tmp/qgis-4.2/src
+git clone --depth 1 --branch release-4_4 https://github.com/qgis/QGIS.git /tmp/qgis-4.4
+python3 scripts/generate-attributes.py /tmp/qgis-3.44/src /tmp/qgis-4.4/src
 pnpm format
 ```
 
@@ -204,7 +204,7 @@ Deeper elements are written in their writers' order, which must match QGIS.
 ## Format references
 
 - [QGIS project file format](https://documentation.qgis.org/3.44/en/docs/user_manual/appendices/qgis_file_formats.html)
-- [Project reader and writer](https://github.com/qgis/QGIS/blob/release-4_2/src/core/project/qgsproject.cpp)
+- [Project reader and writer](https://github.com/qgis/QGIS/blob/release-4_4/src/core/project/qgsproject.cpp)
 - [View settings](https://github.com/qgis/QGIS/blob/release-3_44/src/core/project/qgsprojectviewsettings.cpp)
 - [CRS reader and writer](https://github.com/qgis/QGIS/blob/release-3_44/src/core/proj/qgscoordinatereferencesystem.cpp)
 - [Fixture sources and licenses](test/fixtures/README.md)

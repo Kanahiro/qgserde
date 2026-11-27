@@ -48,6 +48,8 @@ jobs:
             image: qgis/qgis:4.0-trixie
           - version: "4.2"
             image: qgis/qgis:4.2-trixie
+          - version: "4.4"
+            image: qgis/qgis:4.4-trixie
     env:
       QGIS_VERSION: ${{ matrix.version }}
       QGIS_IMAGE: ${{ matrix.image }}

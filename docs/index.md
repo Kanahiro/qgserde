@@ -375,7 +375,7 @@ is not part of the group fails with `INVALID_EDIT`.
 Namespace declarations (`xmlns:*`) are never part of a group.
 
 The interfaces and their attribute kinds are generated from the QGIS 3.44 and
-4.2 writers by `scripts/generate-attributes.py`; see CONTRIBUTING.md.
+4.4 writers by `scripts/generate-attributes.py`; see CONTRIBUTING.md.
 
 ## Preserve data and order
 
