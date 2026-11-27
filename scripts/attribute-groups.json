@@ -120,7 +120,7 @@
   "LayerTreeGroup": {
     "doc": "`<layer-tree-group>` attributes.",
     "keys": ["^qgslayertreegroup\\.cpp\\|layer-tree-group$"],
-    "exclude": ["name", "checked", "expanded"]
+    "exclude": ["name", "checked", "expanded", "wms-has-time-dimension"]
   },
   "Layout": {
     "doc": "`<Layout>` attributes.",

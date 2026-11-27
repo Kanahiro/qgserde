@@ -336,6 +336,8 @@ project metadata keywords, contacts, links, history, and dates. It also models
 QGIS 4.2, `elevationProfiles` and selective masking source sets. Layer-tree
 nodes model their other attributes, such as `mutually-exclusive`, legend patch
 shapes, and custom properties; QGIS 4.2 custom nodes have `type: "custom"`.
+Groups model their QGIS Server settings in `server`, whatever form the file
+stores them in; each target version gets the form it reads.
 
 ### Layouts
 

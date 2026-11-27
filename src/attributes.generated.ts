@@ -549,8 +549,6 @@ export interface QgsLayerTreeGroupAttributes {
   "mutually-exclusive-child"?: number;
   /** `wms-group-request-mode`. */
   "wms-group-request-mode"?: string;
-  /** `wms-has-time-dimension`. */
-  "wms-has-time-dimension"?: string;
 }
 
 export const layerTreeGroupAttributes = {
@@ -559,7 +557,6 @@ export const layerTreeGroupAttributes = {
   "mutually-exclusive": "string",
   "mutually-exclusive-child": "number",
   "wms-group-request-mode": "string",
-  "wms-has-time-dimension": "string",
 } as const satisfies AttributeTable;
 
 /** `<Layout>` attributes. */

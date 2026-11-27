@@ -4,6 +4,7 @@ import { test } from "node:test";
 import {
   createProject,
   parseQgs,
+  type QgsLayerServerProperties,
   type QgsVectorLayer,
   serializeQgs,
 } from "../src/index.ts";
@@ -257,4 +258,85 @@ test("fresh vector tiles include native symbology required by QGIS 3 and preserv
   const parsed = parseQgs(custom);
   assert.deepEqual(parseQgs(serializeQgs(parsed, { version: "3.44" })), parsed);
   assert.match(serializeQgs(parsed, { version: "3.44" }), /custom="keep"/u);
+});
+
+test("group server settings are one model across their QGIS storage forms", () => {
+  const groupOf = (xml: string) =>
+    findChild(
+      findChild(readXml(xml).root, "layer-tree-group")!,
+      "layer-tree-group",
+    )!;
+  // QGIS 3.2 stores the short name, title, and abstract as custom properties.
+  const project = parseQgs(
+    readFileSync(
+      new URL("./fixtures/qgis3-raster.qgs", import.meta.url),
+      "utf8",
+    ),
+  );
+  const group = project.layerTree!.children[0]!;
+  assert.equal(group.type, "group");
+  if (group.type !== "group") return;
+  const server: QgsLayerServerProperties = group.server!;
+  assert.deepEqual(
+    { ...server },
+    {
+      shortName: "group_name",
+      title: "Group title",
+      abstract: "My so beautiful and useful abstract",
+    },
+  );
+  assert.equal(group.customProperties, undefined);
+  const modern = groupOf(serializeQgs(project, { version: "4.4" }));
+  assert.equal(findChild(modern, "shortname")?.children[0]?.type, "text");
+  assert.equal(
+    findChildren(findChild(modern, "customproperties")!, "property").length,
+    0,
+  );
+  assert.equal(
+    parseQgs(serializeQgs(project, { version: "4.4" })).layerTree!.children[0]!
+      .type,
+    "group",
+  );
+
+  // 3.44 to 4.2 store a default TIME dimension as an attribute, 4.4 as an element.
+  server.wmsDimensions = [{ name: "TIME", defaultDisplayType: 0 }];
+  const v42 = serializeQgs(project, { version: "4.2" });
+  assert.equal(groupOf(v42).attributes["wms-has-time-dimension"], "1");
+  assert.equal(findChild(groupOf(v42), "wmsDimensions"), undefined);
+  const reread = parseQgs(v42).layerTree!.children[0]!;
+  assert.deepEqual(reread.type === "group" && reread.server, group.server);
+  assert.equal(
+    reread.type === "group" &&
+      reread.attributes?.["wms-has-time-dimension" as never],
+    undefined,
+  );
+  const v44 = groupOf(serializeQgs(parseQgs(v42), { version: "4.4" }));
+  assert.equal(v44.attributes["wms-has-time-dimension"], undefined);
+  assert.deepEqual(
+    findChild(findChild(v44, "wmsDimensions")!, "dimension")!.attributes,
+    { name: "TIME", defaultDisplayType: "0" },
+  );
+
+  // Settings an older target cannot store fail instead of being dropped.
+  assert.throws(() => serializeQgs(project, { version: "3.40" }), {
+    code: "INVALID_EDIT",
+  });
+  server.wmsDimensions[0]!.referenceValue = "2026-01-01T00:00:00";
+  assert.throws(() => serializeQgs(project, { version: "4.2" }), {
+    code: "INVALID_EDIT",
+  });
+  delete server.wmsDimensions;
+  const v340 = serializeQgs(project, { version: "3.40" });
+  const legacy = groupOf(v340);
+  assert.match(
+    v340,
+    /<Option name="wmsShortName" type="QString" value="group_name"\/>/,
+  );
+  const back = parseQgs(v340).layerTree!.children[0]!;
+  assert.deepEqual(back.type === "group" && back.server, server);
+  assert.equal(findChild(legacy, "shortname"), undefined);
+  group.customProperties = { wmsTitle: "ambiguous" };
+  assert.throws(() => serializeQgs(project, { version: "4.4" }), {
+    code: "INVALID_EDIT",
+  });
 });

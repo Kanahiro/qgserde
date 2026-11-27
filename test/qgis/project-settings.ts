@@ -44,6 +44,11 @@ export function createProjectSettingsProject(): QgsProject {
     ],
     attributes: { "mutually-exclusive": "1" },
     customProperties: { "plugin/flag": "x" },
+    server: {
+      shortName: "group_short",
+      title: "Group title",
+      wmsDimensions: [{ name: "TIME", defaultDisplayType: 0 }],
+    },
   });
   project.properties = {
     Variables: {

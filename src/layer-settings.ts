@@ -430,65 +430,65 @@ export const commonLayerEntries: Entry[] = [
     at: ["resourceMetadata"],
     spec: layerMetadataSpec,
   },
-  {
-    kind: "object",
-    field: "server",
-    at: [],
-    spec: {
-      tag: "maplayer",
-      entries: [
-        text("shortName", "shortname"),
-        text("title", "title"),
-        text("abstract", "abstract"),
-        {
-          kind: "values",
-          field: "keywords",
-          at: ["keywordList"],
-          item: "value",
-        },
-        text("dataUrl", "dataUrl"),
-        {
-          kind: "attribute",
-          field: "dataUrlFormat",
-          attribute: "format",
-          type: "string",
-          at: ["dataUrl"],
-        },
-        text("attribution", "attribution"),
-        {
-          kind: "attribute",
-          field: "attributionUrl",
-          attribute: "href",
-          type: "string",
-          at: ["attribution"],
-        },
-        text("legendUrl", "legendUrl"),
-        {
-          kind: "attribute",
-          field: "legendUrlFormat",
-          attribute: "format",
-          type: "string",
-          at: ["legendUrl"],
-        },
-        {
-          kind: "records",
-          field: "metadataUrls",
-          at: ["metadataUrls"],
-          item: "metadataUrl",
-          table: metadataUrlAttributes,
-          text: "url",
-        },
-        {
-          kind: "records",
-          field: "wmsDimensions",
-          at: ["wmsDimensions"],
-          item: "dimension",
-          table: wmsDimensionAttributes,
-        },
-      ],
-    },
-  },
+  { kind: "object", field: "server", at: [], spec: serverSpec("maplayer") },
 ];
+
+/** Server publishing settings stored directly in a layer or layer-tree group. */
+export function serverSpec(tag: string): Spec {
+  return {
+    tag,
+    entries: [
+      text("shortName", "shortname"),
+      text("title", "title"),
+      text("abstract", "abstract"),
+      {
+        kind: "values",
+        field: "keywords",
+        at: ["keywordList"],
+        item: "value",
+      },
+      text("dataUrl", "dataUrl"),
+      {
+        kind: "attribute",
+        field: "dataUrlFormat",
+        attribute: "format",
+        type: "string",
+        at: ["dataUrl"],
+      },
+      text("attribution", "attribution"),
+      {
+        kind: "attribute",
+        field: "attributionUrl",
+        attribute: "href",
+        type: "string",
+        at: ["attribution"],
+      },
+      text("legendUrl", "legendUrl"),
+      {
+        kind: "attribute",
+        field: "legendUrlFormat",
+        attribute: "format",
+        type: "string",
+        at: ["legendUrl"],
+      },
+      {
+        kind: "records",
+        field: "metadataUrls",
+        at: ["metadataUrls"],
+        item: "metadataUrl",
+        table: metadataUrlAttributes,
+        text: "url",
+      },
+      {
+        kind: "records",
+        field: "wmsDimensions",
+        at: ["wmsDimensions"],
+        item: "dimension",
+        table: wmsDimensionAttributes,
+      },
+    ],
+  };
+}
 
 const labelStyle: Entry = {
   kind: "object",
