@@ -1,3 +1,4 @@
+import type { QgsWmsDimensionAttributes } from "./attributes.generated.ts";
 import {
   boolean,
   ensure,
@@ -7,11 +8,13 @@ import {
 } from "./codec.ts";
 import { QgsError } from "./errors.ts";
 import type { ExtensionCodec } from "./extensions.ts";
+import { serverSpec } from "./layer-settings.ts";
 import { treeNodeSpec, treeTags } from "./project-settings.ts";
 import { readSpec, writeSpec } from "./spec.ts";
 import type {
   QgisVersion,
   QgsCheckState,
+  QgsLayerServerProperties,
   QgsLayerTreeGroup,
   QgsLayerTreeNode,
   QgsMapLayer,
@@ -40,6 +43,7 @@ const treeElements: string[] = Object.values(treeTags);
 export function readTree(
   element: XmlElement,
   codec: ExtensionCodec,
+  root = true,
 ): QgsLayerTreeNode {
   const state = {
     expanded: boolean(element.attributes.expanded) ?? true,
@@ -70,7 +74,7 @@ export function readTree(
     ...state,
     children: findChildren(element)
       .filter((child) => treeElements.includes(child.name))
-      .map((child) => readTree(child, codec)),
+      .map((child) => readTree(child, codec, false)),
   };
   const order = findChild(element, "custom-order");
   if (order)
@@ -79,7 +83,144 @@ export function readTree(
       layerIds: findChildren(order, "item").map(getText),
     };
   Object.assign(group, readSpec(treeNodeSpec("group"), element, codec));
+  if (!root) readGroupServer(group, element);
   return codec.remember(group, element);
+}
+
+// QGIS has stored a group's server settings in three ways; the model has one.
+// Before 3.44: custom properties for these three fields.
+const legacyServerKeys = {
+  wmsShortName: "shortName",
+  wmsTitle: "title",
+  wmsAbstract: "abstract",
+} as const;
+// 3.44 to 4.2: `wms-has-time-dimension="1"` for this dimension with default
+// settings. QGIS 4.4 stores it in <wmsDimensions>.
+const timeDimension = "TIME";
+const timeAttribute = "wms-has-time-dimension";
+
+function before(target: QgisVersion, major: number, minor: number): boolean {
+  return (
+    target.major < major || (target.major === major && target.minor < minor)
+  );
+}
+
+/** Fold the older storage forms into `server`, as QGIS does on read. */
+function readGroupServer(group: QgsLayerTreeGroup, element: XmlElement): void {
+  const server: QgsLayerServerProperties = { ...group.server };
+  const custom = group.customProperties;
+  if (custom) {
+    for (const [key, field] of Object.entries(legacyServerKeys)) {
+      const value = custom[key];
+      if (typeof value !== "string") continue;
+      delete custom[key];
+      // An element, when present, wins over the custom property.
+      server[field] ??= value;
+    }
+    if (!Object.keys(custom).length) delete group.customProperties;
+  }
+  if (
+    element.attributes[timeAttribute] === "1" &&
+    !server.wmsDimensions?.some((item) => item.name === timeDimension)
+  )
+    server.wmsDimensions = [
+      ...(server.wmsDimensions ?? []),
+      { name: timeDimension, defaultDisplayType: 0 },
+    ];
+  if (Object.keys(server).length) group.server = server;
+}
+
+const serverTags = new Set(
+  serverSpec(treeTags.group).entries.flatMap((entry) =>
+    "at" in entry && entry.at?.[0] ? [entry.at[0]] : [],
+  ),
+);
+
+/** QGIS writes a group's server elements before its child nodes. */
+function serverBeforeChildren(element: XmlElement): void {
+  const first = element.children.findIndex(
+    (child) => child.type === "element" && treeElements.includes(child.name),
+  );
+  if (first === -1) return;
+  const moved = element.children
+    .slice(first)
+    .filter((child) => child.type === "element" && serverTags.has(child.name));
+  if (!moved.length) return;
+  const rest = element.children.filter((child) => !moved.includes(child));
+  rest.splice(first, 0, ...moved);
+  element.children = rest;
+}
+
+function isDefaultTime(dimension: QgsWmsDimensionAttributes): boolean {
+  return Object.entries(dimension).every(([key, value]) =>
+    key === "name"
+      ? value === timeDimension
+      : // QGIS reads a missing display type as 0, all values.
+        key === "defaultDisplayType"
+        ? value === 0 || value === undefined
+        : value === undefined,
+  );
+}
+
+/**
+ * The group as the spec writes it for `target`, with settings moved to the
+ * custom properties or attribute that target reads.
+ */
+function groupForTarget(
+  node: QgsLayerTreeGroup,
+  element: XmlElement,
+  target: QgisVersion,
+  root: boolean,
+): QgsLayerTreeGroup {
+  for (const [key, field] of Object.entries(legacyServerKeys))
+    if (node.customProperties && key in node.customProperties)
+      throw new QgsError(
+        "INVALID_EDIT",
+        `Group custom property ${key} is modeled as server.${field}`,
+      );
+  delete element.attributes[timeAttribute];
+  const { server } = node;
+  if (root && server)
+    throw new QgsError(
+      "INVALID_EDIT",
+      "The layer-tree root has no server settings",
+    );
+  if (!server || !before(target, 4, 4)) return node;
+  const { wmsDimensions = [], ...rest } = server;
+  if (!before(target, 3, 44)) {
+    if (wmsDimensions.length > 1 || !wmsDimensions.every(isDefaultTime))
+      throw new QgsError(
+        "INVALID_EDIT",
+        `Group WMS dimensions other than one ${timeDimension} dimension with default settings cannot be written for QGIS versions before 4.4`,
+      );
+    if (wmsDimensions.length) element.attributes[timeAttribute] = "1";
+    return { ...node, server: rest };
+  }
+  const { shortName, title, abstract, ...unsupported } = server;
+  if (
+    Object.values(unsupported).some((value) =>
+      Array.isArray(value) ? value.length : value !== undefined,
+    )
+  )
+    throw new QgsError(
+      "INVALID_EDIT",
+      "Group server settings other than shortName, title, and abstract cannot be written for QGIS versions before 3.44",
+    );
+  const legacy = Object.fromEntries(
+    Object.entries({
+      wmsShortName: shortName,
+      wmsTitle: title,
+      wmsAbstract: abstract,
+    }).filter(([, value]) => value !== undefined),
+  ) as Record<string, string>;
+  const { server: _, ...withoutServer } = node;
+  // QGIS keeps custom properties in a QVariantMap and writes them sorted.
+  const customProperties = Object.fromEntries(
+    Object.entries({ ...node.customProperties, ...legacy }).sort(([a], [b]) =>
+      a < b ? -1 : a > b ? 1 : 0,
+    ),
+  );
+  return { ...withoutServer, customProperties };
 }
 
 /**
@@ -125,7 +266,17 @@ export function writeTree(
     if (!state)
       throw new QgsError("INVALID_EDIT", "Invalid layer-tree check state");
     putAttribute(element, "checked", state);
-    writeSpec(treeNodeSpec(node.type), node as never, element, codec, target);
+    const written =
+      node.type === "group"
+        ? groupForTarget(node, element, target, depth === 1)
+        : node;
+    writeSpec(
+      treeNodeSpec(node.type),
+      written as never,
+      element,
+      codec,
+      target,
+    );
     if (node.type === "custom") {
       putAttribute(element, "id", node.id);
       putAttribute(element, "name", node.name);
@@ -162,6 +313,7 @@ export function writeTree(
       return encoded ? [encoded] : [];
     });
     replaceChildren(element, treeElements, children);
+    if (depth > 1) serverBeforeChildren(element);
     if (node.customOrder) {
       const order = ensure(element, "custom-order");
       putAttribute(order, "enabled", node.customOrder.enabled);

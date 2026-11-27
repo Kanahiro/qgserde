@@ -14,7 +14,7 @@ test("QGIS opens generated, edited and round-tripped projects including vector t
 }, async () => {
   assert.ok(qgisPython);
   const directory = mkdtempSync(join(tmpdir(), "qgserde-"));
-  const version = process.env.QGIS_VERSION ?? "4.2";
+  const version = process.env.QGIS_VERSION ?? "4.4";
   try {
     await writeQgisFixtures(directory, version);
     const output = execFileSync(

@@ -40,8 +40,8 @@ import {
 } from "./xml.ts";
 
 // QGIS 4 writes a property key as <properties name="Key">, QGIS 3 as <Key>.
-// QGIS 4.0-4.2 read both and QGIS 3 reads only <Key>. Read and update both;
-// the named form wins because later QGIS versions ignore <Key> next to it.
+// QGIS 4 reads both and QGIS 3 reads only <Key>. Read and update both;
+// the named form wins because QGIS 4.4+ ignores <Key> next to it.
 function propertyEntries(parent: XmlElement, key: string): XmlElement[] {
   return findChildren(parent).filter((child) =>
     isNamedProperty(child) ? child.attributes.name === key : child.name === key,

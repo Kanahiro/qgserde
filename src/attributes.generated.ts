@@ -541,22 +541,22 @@ export const layerTreeLayerAttributes = {
 export interface QgsLayerTreeGroupAttributes {
   /** `groupLayer`. */
   groupLayer?: string;
+  /** `id`. */
+  id?: string;
   /** `mutually-exclusive`. */
   "mutually-exclusive"?: string;
   /** `mutually-exclusive-child`. */
   "mutually-exclusive-child"?: number;
   /** `wms-group-request-mode`. */
   "wms-group-request-mode"?: string;
-  /** `wms-has-time-dimension`. */
-  "wms-has-time-dimension"?: string;
 }
 
 export const layerTreeGroupAttributes = {
   groupLayer: "string",
+  id: "string",
   "mutually-exclusive": "string",
   "mutually-exclusive-child": "number",
   "wms-group-request-mode": "string",
-  "wms-has-time-dimension": "string",
 } as const satisfies AttributeTable;
 
 /** `<Layout>` attributes. */
@@ -798,10 +798,14 @@ export interface QgsLayoutItemAttributes {
   columnSpace?: number;
   /** `cornerRadiusMeasure`. */
   cornerRadiusMeasure?: string;
+  /** `distanceScale`. */
+  distanceScale?: number;
   /** `distanceUnit`. */
   distanceUnit?: string;
   /** `drawCanvasItems`. */
   drawCanvasItems?: string;
+  /** `elevationScale`. */
+  elevationScale?: number;
   /** `enableZRange`. */
   enableZRange?: number;
   /** `endMarkerFile`. */
@@ -926,6 +930,8 @@ export interface QgsLayoutItemAttributes {
   positionLock?: string;
   /** `positionOnPage`. */
   positionOnPage?: string;
+  /** `rangeMethod`. */
+  rangeMethod?: string;
   /** `rasterBorder`, stored as 1 or 0. */
   rasterBorder?: boolean;
   /** `rasterBorderColor`. */
@@ -998,6 +1004,10 @@ export interface QgsLayoutItemAttributes {
   tolerance?: number;
   /** `unitLabel`. */
   unitLabel?: string;
+  /** `unitLabelPlacement`. */
+  unitLabelPlacement?: string;
+  /** `unitLabelString`. */
+  unitLabelString?: string;
   /** `unitType`. */
   unitType?: string;
   /** `uuid`. */
@@ -1049,8 +1059,10 @@ export const layoutItemAttributes = {
   columnCount: "number",
   columnSpace: "number",
   cornerRadiusMeasure: "string",
+  distanceScale: "number",
   distanceUnit: "string",
   drawCanvasItems: "string",
+  elevationScale: "number",
   enableZRange: "number",
   endMarkerFile: "string",
   equalColumnWidth: "number",
@@ -1113,6 +1125,7 @@ export const layoutItemAttributes = {
   position: "string",
   positionLock: "string",
   positionOnPage: "string",
+  rangeMethod: "string",
   rasterBorder: "boolean",
   rasterBorderColor: "string",
   rasterBorderWidth: "number",
@@ -1149,6 +1162,8 @@ export const layoutItemAttributes = {
   titleAlignment: "number",
   tolerance: "number",
   unitLabel: "string",
+  unitLabelPlacement: "string",
+  unitLabelString: "string",
   unitType: "string",
   uuid: "string",
   valign: "number",
@@ -2631,6 +2646,8 @@ export interface QgsAnnotationLayerItemAttributes {
   angle?: number;
   /** `backgroundEnabled`, stored as 1 or 0. */
   backgroundEnabled?: boolean;
+  /** `billboardMode`. */
+  billboardMode?: string;
   /** `calloutAnchor`. */
   calloutAnchor?: string;
   /** `calloutType`. */
@@ -2669,12 +2686,18 @@ export interface QgsAnnotationLayerItemAttributes {
   path?: string;
   /** `referenceScale`. */
   referenceScale?: number;
+  /** `rotation`. */
+  rotation?: number;
   /** `rotationMode`. */
   rotationMode?: string;
+  /** `size3D`. */
+  size3D?: string;
   /** `sizeMode`. */
   sizeMode?: string;
   /** `text`. */
   text?: string;
+  /** `textAnchor`. */
+  textAnchor?: string;
   /** `type`. */
   type?: string;
   /** `useReferenceScale`, stored as 1 or 0. */
@@ -2701,6 +2724,7 @@ export const annotationLayerItemAttributes = {
   alignment: "number",
   angle: "number",
   backgroundEnabled: "boolean",
+  billboardMode: "string",
   calloutAnchor: "string",
   calloutType: "string",
   enabled: "number",
@@ -2720,9 +2744,12 @@ export const annotationLayerItemAttributes = {
   offsetFromLineUnit: "string",
   path: "string",
   referenceScale: "number",
+  rotation: "number",
   rotationMode: "string",
+  size3D: "string",
   sizeMode: "string",
   text: "string",
+  textAnchor: "string",
   type: "string",
   useReferenceScale: "boolean",
   wkt: "string",
@@ -3271,16 +3298,30 @@ export interface QgsRasterRendererAttributes {
   "contour-index-interval"?: number;
   /** `contour-interval`. */
   "contour-interval"?: number;
+  /** `direction-band`. */
+  "direction-band"?: number;
+  /** `direction-encoding`. */
+  "direction-encoding"?: string;
   /** `downscale`. */
   downscale?: number;
   /** `gradient`. */
   gradient?: string;
   /** `grayBand`. */
   grayBand?: number;
+  /** `maximum-magnitude`. */
+  "maximum-magnitude"?: number;
+  /** `minimum-magnitude`. */
+  "minimum-magnitude"?: number;
   /** `multidirection`. */
   multidirection?: number;
   /** `nodataColor`. */
   nodataColor?: string;
+  /** `source-mode`. */
+  "source-mode"?: string;
+  /** `x-band`. */
+  "x-band"?: number;
+  /** `y-band`. */
+  "y-band"?: number;
   /** `zfactor`. */
   zfactor?: number;
 }
@@ -3293,11 +3334,18 @@ export const rasterRendererAttributes = {
   color: "string",
   "contour-index-interval": "number",
   "contour-interval": "number",
+  "direction-band": "number",
+  "direction-encoding": "string",
   downscale: "number",
   gradient: "string",
   grayBand: "number",
+  "maximum-magnitude": "number",
+  "minimum-magnitude": "number",
   multidirection: "number",
   nodataColor: "string",
+  "source-mode": "string",
+  "x-band": "number",
+  "y-band": "number",
   zfactor: "number",
 } as const satisfies AttributeTable;
 
@@ -4183,6 +4231,8 @@ export interface QgsLegendTreeGroupAttributes {
   expanded?: boolean;
   /** `groupLayer`. */
   groupLayer?: string;
+  /** `id`. */
+  id?: string;
   /** `mutually-exclusive`. */
   "mutually-exclusive"?: string;
   /** `mutually-exclusive-child`. */
@@ -4199,6 +4249,7 @@ export const legendTreeGroupAttributes = {
   checked: "string",
   expanded: "boolean",
   groupLayer: "string",
+  id: "string",
   "mutually-exclusive": "string",
   "mutually-exclusive-child": "number",
   name: "string",
@@ -4962,6 +5013,8 @@ export interface QgsMaterial3DAttributes {
   clear_coat_factor?: number;
   /** `clear_coat_roughness`. */
   clear_coat_roughness?: number;
+  /** `color`. */
+  color?: string;
   /** `cool`. */
   cool?: string;
   /** `diffuse`. */
@@ -5027,6 +5080,7 @@ export const material3DAttributes = {
   beta: "number",
   clear_coat_factor: "number",
   clear_coat_roughness: "number",
+  color: "string",
   cool: "string",
   diffuse: "string",
   diffuse_texture_path: "string",

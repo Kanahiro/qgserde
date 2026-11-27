@@ -38,6 +38,7 @@ import {
   metadataBase,
   numericFormat,
   relationSpec,
+  serverSpec,
 } from "./layer-settings.ts";
 import { annotationEntries } from "./layer-types.ts";
 import { layoutSpec, legendGroup, reportSpec } from "./layouts.ts";
@@ -573,7 +574,8 @@ export const treeTags = {
 const treeAttributes = {
   group: {
     table: layerTreeGroupAttributes,
-    exclude: ["name", "checked", "expanded"],
+    // wms-has-time-dimension is the pre-4.4 form of server.wmsDimensions.
+    exclude: ["name", "checked", "expanded", "wms-has-time-dimension"],
   },
   layer: {
     table: layerTreeLayerAttributes,
@@ -592,9 +594,17 @@ export function treeNodeSpec(type: keyof typeof treeTags): Spec {
       { kind: "attributes", field: "attributes", ...treeAttributes[type] },
       { kind: "custom", field: "customProperties", custom: customProperties },
       ...(type === "layer" ? [patchEntry] : []),
+      ...(type === "group" ? [groupServerEntry] : []),
     ],
   };
 }
+
+const groupServerEntry: Entry = {
+  kind: "object",
+  field: "server",
+  at: [],
+  spec: serverSpec(treeTags.group),
+};
 
 const patchEntry: Entry = {
   kind: "attributes",

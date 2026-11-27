@@ -336,6 +336,8 @@ project metadata keywords, contacts, links, history, and dates. It also models
 QGIS 4.2, `elevationProfiles` and selective masking source sets. Layer-tree
 nodes model their other attributes, such as `mutually-exclusive`, legend patch
 shapes, and custom properties; QGIS 4.2 custom nodes have `type: "custom"`.
+Groups model their QGIS Server settings in `server`, whatever form the file
+stores them in; each target version gets the form it reads.
 
 ### Layouts
 
@@ -375,7 +377,7 @@ is not part of the group fails with `INVALID_EDIT`.
 Namespace declarations (`xmlns:*`) are never part of a group.
 
 The interfaces and their attribute kinds are generated from the QGIS 3.44 and
-4.2 writers by `scripts/generate-attributes.py`; see CONTRIBUTING.md.
+4.4 writers by `scripts/generate-attributes.py`; see CONTRIBUTING.md.
 
 ## Preserve data and order
 

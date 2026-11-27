@@ -1162,6 +1162,15 @@ export interface QgsLayerTreeGroup {
   children: QgsLayerTreeNode[];
   /** Other attributes, such as `mutually-exclusive` and `groupLayer`. */
   attributes?: QgsLayerTreeGroupAttributes;
+  /**
+   * QGIS Server publishing settings. A WMS time dimension is a
+   * `wmsDimensions` entry named `TIME`. Each target version gets its own
+   * storage: custom properties before QGIS 3.44 (short name, title, and
+   * abstract only), the `wms-has-time-dimension` attribute before 4.4 (a
+   * `TIME` entry with default settings only), and elements otherwise.
+   * Settings the target cannot store fail with `INVALID_EDIT`.
+   */
+  server?: QgsLayerServerProperties;
   /** Plugin and application properties stored with the node. */
   customProperties?: QgsVariantMap;
   /** Custom drawing order, independent of the tree order. */

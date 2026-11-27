@@ -426,6 +426,9 @@ def check_project_settings(project):
     group = project.layerTreeRoot().findGroup("Group")
     assert group.isMutuallyExclusive()
     assert group.customProperty("plugin/flag") == "x"
+    server = group.serverProperties()
+    assert server.shortName() == "group_short" and server.title() == "Group title"
+    assert group.hasWmsTimeDimension()
     metadata = project.metadata()
     assert metadata.author() == "Me" and metadata.abstract() == "About"
     assert metadata.keywords() == {"places": ["city"]}
